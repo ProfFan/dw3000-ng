@@ -43,6 +43,8 @@
 
 use core::mem::size_of;
 
+/*
+
 use embedded_hal::{
     blocking::spi,
     digital::v2::OutputPin,
@@ -436,3 +438,4 @@ pub enum ComputeDistanceError {
     /// The time of flight is so large, the distance calculation would overflow
     TimeOfFlightTooLarge,
 }
+*/

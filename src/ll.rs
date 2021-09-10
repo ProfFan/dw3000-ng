@@ -608,6 +608,482 @@ macro_rules! impl_rw {
 //     ...
 // }
 //
+
+
+/*************************************************************************/
+/**********               DWM3000 MODIFICATIONS               ************/
+/*************************************************************************/
+// registers for DWM3000
+// Each field follows the following syntax:
+// <Id>, <Offset>, <Length>, <Access>, <NAME(name)>
+//      <name>, <first-bit-index>, <last-bit-index>, <type>; /// <doc>
+
+impl_register! {
+    
+    0x00, 0x00, 121, RO, GEN_CFG_AES(gen_cfg_aes) { /// Device identifier
+
+    }
+    
+    0x00, 0x00, 4, RO, DEV_ID(dev_id) { /// Device identifier
+        rev,     0,  3, u8;  /// Revision
+        ver,     4,  7, u8;  /// Version
+        model,   8, 15, u8;  /// Model
+        ridtag, 16, 31, u16; /// Register Identification Tag
+    }
+    0x00, 16, 8, RW, EUI(eui) { /// Extended Unique Identifier
+        value, 0, 63, u64; /// Extended Unique Identifier
+    }
+    0x00, 48, 4, RW, PANADR(panadr) { /// PAN Identifier and Short Address
+        short_addr,  0, 15, u16; /// Short Address
+        pan_id,     16, 31, u16; /// PAN Identifier
+    }
+    0x00, 64, 4, RW, SYS_CFG(sys_cfg) { /// System Configuration
+        ffen,        0,  0, u8; /// Frame Filtering Enable
+        dis_fcs_tx,  1,  1, u8; /// disable auto-FCS Transmission
+        dis_fce,     2,  2, u8; /// Disable frame check error handling
+        dis_drxb,    3,  3, u8; /// Disable Double RX Buffer
+        phr_mode,    4,  4, u8; /// PHR Mode
+        phr_6m8,     5,  5, u8; /// Sets the PHR rate to match the data rate
+        spi_crcen,   6,  6, u8; /// Enable SPI CRC functionnality
+        cia_ipatov,  7,  7, u8; /// Select CIA processing preamble CIR
+        cia_sts,     8,  8, u8; /// Select CIA processing STS CIR
+        rxwtoe,      9,  9, u8; /// Receive Wait Timeout Enable
+        rxautr,     10, 10, u8; /// Receiver Auto Re-enable
+        auto_ack,   11, 11, u8; /// Automatic Acknowledge Enable
+        cp_spc,     12, 13, u8; /// STS Packet Configuration
+        cp_sdc,     15, 15, u8; /// configures the SDC
+        pdoa_mode,  16, 17, u8; /// configure PDoA
+        fast_aat,   18, 18, u8; /// enable fast RX to TX turn around mode
+    }   
+    0x00, 80, 2, RW, FF_CFG(ff_cfg) { /// comments
+        ffab,        2,  2, u8; /// Frame Filtering Allow Beacon
+        ffad,        3,  3, u8; /// Frame Filtering Allow Data
+        ffaa,        4,  4, u8; /// Frame Filtering Allow Acknowledgement
+        ffam,        5,  5, u8; /// Frame Filtering Allow MAC Command Frame
+        ffar,        6,  6, u8; /// Frame Filtering Allow Reserved
+        ffamulti,    6,  6, u8; /// Frame Filtering Allow Multipurpose
+        ffaf,        6,  6, u8; /// Frame Filtering Allow Fragmented
+        ffae,        6,  6, u8; /// Frame Filtering Allow extended frame
+        ffbc,        1,  1, u8; /// Frame Filtering Behave As Coordinator
+        ffib,        1,  1, u8; /// Frame Filtering Allow MAC
+        le0_pend,    1,  1, u8; /// Data pending for device at led0 addr
+        le1_pend,    1,  1, u8; /// Data pending for device at led1 addr
+        le2_pend,    1,  1, u8; /// Data pending for device at led2 addr
+        le3_pend,    1,  1, u8; /// Data pending for device at led3 addr
+        ssadrap,     1,  1, u8; /// Short Source Address Data Request
+        lsadrape,    1,  1, u8; /// Long Source Address Data Request
+    }  
+    0x00, 88, 1, RO, SPI_RD_CRC(spi_rd_crc) { /// Commentaire
+
+    }
+
+
+
+
+    0x00, 0x00, 5, RO, SYS_TIME(sys_time) { /// System Time Counter
+        value, 0, 39, u64; /// System Time Counter
+    }
+    0x08, 0x00, 5, RW, TX_FCTRL(tx_fctrl) { /// TX Frame Control
+        tflen,     0,  6, u8;  /// TX Frame Length
+        tfle,      7,  9, u8;  /// TX Frame Length Extension
+        txbr,     13, 14, u8;  /// TX Bit Rate
+        tr,       15, 15, u8;  /// TX Ranging Enable
+        txprf,    16, 17, u8;  /// TX Pulse Repetition Frequency
+        txpsr,    18, 19, u8;  /// TX Preamble Symbol Repetitions
+        pe,       20, 21, u8;  /// Preamble Extension
+        txboffs,  22, 31, u16; /// TX Buffer Index Offset
+        ifsdelay, 32, 39, u8;  /// Inter-Frame Spacing
+    }
+    0x0A, 0x00, 5, RW, DX_TIME(dx_time) { /// Delayed Send or Receive Time
+        value, 0, 39, u64; /// Delayed Send or Receive Time
+    }
+    /*
+    0x00, , , , DREF_TIME(dref_time) {
+
+    }
+    0x00, , , , RX_FWTO(r_fwto) {
+
+    }
+    */
+    0x0D, 0x00, 4, RW, SYS_CTRL(sys_ctrl) { /// System Control Register
+        sfcst,      0,  0, u8; /// Suppress Auto-FCS Transmission
+        txstrt,     1,  1, u8; /// Transmit Start
+        txdlys,     2,  2, u8; /// Transmitter Delayed Sending
+        cansfcs,    3,  3, u8; /// Cancel Auto-FCS Suppression
+        trxoff,     6,  6, u8; /// Transceiver Off
+        wait4resp,  7,  7, u8; /// Wait for Response
+        rxenab,     8,  8, u8; /// Enable Receiver
+        rxdlye,     9,  9, u8; /// Receiver Delayed Enable
+        hrbpt,     24, 24, u8; /// Host Side RX Buffer Pointer Toggle
+    }
+    0x0E, 0x00, 4, RW, SYS_MASK(sys_mask) { /// System Event Mask Register
+        mpclock,    1,  1, u8; /// Mask clock PLL lock
+        mesyncr,    2,  2, u8; /// Mask external sync clock reset
+        maat,       3,  3, u8; /// Mask automatic acknowledge trigger
+        mtxfrbm,    4,  4, u8; /// Mask transmit frame begins
+        mtxprs,     5,  5, u8; /// Mask transmit preamble sent
+        mtxphs,     6,  6, u8; /// Mask transmit PHY Header Sent
+        mtxfrs,     7,  7, u8; /// Mask transmit frame sent
+        mrxprd,     8,  8, u8; /// Mask receiver preamble detected
+        mrxsfdd,    9,  9, u8; /// Mask receiver SFD detected
+        mldedone,  10, 10, u8; /// Mask LDE processing done
+        mrxphd,    11, 11, u8; /// Mask receiver PHY header detect
+        mrxphe,    12, 12, u8; /// Mask receiver PHY header error
+        mrxdfr,    13, 13, u8; /// Mask receiver data frame ready
+        mrxfcg,    14, 14, u8; /// Mask receiver FCS good
+        mrxfce,    15, 15, u8; /// Mask receiver FCS error
+        mrxrfsl,   16, 16, u8; /// Mask receiver Reed Solomon Frame Sync loss
+        mrxrfto,   17, 17, u8; /// Mask Receive Frame Wait Timeout
+        mldeerr,   18, 18, u8; /// Mask leading edge detection processing error
+        mrxovrr,   20, 20, u8; /// Mask Receiver Overrun
+        mrxpto,    21, 21, u8; /// Mask Preamble detection timeout
+        mgpioirq,  22, 22, u8; /// Mask GPIO interrupt
+        mslp2init, 23, 23, u8; /// Mask SLEEP to INIT event
+        mrfpllll,  24, 24, u8; /// Mask RF PLL Losing Lock warning
+        mcpllll,   25, 25, u8; /// Mask Clock PLL Losing Lock warning
+        mrxsfdto,  26, 26, u8; /// Mask Receive SFD timeout
+        mhpdwarn,  27, 27, u8; /// Mask Half Period Delay Warning
+        mtxberr,   28, 28, u8; /// Mask Transmit Buffer Error
+        maffrej,   29, 29, u8; /// Mask Automatic Frame Filtering rejection
+    }
+    0x0F, 0x00, 5, RW, SYS_STATUS(sys_status) { /// System Event Status Register
+        irqs,       0,  0, u8; /// Interrupt Request Status
+        cplock,     1,  1, u8; /// Clock PLL Lock
+        esyncr,     2,  2, u8; /// External Sync Clock Reset
+        aat,        3,  3, u8; /// Automatic Acknowledge Trigger
+        txfrb,      4,  4, u8; /// TX Frame Begins
+        txprs,      5,  5, u8; /// TX Preamble Sent
+        txphs,      6,  6, u8; /// TX PHY Header Sent
+        txfrs,      7,  7, u8; /// TX Frame Sent
+        rxprd,      8,  8, u8; /// RX Preamble Detected
+        rxsfdd,     9,  9, u8; /// RX SFD Detected
+        ldedone,   10, 10, u8; /// LDE Processing Done
+        rxphd,     11, 11, u8; /// RX PHY Header Detect
+        rxphe,     12, 12, u8; /// RX PHY Header Error
+        rxdfr,     13, 13, u8; /// RX Data Frame Ready
+        rxfcg,     14, 14, u8; /// RX FCS Good
+        rxfce,     15, 15, u8; /// RX FCS Error
+        rxrfsl,    16, 16, u8; /// RX Reed-Solomon Frame Sync Loss
+        rxrfto,    17, 17, u8; /// RX Frame Wait Timeout
+        ldeerr,    18, 18, u8; /// Leading Edge Detection Error
+        rxovrr,    20, 20, u8; /// RX Overrun
+        rxpto,     21, 21, u8; /// Preamble Detection Timeout
+        gpioirq,   22, 22, u8; /// GPIO Interrupt
+        slp2init,  23, 23, u8; /// SLEEP to INIT
+        rfpll_ll,  24, 24, u8; /// RF PLL Losing Lock
+        clkpll_ll, 25, 25, u8; /// Clock PLL Losing Lock
+        rxsfdto,   26, 26, u8; /// Receive SFD Timeout
+        hpdwarn,   27, 27, u8; /// Half Period Delay Warning
+        txberr,    28, 28, u8; /// TX Buffer Error
+        affrej,    29, 29, u8; /// Auto Frame Filtering Rejection
+        hsrbp,     30, 30, u8; /// Host Side RX Buffer Pointer
+        icrbp,     31, 31, u8; /// IC Side RX Buffer Pointer
+        rxrscs,    32, 32, u8; /// RX Reed-Solomon Correction Status
+        rxprej,    33, 33, u8; /// RX Preamble Rejection
+        txpute,    34, 34, u8; /// TX Power Up Time Error
+    }
+    0x10, 0x00, 4, RO, RX_FINFO(rx_finfo) { /// RX Frame Information
+        rxflen,  0,  6, u8; /// Receive Frame Length
+        rxfle,   7,  9, u8; /// Receive Frame Length Extension
+        rxnspl, 11, 12, u8; /// Receive Non-Standard Preamble Length
+        rxbr,   13, 14, u8; /// Receive Bit Rate Report
+        rng,    15, 15, u8; /// Receiver Ranging
+        rxprfr, 16, 17, u8; /// RX Pulse Repetition Rate Report
+        rxpsr,  18, 19, u8; /// RX Preamble Repetition
+    }
+    0x15, 0x00, 14, RO, RX_TIME(rx_time) { /// Receive Time Stamp
+        rx_stamp,  0,  39, u64; /// Fully adjusted time stamp
+        fp_index, 40,  55, u16; /// First Path Index
+        fp_ampl1, 56,  71, u16; /// First Path Amplitude Point 1
+        rx_rawst, 72, 111, u64; /// Raw time stamp
+    }
+    0x17, 0x00, 10, RO, TX_TIME(tx_time) { /// Transmit Time Stamp
+        tx_stamp,  0, 39, u64; /// Fully adjusted time stamp
+        tx_rawst, 40, 79, u64; /// Raw time stamp
+    }
+    0x18, 0x00, 2, RW, TX_ANTD(tx_antd) { /// TX Antenna Delay
+        value, 0, 15, u16; /// TX Antenna Delay
+    }
+    0x19, 0x00, 5, RO, SYS_STATE(sys_state) { /// System State information
+        tx_state,    0,  3, u8; /// Current Transmit State Machine value
+        rx_state,    8, 12, u8; /// Current Receive State Machine value
+        pmsc_state, 16, 23, u8; /// Current PMSC State Machine value
+    }
+    0x1E, 0x00, 4, RW, TX_POWER(tx_power) { /// TX Power Control
+        // The TX_POWER register has multiple sets of fields defined, depending
+        // on the smart TX power control setting. I don't know how to model
+        // this, so I've opted to provide just a single `value` field for
+        // maximum flexibility.
+        value, 0, 31, u32; /// TX Power Control value
+    }
+    0x1F, 0x00, 4, RW, CHAN_CTRL(chan_ctrl) { /// Channel Control Register
+        tx_chan, 0, 3, u8; /// Selects the transmit channel.
+        rx_chan, 4, 7, u8; /// Selects the receive channel.
+        dwsfd, 17, 17, u8; /// Enables the non-standard Decawave proprietary SFD sequence.
+        rxprf, 18, 19, u8; /// Selects the PRF used in the receiver.
+        tnssfd, 20, 20, u8; /// This bit enables the use of a user specified (non-standard) SFDin the transmitter.
+        rnssfd, 21, 21, u8; /// This bit enables the use of a user specified (non-standard) SFDin the receiver.
+        tx_pcode, 22, 26, u8; /// This field selects the preamble code used in the transmitter.
+        rx_pcode, 27, 31, u8; /// This field selects the preamble code used in the receiver.
+    }
+    0x21, 0x00, 1, RW, SFD_LENGTH(sfd_length) { /// This is the length of the SFD sequence used when the data rate is 850kbps and higher.
+        value, 0, 7, u8; /// This is the length of the SFD sequence used when the data rate is 850kbps and higher.
+    }
+    0x23, 0x04, 2, RW, AGC_TUNE1(agc_tune1) { /// AGC Tuning register 1
+        value, 0, 15, u16; /// AGC Tuning register 1 value
+    }
+    0x23, 0x0C, 4, RW, AGC_TUNE2(agc_tune2) { /// AGC Tuning register 2
+        value, 0, 31, u32; /// AGC Tuning register 2 value
+    }
+    0x24, 0x00, 4, RW, EC_CTRL(ec_ctrl) { /// External Clock Sync Counter Config
+        ostsm,   0,  0, u8; /// External Transmit Synchronization Mode Enable
+        osrsm,   1,  1, u8; /// External Receive Synchronization Mode Enable
+        pllldt,  2,  2, u8; /// Clock PLL Lock Detect Tune
+        wait,    3, 10, u8; /// Wait Counter
+        ostrm,  11, 11, u8; /// External Timebase Reset Mode Enable
+    }
+    0x26, 0x00, 4, RW, GPIO_MODE(gpio_mode) { /// GPIO Mode Control Register
+        msgp0,  6,  7, u8; /// Mode Selection for GPIO0/RXOKLED
+        msgp1,  8,  9, u8; /// Mode Selection for GPIO1/SFDLED
+        msgp2, 10, 11, u8; /// Mode Selection for GPIO2/RXLED
+        msgp3, 12, 13, u8; /// Mode Selection for GPIO3/TXLED
+        msgp4, 14, 15, u8; /// Mode Selection for GPIO4/EXTPA
+        msgp5, 16, 17, u8; /// Mode Selection for GPIO5/EXTTXE
+        msgp6, 18, 19, u8; /// Mode Selection for GPIO6/EXTRXE
+        msgp7, 20, 21, u8; /// Mode Selection for SYNC/GPIO7
+        msgp8, 22, 23, u8; /// Mode Selection for IRQ/GPIO8
+    }
+    0x26, 0x08, 4, RW, GPIO_DIR(gpio_dir) { /// GPIO Direction Control Register
+        gdp0,  0,  0, u8; /// Direction Selection for GPIO0
+        gdp1,  1,  1, u8; /// Direction Selection for GPIO1
+        gdp2,  2,  2, u8; /// Direction Selection for GPIO2
+        gdp3,  3,  3, u8; /// Direction Selection for GPIO3
+        gdm0,  4,  4, u8; /// Mask for setting the direction of GPIO0
+        gdm1,  5,  5, u8; /// Mask for setting the direction of GPIO1
+        gdm2,  6,  6, u8; /// Mask for setting the direction of GPIO2
+        gdm3,  7,  7, u8; /// Mask for setting the direction of GPIO3
+        gdp4,  8,  8, u8; /// Direction Selection for GPIO4
+        gdp5,  9,  9, u8; /// Direction Selection for GPIO5
+        gdp6, 10, 10, u8; /// Direction Selection for GPIO6
+        gdp7, 11, 11, u8; /// Direction Selection for GPIO7
+        gdm4, 12, 12, u8; /// Mask for setting the direction of GPIO4
+        gdm5, 13, 13, u8; /// Mask for setting the direction of GPIO5
+        gdm6, 14, 14, u8; /// Mask for setting the direction of GPIO6
+        gdm7, 15, 15, u8; /// Mask for setting the direction of GPIO7
+        gdp8, 16, 16, u8; /// Direction Selection for GPIO8
+        gdm8, 20, 20, u8; /// Mask for setting the direction of GPIO8
+    }
+    0x26, 0x0C, 4, RW, GPIO_DOUT(gpio_dout) { /// GPIO Data Output register
+        gop0,  0,  0, u8; /// Output state setting for GPIO0
+        gop1,  1,  1, u8; /// Output state setting for GPIO1
+        gop2,  2,  2, u8; /// Output state setting for GPIO2
+        gop3,  3,  3, u8; /// Output state setting for GPIO3
+        gom0,  4,  4, u8; /// Mask for setting the output state of GPIO0
+        gom1,  5,  5, u8; /// Mask for setting the output state of GPIO1
+        gom2,  6,  6, u8; /// Mask for setting the output state of GPIO2
+        gom3,  7,  7, u8; /// Mask for setting the output state of GPIO3
+        gop4,  8,  8, u8; /// Output state setting for GPIO4
+        gop5,  9,  9, u8; /// Output state setting for GPIO5
+        gop6, 10, 10, u8; /// Output state setting for GPIO6
+        gop7, 11, 11, u8; /// Output state setting for GPIO7
+        gom4, 12, 12, u8; /// Mask for setting the output state of GPIO4
+        gom5, 13, 13, u8; /// Mask for setting the output state of GPIO5
+        gom6, 14, 14, u8; /// Mask for setting the output state of GPIO6
+        gom7, 15, 15, u8; /// Mask for setting the output state of GPIO7
+        gop8, 16, 16, u8; /// Output state setting for GPIO8
+        gom8, 20, 20, u8; /// Mask for setting the output state of GPIO8
+    }
+    0x26, 0x10, 4, RW, GPIO_IRQE(gpio_irqe) { /// GPIO Interrupt Enable
+        girqe0,  0,  0, u8; /// GPIO IRQ Enable for GPIO0 input
+        girqe1,  1,  1, u8; /// GPIO IRQ Enable for GPIO1 input
+        girqe2,  2,  2, u8; /// GPIO IRQ Enable for GPIO2 input
+        girqe3,  3,  3, u8; /// GPIO IRQ Enable for GPIO3 input
+        girqe4,  4,  4, u8; /// GPIO IRQ Enable for GPIO4 input
+        girqe5,  5,  5, u8; /// GPIO IRQ Enable for GPIO5 input
+        girqe6,  6,  6, u8; /// GPIO IRQ Enable for GPIO6 input
+        girqe7,  7,  7, u8; /// GPIO IRQ Enable for GPIO7 input
+        girqe8,  8,  8, u8; /// GPIO IRQ Enable for GPIO8 input
+    }
+    0x26, 0x14, 4, RW, GPIO_ISEN(gpio_isen) { /// GPIO Interrupt Sense Selection
+        gisen0,  0,  0, u8; /// GPIO IRQ sense for GPIO0 input
+        gisen1,  1,  1, u8; /// GPIO IRQ sense for GPIO1 input
+        gisen2,  2,  2, u8; /// GPIO IRQ sense for GPIO2 input
+        gisen3,  3,  3, u8; /// GPIO IRQ sense for GPIO3 input
+        gisen4,  4,  4, u8; /// GPIO IRQ sense for GPIO4 input
+        gisen5,  5,  5, u8; /// GPIO IRQ sense for GPIO5 input
+        gisen6,  6,  6, u8; /// GPIO IRQ sense for GPIO6 input
+        gisen7,  7,  7, u8; /// GPIO IRQ sense for GPIO7 input
+        gisen8,  8,  8, u8; /// GPIO IRQ sense for GPIO8 input
+    }
+    0x26, 0x18, 4, RW, GPIO_IMODE(gpio_imode) { /// GPIO Interrupt Mode (Level / Edge)
+        gimod0,  0,  0, u8; /// GPIO IRQ mode selection for GPIO0 input
+        gimod1,  1,  1, u8; /// GPIO IRQ mode selection for GPIO1 input
+        gimod2,  2,  2, u8; /// GPIO IRQ mode selection for GPIO2 input
+        gimod3,  3,  3, u8; /// GPIO IRQ mode selection for GPIO3 input
+        gimod4,  4,  4, u8; /// GPIO IRQ mode selection for GPIO4 input
+        gimod5,  5,  5, u8; /// GPIO IRQ mode selection for GPIO5 input
+        gimod6,  6,  6, u8; /// GPIO IRQ mode selection for GPIO6 input
+        gimod7,  7,  7, u8; /// GPIO IRQ mode selection for GPIO7 input
+        gimod8,  8,  8, u8; /// GPIO IRQ mode selection for GPIO8 input
+    }
+    0x26, 0x1C, 4, RW, GPIO_IBES(gpio_ibes) { /// GPIO Interrupt “Both Edge” Select
+        gibes0,  0,  0, u8; /// GPIO IRQ "Both Edges" selection for GPIO0 input
+        gibes1,  1,  1, u8; /// GPIO IRQ "Both Edges" selection for GPIO1 input
+        gibes2,  2,  2, u8; /// GPIO IRQ "Both Edges" selection for GPIO2 input
+        gibes3,  3,  3, u8; /// GPIO IRQ "Both Edges" selection for GPIO3 input
+        gibes4,  4,  4, u8; /// GPIO IRQ "Both Edges" selection for GPIO4 input
+        gibes5,  5,  5, u8; /// GPIO IRQ "Both Edges" selection for GPIO5 input
+        gibes6,  6,  6, u8; /// GPIO IRQ "Both Edges" selection for GPIO6 input
+        gibes7,  7,  7, u8; /// GPIO IRQ "Both Edges" selection for GPIO7 input
+        gibes8,  8,  8, u8; /// GPIO IRQ "Both Edges" selection for GPIO8 input
+    }
+    0x26, 0x20, 4, RW, GPIO_ICLR(gpio_iclr) { /// GPIO Interrupt Latch Clear
+        giclr0,  0,  0, u8; /// GPIO IRQ latch clear for GPIO0 input
+        giclr1,  1,  1, u8; /// GPIO IRQ latch clear for GPIO1 input
+        giclr2,  2,  2, u8; /// GPIO IRQ latch clear for GPIO2 input
+        giclr3,  3,  3, u8; /// GPIO IRQ latch clear for GPIO3 input
+        giclr4,  4,  4, u8; /// GPIO IRQ latch clear for GPIO4 input
+        giclr5,  5,  5, u8; /// GPIO IRQ latch clear for GPIO5 input
+        giclr6,  6,  6, u8; /// GPIO IRQ latch clear for GPIO6 input
+        giclr7,  7,  7, u8; /// GPIO IRQ latch clear for GPIO7 input
+        giclr8,  8,  8, u8; /// GPIO IRQ latch clear for GPIO8 input
+    }
+    0x26, 0x24, 4, RW, GPIO_IDBE(gpio_idbe) { /// GPIO Interrupt De-bounce Enable
+        gidbe0,  0,  0, u8; /// GPIO IRQ de-bounce enable for GPIO0
+        gidbe1,  1,  1, u8; /// GPIO IRQ de-bounce enable for GPIO1
+        gidbe2,  2,  2, u8; /// GPIO IRQ de-bounce enable for GPIO2
+        gidbe3,  3,  3, u8; /// GPIO IRQ de-bounce enable for GPIO3
+        gidbe4,  4,  4, u8; /// GPIO IRQ de-bounce enable for GPIO4
+        gidbe5,  5,  5, u8; /// GPIO IRQ de-bounce enable for GPIO5
+        gidbe6,  6,  6, u8; /// GPIO IRQ de-bounce enable for GPIO6
+        gidbe7,  7,  7, u8; /// GPIO IRQ de-bounce enable for GPIO7
+        gidbe8,  8,  8, u8; /// GPIO IRQ de-bounce enable for GPIO8
+    }
+    0x26, 0x28, 4, RW, GPIO_RAW(gpio_raw) { /// GPIO raw state
+        grawp0,  0,  0, u8; /// GPIO0 port raw state
+        grawp1,  1,  1, u8; /// GPIO1 port raw state
+        grawp2,  2,  2, u8; /// GPIO2 port raw state
+        grawp3,  3,  3, u8; /// GPIO3 port raw state
+        grawp4,  4,  4, u8; /// GPIO4 port raw state
+        grawp5,  5,  5, u8; /// GPIO5 port raw state
+        grawp6,  6,  6, u8; /// GPIO6 port raw state
+        grawp7,  7,  7, u8; /// GPIO7 port raw state
+        grawp8,  8,  8, u8; /// GPIO8 port raw state
+    }
+    0x27, 0x02, 2, RW, DRX_TUNE0B(drx_tune0b) { /// Digital Tuning Register 0b
+        value, 0, 15, u16; /// DRX_TUNE0B tuning value
+    }
+    0x27, 0x04, 2, RW, DRX_TUNE1A(drx_tune1a) { /// Digital Tuning Register 1a
+        value, 0, 15, u16; /// DRX_TUNE1A tuning value
+    }
+    0x27, 0x06, 2, RW, DRX_TUNE1B(drx_tune1b) { /// Digital Tuning Register 1b
+        value, 0, 15, u16; /// DRX_TUNE1B tuning value
+    }
+    0x27, 0x08, 4, RW, DRX_TUNE2(drx_tune2) { /// Digital Tuning Register 2
+        value, 0, 31, u32; /// DRX_TUNE2 tuning value
+    }
+    0x27, 0x20, 2, RW, DRX_SFDTOC(drx_sfdtoc) { /// SFD timeout
+        count, 0, 15, u16; /// SFD detection timeout count
+    }
+    0x27, 0x24, 2, RW, DRX_PRETOC(drx_pretoc) { /// Preamble detection timeou
+        count, 0, 15, u16; /// Preamble detection timeout count
+    }
+    0x27, 0x26, 2, RW, DRX_TUNE4H(drx_tune4h) { /// Digital Tuning Register 4h
+        value, 0, 15, u16; /// DRX_TUNE4H tuning value
+    }
+    0x27, 0x28, 2, RO, DRX_CAR_INT(dxr_car_int) { /// Carrier Recovery Integrator Register
+        value, 0, 15, u16; /// value
+    }
+    0x27, 0x2C, 2, RO, RXPACC_NOSAT(rxpacc_nosat) { /// Digital debug register. Unsaturated accumulated preamble symbols.
+        value, 0, 15, u16; /// value
+    }
+    0x28, 0x0B, 1, RW, RF_RXCTRLH(rf_rxctrlh) { /// Analog RX Control Register
+        value, 0, 7, u8; /// Analog RX Control Register
+    }
+    0x28, 0x0C, 3, RW, RF_TXCTRL(rf_txctrl) { /// Analog TX Control Register
+        txmtune, 5,  8, u8; /// Transmit mixer tuning register
+        txmq,    9, 11, u8; /// Transmit mixer Q-factor tuning register
+        value, 0, 23, u32; /// The entire register
+    }
+    0x28, 0x30, 5, RW, LDOTUNE(ldotune) { /// LDO voltage tuning parameter
+        value, 0, 39, u64; /// Internal LDO voltage tuning parameter
+    }
+    0x2A, 0x0B, 1, RW, TC_PGDELAY(tc_pgdelay) { /// Pulse Generator Delay
+        value, 0, 7, u8; /// Transmitter Calibration - Pulse Generator Delay
+    }
+    0x2B, 0x07, 4, RW, FS_PLLCFG(fs_pllcfg) { /// Frequency synth - PLL configuration
+        value, 0, 31, u32; /// Frequency synth - PLL configuration
+    }
+    0x2B, 0x0B, 1, RW, FS_PLLTUNE(fs_plltune) { /// Frequency synth - PLL Tuning
+        value, 0, 7, u8; /// Frequency synthesiser - PLL Tuning
+    }
+    0x2D, 0x04, 2, RW, OTP_ADDR(otp_addr) { /// OTP Address
+        value, 0, 10, u16; /// OTP Address
+    }
+    0x2D, 0x06, 2, RW, OTP_CTRL(otp_ctrl) { /// OTP Control
+        otprden,  0,  0, u8; /// Forces OTP into manual read mode
+        otpread,  1,  1, u8; /// Commands a read operation
+        otpmrwr,  3,  3, u8; /// OTP mode register write
+        otpprog,  6,  6, u8; /// Write OTP_WDAT to OTP_ADDR
+        otpmr,    7, 10, u8; /// OTP mode register
+        ldeload, 15, 15, u8; /// Force load of LDE microcode
+    }
+    0x2D, 0x0A, 4, RO, OTP_RDAT(otp_rdat) { /// OTP Read Data
+        value, 0, 31, u32; /// OTP Read Data
+    }
+    0x2E, 0x0806, 1, RW, LDE_CFG1(lde_cfg1) { /// LDE Configuration Register 1
+        ntm,   0, 4, u8; /// Noise Threshold Multiplier
+        pmult, 5, 7, u8; /// Peak Multiplier
+    }
+    0x2E, 0x1804, 2, RW, LDE_RXANTD(lde_rxantd) { /// RX Antenna Delay
+        value, 0, 15, u16; /// RX Antenna Delay
+    }
+    0x2E, 0x1806, 2, RW, LDE_CFG2(lde_cfg2) { /// LDE Configuration Register 2
+        value, 0, 15, u16; /// The LDE_CFG2 configuration value
+    }
+    0x2F, 0x00, 4, RW, EVC_CTRL(evc_ctrl) { /// Event Counter Control
+        evc_en,  0, 0, u8; /// Event Counters Enable
+        evc_clr, 1, 1, u8; /// Event Counters Clear
+    }
+    0x2F, 0x18, 2, RO, EVC_HPW(evc_hpw) { /// Half Period Warning Counter
+        value, 0, 11, u16; /// Half Period Warning Event Counter
+    }
+    0x2F, 0x1A, 2, RO, EVC_TPW(evc_tpw) { /// TX Power-Up Warning Counter
+        value, 0, 11, u16; /// TX Power-Up Warning Event Counter
+    }
+    0x36, 0x00, 4, RW, PMSC_CTRL0(pmsc_ctrl0) { /// PMSC Control Register 0
+        sysclks,    0,  1, u8; /// System Clock Selection
+        rxclks,     2,  3, u8; /// Receiver Clock Selection
+        txclks,     4,  5, u8; /// Transmitter Clock Selection
+        face,       6,  6, u8; /// Force Accumulator Clock Enable
+        adcce,     10, 10, u8; /// ADC Clock Enable
+        amce,      15, 15, u8; /// Accumulator Memory Clock Enable
+        gpce,      16, 16, u8; /// GPIO Clock Enable
+        gprn,      17, 17, u8; /// GPIO Reset (Not), active low
+        gpdce,     18, 18, u8; /// GPIO De-bounce Clock Enable
+        gpdrn,     19, 19, u8; /// GPIO De-bounce Reset (Not), active low
+        khzclken,  23, 23, u8; /// Kilohertz Clock Enable
+        softreset, 28, 31, u8; /// Soft Reset
+    }
+    0x36, 0x04, 4, RW, PMSC_CTRL1(pmsc_ctrl1) { /// PMSC Control Register 1
+        arx2init,   1,  1, u8; /// Automatic transition from receive to init
+        pktseq,     3, 10, u8; /// Control PMSC control of analog RF subsystem
+        atxslp,    11, 11, u8; /// After TX automatically sleep
+        arxslp,    12, 12, u8; /// After RX automatically sleep
+        snoze,     13, 13, u8; /// Snooze Enable
+        snozr,     14, 14, u8; /// Snooze Repeat
+        pllsyn,    15, 15, u8; /// Enable clock used for external sync modes
+        lderune,   17, 17, u8; /// LDE Run Enable
+        khzclkdiv, 26, 31, u8; /// Kilohertz Clock Divisor
+    }
+    0x36, 0x28, 4, RW, PMSC_LEDC(pmsc_ledc) { /// PMSC LED Control Register
+        blink_tim, 0, 7, u8; /// Blink time count value
+        blnken, 8, 8, u8; /// Blink Enable
+        blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
+    }
+}
+
+/*
 // Each field follows the following syntax:
 // <name>, <first-bit-index>, <last-bit-index>, <type>; /// <doc>
 impl_register! {
@@ -1043,7 +1519,7 @@ impl_register! {
         blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
     }
 }
-
+*/
 
 /// Transmit Data Buffer
 ///

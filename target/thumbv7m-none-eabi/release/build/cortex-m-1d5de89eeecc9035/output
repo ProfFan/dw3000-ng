@@ -1,0 +1,4 @@
+cargo:rustc-link-lib=static=cortex-m
+cargo:rustc-link-search=/home/rustsii/Documents/embedded-lab/Positionnement-Fin/DRIVER/DW3000_driver/target/thumbv7m-none-eabi/release/build/cortex-m-1d5de89eeecc9035/out
+cargo:rustc-cfg=cortex_m
+cargo:rustc-cfg=armv7m

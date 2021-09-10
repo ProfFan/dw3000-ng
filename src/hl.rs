@@ -68,16 +68,9 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
         }
     }
 
-    /// Initialize the DW1000
-    ///
-    /// The DW1000's default configuration is somewhat inconsistent, and the
-    /// user manual (section 2.5.5) has a long list of default configuration
-    /// values that should be changed to guarantee everything works correctly.
-    /// This method does just that.
-    ///
-    /// Please note that this method assumes that you kept the default
-    /// configuration. It is generally recommended not to change configuration
-    /// before calling this method.
+    // Initialize the DW1000
+
+    /*
     pub fn init(mut self) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
         // Set AGC_TUNE1. See user manual, section 2.5.5.1.
         self.ll.agc_tune1().write(|w| w.value(0x8870))?;
@@ -147,6 +140,7 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
             state: Ready,
         })
     }
+    */
 }
 
 impl<SPI, CS> DW1000<SPI, CS, Ready>
@@ -154,7 +148,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         SPI: spi::Transfer<u8> + spi::Write<u8>,
         CS:  OutputPin,
 {
-    /// Sets the RX and TX antenna delays
+    // Sets the RX and TX antenna delays
+    /*
     pub fn set_antenna_delay(&mut self, rx_delay: u16, tx_delay: u16)
         -> Result<(), Error<SPI, CS>>
     {
@@ -167,8 +162,10 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
 
         Ok(())
     }
+    */
 
-    /// Sets the network id and address used for sending and receiving
+    // Sets the network id and address used for sending and receiving
+    /*
     pub fn set_address(&mut self, pan_id: mac::PanId, addr: mac::ShortAddress)
         -> Result<(), Error<SPI, CS>>
     {
@@ -182,25 +179,10 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
 
         Ok(())
     }
+    */
 
-    /// Send an IEEE 802.15.4 MAC frame
-    ///
-    /// The `data` argument is wrapped into an IEEE 802.15.4 MAC frame and sent
-    /// to `destination`.
-    ///
-    /// This operation can be delayed to aid in distance measurement, by setting
-    /// `delayed_time` to `Some(instant)`. If you want to send the frame as soon
-    /// as possible, just pass `None` instead.
-    ///
-    /// The config parameter struct allows for setting the channel, bitrate, and
-    /// more. This configuration needs to be the same as the configuration used
-    /// by the receiver, or the message may not be received.
-    /// The defaults are a sane starting point.
-    ///
-    /// This method starts the transmission and returns immediately thereafter.
-    /// It consumes this instance of `DW1000` and returns another instance which
-    /// is in the `Sending` state, and can be used to wait for the transmission
-    /// to finish and check its result.
+    // Send an IEEE 802.15.4 MAC frame
+    /*
     pub fn send(mut self,
         data:         &[u8],
         destination:  Option<mac::Address>,
@@ -325,17 +307,10 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
             state: Sending { finished: false },
         })
     }
+    */
 
-    /// Attempt to receive an IEEE 802.15.4 MAC frame
-    ///
-    /// Initializes the receiver. The method consumes this instance of `DW1000`
-    /// and returns another instance which is in the `Receiving` state, and can
-    /// be used to wait for a message.
-    ///
-    /// The config parameter allows for the configuration of bitrate, channel
-    /// and more. Make sure that the values used are the same as of the frames
-    /// that are transmitted. The default works with the TxConfig's default and
-    /// is a sane starting point.
+    // Attempt to receive an IEEE 802.15.4 MAC frame
+    /*
     pub fn receive(mut self, config: RxConfig)
         -> Result<DW1000<SPI, CS, Receiving>, Error<SPI, CS>>
     {
@@ -458,17 +433,20 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
             state: Receiving { finished: false },
         })
     }
-
+    */
+    /*
     /// Enables transmit interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
+    
     pub fn enable_tx_interrupts(&mut self)
         -> Result<(), Error<SPI, CS>>
     {
         self.ll.sys_mask().modify(|_, w| w.mtxfrs(0b1))?;
         Ok(())
     }
-
+    */
+    /*
     /// Enables receive interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
@@ -493,15 +471,18 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
 
         Ok(())
     }
-
+    */
+    /*
     /// Disables all interrupts
+    
     pub fn disable_interrupts(&mut self)
         -> Result<(), Error<SPI, CS>>
     {
         self.ll.sys_mask().write(|w| w)?;
         Ok(())
     }
-
+    */
+    /*
     /// Configures the gpio pins to operate as LED output.
     ///
     /// - Note: This means that the function of the gpio pins change
@@ -513,6 +494,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
     /// - TXLED will change GPIO3
     ///
     /// blink_time is in units of 14 ms
+    
     pub fn configure_leds(
         &mut self,
         enable_rx_ok: bool,
@@ -546,6 +528,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
 
         Ok(())
     }
+    */
 }
 
 impl<SPI, CS> DW1000<SPI, CS, Sending>
@@ -553,6 +536,7 @@ impl<SPI, CS> DW1000<SPI, CS, Sending>
         SPI: spi::Transfer<u8> + spi::Write<u8>,
         CS:  OutputPin,
 {
+    /*
     /// Wait for the transmission to finish
     ///
     /// This method returns an `nb::Result` to indicate whether the transmission
@@ -614,7 +598,8 @@ impl<SPI, CS> DW1000<SPI, CS, Sending>
 
         Ok(())
     }
-
+    */
+    /*
     /// Finishes sending and returns to the `Ready` state
     ///
     /// If the send operation has finished, as indicated by `wait`, this is a
@@ -641,7 +626,8 @@ impl<SPI, CS> DW1000<SPI, CS, Sending>
             state: Ready,
         })
     }
-
+    */
+    /*
     fn reset_flags(&mut self) -> Result<(), Error<SPI, CS>> {
         self.ll
             .sys_status()
@@ -655,6 +641,7 @@ impl<SPI, CS> DW1000<SPI, CS, Sending>
 
         Ok(())
     }
+    */
 }
 
 impl<SPI, CS> DW1000<SPI, CS, Receiving>
@@ -662,6 +649,7 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
         SPI: spi::Transfer<u8> + spi::Write<u8>,
         CS:  OutputPin,
 {
+    /*
     /// Wait for receive operation to finish
     ///
     /// This method returns an `nb::Result` to indicate whether the transmission
@@ -794,7 +782,8 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
             frame,
         })
     }
-
+    */
+    /*
     /// Finishes receiving and returns to the `Ready` state
     ///
     /// If the receive operation has finished, as indicated by `wait`, this is a
@@ -817,6 +806,7 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
             state: Ready,
         })
     }
+    */
 }
 
 impl<SPI, CS, State> DW1000<SPI, CS, State>
@@ -824,6 +814,7 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
         SPI: spi::Transfer<u8> + spi::Write<u8>,
         CS:  OutputPin,
 {
+    /*
     /// Returns the TX antenna delay
     pub fn get_tx_antenna_delay(&mut self)
         -> Result<Duration, Error<SPI, CS>>
@@ -835,7 +826,8 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
 
         Ok(tx_antenna_delay)
     }
-
+    */
+    /*
     /// Returns the network id and address used for sending and receiving
     pub fn get_address(&mut self)
         -> Result<mac::Address, Error<SPI, CS>>
@@ -847,7 +839,8 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
             mac::ShortAddress(panadr.short_addr()),
         ))
     }
-
+    */
+    /*
     /// Returns the current system time
     pub fn sys_time(&mut self) -> Result<Instant, Error<SPI, CS>> {
         let sys_time = self.ll.sys_time().read()?.value();
@@ -856,7 +849,8 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
         // never panic.
         Ok(Instant::new(sys_time).unwrap())
     }
-
+    */
+    
     /// Provides direct access to the register-level API
     ///
     /// Be aware that by using the register-level API, you can invalidate
@@ -866,7 +860,8 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
     pub fn ll(&mut self) -> &mut ll::DW1000<SPI, CS> {
         &mut self.ll
     }
-
+    
+    /*
     /// Force the DW1000 into IDLE mode
     ///
     /// Any ongoing RX/TX operations will be aborted.
@@ -878,6 +873,7 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
 
         Ok(())
     }
+    */
 }
 
 // Can't be derived without putting requirements on `SPI` and `CS`.
@@ -1065,3 +1061,5 @@ pub struct Message<'l> {
     /// The MAC frame
     pub frame: mac::Frame<'l>,
 }
+
+

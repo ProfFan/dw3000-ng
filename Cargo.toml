@@ -1,21 +1,8 @@
 [package]
-name    = "dw1000"
+name    = "dw3000"
 version = "0.5.0"
 authors = ["Hanno Braun <hanno@braun-embedded.com>"]
 edition = "2018"
-
-description   = "Driver for the Decawave DW1000 UWB wireless transceiver chip, providing radio communication based on IEEE 802.15.4 and distance measurement"
-documentation = "https://docs.rs/dw1000"
-repository    = "https://github.com/braun-embedded/rust-dw1000"
-license       = "0BSD"
-readme        = "README.md"
-categories    = ["embedded", "hardware-support", "no-std"]
-keywords      = ["decawave", "dw1000", "radio", "embedded-hal", "embedded-hal-driver"]
-
-
-[badges]
-travis-ci = { repository = "braun-embedded/rust-dw1000" }
-
 
 [dependencies]
 byte         = "0.2.4"
@@ -31,3 +18,24 @@ features = ["derive"]
 [dependencies.ssmarshal]
 version = "1.0.0"
 default-features = false
+
+[dev-dependencies]
+cortex-m = "0.6.0"
+cortex-m-rt = "0.6.10"
+#cortex-m-semihosting = "0.3.3"
+#panic-semihosting = "0.5.6"
+panic-rtt-target = { version = "0.1.0", features = ["cortex-m"] }
+rtt-target = { version = "0.3.1", features = ["cortex-m"] }
+#panic-halt = "0.2.0"
+#panic-abort = "0.3.2"
+nb = "1.0.0"
+
+[dev-dependencies.stm32f1]
+version = "0.13.0"
+features = ["stm32f103", "rt"]
+
+[dev-dependencies.stm32f1xx-hal]
+features = ["stm32f103", "rt", "medium"]
+version = "^0.6.1"
+
+

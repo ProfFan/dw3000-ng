@@ -16,7 +16,7 @@ use stm32f1xx_hal::{
     //delay::Delay,
 };
 
-use dw1000::{configs, hl, RxConfig};
+use dw3000::{hl};
 
 #[entry]
 fn main() -> ! {
@@ -67,33 +67,44 @@ fn main() -> ! {
     /*****************              CONFIGURATION du DW3000               *******************/
     /****************************************************************************************/
 
+    let mut dw3000 = hl::DW1000::new(spi, cs);
+    rprintln!("dm3000 = {:?}", dw3000);
 
-    let mut dw1000 = hl::DW1000::new(spi, cs).init()
+    /* // BLOQUE !!!!!
+    let mut dw3000 = hl::DW1000::new(spi, cs).init()
         .expect("Failed to initialize DW1000");
-    rprintln!("dm1000 = {:?}", dw1000);
+    rprintln!("dm3000 = {:?}", dw3000);
+    */
 
-    // permet de visualiser les messages envoyés et recus
-    // ne permet pas de 
-    dw1000.configure_leds(true, true, true, true, 15)
-        .expect("Failed to initialize LEDS");;
-
-    
-    //let mut dw1000 = dw1000.get_address();
-    //rprintln!("dm1000 = {:?}", dw1000);
-
-    //dw1000.set_adress();
-
-    //let adresse = dw1000.get_address().unwrap();
-    //rprintln!("adresse = {:?}", adresse);
-
-    let dev_id = dw1000.ll().dev_id().read()
+    let gen_cfg_aes = dw3000.ll().gen_cfg_aes().read()
         .expect("Failed to read DEV_ID register");
+    rprintln!("gen_cfg_aes = {:?}", gen_cfg_aes);
 
-    rprintln!("info ? = {:?}", dev_id);
 
-    let mut dw1000 = dw1000.receive(RxConfig::default())
-        .expect("Failed to set DW1000 as a receiver");;
-    rprintln!("dm1000 = {:?}", dw1000);
+    // test du registre dev_id
+    let dev_id = dw3000.ll().dev_id().read()
+        .expect("Failed to read DEV_ID register");
+    rprintln!("dev-id = {:?}", dev_id);
+
+    // test du registre EUI
+    let eui = dw3000.ll().eui().read()
+        .expect("Failed to read DEV_ID register");
+    rprintln!("eui = {:?}", eui);
+
+    // test du registre PANADR
+    let panadr = dw3000.ll().panadr().read()
+        .expect("Failed to read DEV_ID register");
+    rprintln!("panadr = {:?}", panadr);
+
+    // test du registre SYS_CFG
+    let sys_cfg = dw3000.ll().sys_cfg().read()
+        .expect("Failed to read DEV_ID register");
+    rprintln!("SYS_CFG = {:?}", sys_cfg);
+
+    // test du registre FF_CFG
+    let ff_cfg = dw3000.ll().ff_cfg().read()
+        .expect("Failed to read DEV_ID register");
+    rprintln!("FF_CFG = {:?}", ff_cfg);
 
     loop {
         
