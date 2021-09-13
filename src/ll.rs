@@ -194,13 +194,8 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
         return 1;
     }
 
-    // let ext_addr = R::SUB_ID > 127;
+    buffer[1] = ((R::SUB_ID as u8)  << 2); 
 
-    buffer[1] =
-        // (((ext_addr as u8) << 7) & 0x80) |
-        ((R::SUB_ID as u8)  << 2); 
-
-    
     2
 }
 
