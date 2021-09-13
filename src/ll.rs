@@ -73,7 +73,6 @@ impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
         let mut buffer = R::buffer(&mut r);
 
         init_header::<R>(false, &mut buffer);
-
         self.0.chip_select.set_low()
             .map_err(|err| Error::ChipSelect(err))?;
         self.0.spi.transfer(buffer)
@@ -907,7 +906,6 @@ impl_register! {
         //value,  0, 127, u128; /// CC
     }
 
-    // STS_CFG
 
 /*
     0x19, 0x00, 5, RO, SYS_STATE(sys_state) { /// System State information
@@ -1165,7 +1163,7 @@ impl_register! {
         blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
     }
 */
-
+    
     0x0F, 0x00, 79, RO, DIG_DIAG(dig_dial) { /// Digital diagnostics interface 
     }
     0x0F, 0x00, 1, RW, EVC_CTRL(evc_ctrl) { /// Event counter control 

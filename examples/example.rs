@@ -76,6 +76,12 @@ fn main() -> ! {
     rprintln!("dm3000 = {:?}", dw3000);
     */
 
+<<<<<<< HEAD
+=======
+    // let mut dw3000 = hl::DW1000::new(spi, cs);
+    // rprintln!("dm3000 = {:?}", dw3000);
+
+>>>>>>> 3a50b6ac6c478bbf3c514e0c928464955596625f
     // test du registre dev_id
     let dev_id = dw3000.ll().dev_id().read()
         .expect("Failed to read DEV_ID register");
