@@ -27,6 +27,10 @@ use embedded_hal::{
 };
 
 use rtt_target::rprintln;
+<<<<<<< HEAD
+
+=======
+>>>>>>> 83b8685d1063d9feaac753c839ca684e8096ee01
 
 /// Entry point to the DW1000 driver's low-level API
 ///
@@ -73,6 +77,12 @@ impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
         let mut buffer = R::buffer(&mut r);
 
         init_header::<R>(false, &mut buffer);
+<<<<<<< HEAD
+
+        rprintln!("{:?}", buffer);
+
+=======
+>>>>>>> 83b8685d1063d9feaac753c839ca684e8096ee01
         self.0.chip_select.set_low()
             .map_err(|err| Error::ChipSelect(err))?;
         self.0.spi.transfer(buffer)
@@ -607,7 +617,7 @@ macro_rules! impl_rw {
 /*************************************************************************/
 /**********               DWM3000 MODIFICATIONS               ************/
 /*************************************************************************/
-// registers for DWM3000
+// registers for DWM3000 
 // Each field follows the following syntax:
 // <Id>, <Offset>, <Length>, <Access>, <NAME(name)>
 //      <name>, <first-bit-index>, <last-bit-index>, <type>; /// <doc>
@@ -1177,7 +1187,165 @@ impl_register! {
         blink_tim, 0, 7, u8; /// Blink time count value
         blnken, 8, 8, u8; /// Blink Enable
         blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
+    }*/
+    0x0F, 0x00, 79, RO, DIG_DIAG(dig_dial) { /// Digital diagnostics interface 
     }
+    0x0F, 0x00, 1, RW, EVC_CTRL(evc_ctrl) { /// Event counter control 
+        evc_en,  0, 0, u8; /// Event Counters Enable.  
+        evc_clr, 1, 1, u8; /// Event Counters Clear.   
+    }
+    0x0F, 0x04, 2, RO, EVC_PHE(evc_phe) { /// PHR error counter
+        evc_phe, 0, 11, u16; /// PHR Error Event Counter.  
+    }
+    0x0F, 0x06, 2, RO, EVC_RSE(evc_rse) { /// RSD error counter 
+        evc_rse, 0, 11, u16; /// Reed Solomon decoder (Sync Loss) Error Event Counter.   
+    }
+    0x0F, 0x08, 2, RO, EVC_FCG(evc_fcg) { /// Frame check sequence good counter
+        evc_fcg, 0, 11, u16; /// Frame Check Sequence Good Event Counter.  
+    }
+    0x0F, 0x08, 2, RO, EVC_FCE(evc_fce) { /// Frame Check Sequence error counter 
+        evc_fce, 0, 11, u16; /// Frame Check Sequence Error Event Counter. 
+    }
+    0x0F, 0x0C, 1, RO, EVC_FFR(evc_ffr) { /// Frame filter rejection counter 
+        evc_ffr, 0,  7, u8; /// Frame Filter Rejection Event Counter.  
+    }
+    0x0F, 0x0E, 1, RO, EVC_OVR (evc_ovr) { /// RX overrun error counter   
+        evc_ovr, 0,  7, u8; /// RX Overrun Error Event Counter. 
+    }
+    0x0F, 0x10, 2, RO, EVC_STO(evc_sto) { /// SFD timeout counter 
+        evc_sto, 0, 11, u16; /// SFD timeout errors Event Counter.  
+    }
+    0x0F, 0x12, 2, RO, EVC_PTO(evc_pto) { /// Preamble timeout counter 
+        evc_pto, 0, 11, u16; /// Preamble  Detection  Timeout  Event  Counter.    
+    }
+    0x0F, 0x14, 1, RO, EVC_FWTO(evc_fwto) { /// RX frame wait timeout counter 
+        evc_fwto, 0, 7, u8; /// RX  Frame  Wait  Timeout  Event  Counter.   
+    }
+    0x0F, 0x16, 2, RO, EVC_TXFS(evc_txfs) { /// TX frame sent counter 
+        evc_txfs, 0, 11, u16; /// TX Frame Sent Event Counter. 
+    }
+    0x0F, 0x18, 1, RO, EVC_HPW(evc_hpw) { /// Half period warning counter 
+        evc_hpw, 0, 7, u8; ///
+    }/*
+    0x0F, 0x1A, 79, RO, DIG_DIAG(dig_dial) { /// SPI write CRC error counter 
+    }
+    0x0F, 0x1C, 79, RO, DIG_DIAG(dig_dial) { /// Digital diagnostics reserved area 1  
+    }
+    0x0F, 0x24, 79, RO, DIG_DIAG(dig_dial) { /// Test mode control register 
+    }
+    0x0F, 0x28, 79, RO, DIG_DIAG(dig_dial) { /// STS quality error counter 
+    }
+    0x0F, 0x2A, 79, RO, DIG_DIAG(dig_dial) { /// Low voltage warning error counter 
+    }
+    0x0F, 0x2C, 79, RO, DIG_DIAG(dig_dial) { /// SPI mode 
+    }
+    0x0F, 0x30, 79, RO, DIG_DIAG(dig_dial) { /// System state 
+    }
+    0x0F, 0x3C, 79, RO, DIG_DIAG(dig_dial) { /// Fast command status 
+    }
+    0x0F, 0x48, 79, RO, DIG_DIAG(dig_dial) { /// Current value of  the low 32-bits of the STS IV 
+    }
+    0x0F, 0x4C, 79, RO, DIG_DIAG(dig_dial) { /// SPI CRC LFSR initialisation code
+    }*/
+    0x11, 0x00, 24, RO, PMSC_CTRL(pmsc_ctrl) { /// Power management, timing and seq control
+    }
+    0x11, 0x00, 2, RW, SOFT_RST(soft_rst) { /// Soft reset of the device blocks
+        arm_rst,  0, 0, u8; /// Soft ARM reset
+        prgn_rst, 1, 1, u8; /// Soft PRGN reset
+        cia_rst,  2, 2, u8; /// Soft CIA reset
+        bist_rst, 3, 3, u8; /// Soft BIST reset
+        rx_rst,   4, 4, u8; /// Soft RX reset
+        tx_rst,   5, 5, u8; /// Soft TX reset
+        hif_rst,  6, 6, u8; /// Soft HIF reset
+        pmsc_rst, 7, 7, u8; /// Soft PMSC reset
+        gpio_rst, 8, 8, u8; /// Soft GPIO reset
+    }
+    0x11, 0x04, 4, RW, CLK_CTRL(clk_ctrl) { /// PMSC clock control register
+        sys_clk,       0,  1, u8; /// System Clock Selection field. 
+        rx_clk,        2,  3, u8; /// Receiver Clock Selection
+        tx_clk,        4,  5, u8; /// Transmitter Clock Selection. 
+        acc_clk_en,    6,  6, u8; /// Force Accumulator Clock Enable
+        cia_clk_en,    8,  8, u8; /// Force CIA Clock Enable
+        sar_clk_en,   10, 10, u8; /// Analog-to-Digital Convertor Clock Enable.  
+        acc_mclk_en,  15, 15, u8; /// Accumulator Memory Clock Enable.   
+        gpio_clk_en,  16, 16, u8; /// GPIO clock Enable
+        gpio_dclk_en, 18, 18, u8; /// GPIO De-bounce Clock Enable. 
+        gpio_drst_n,  19, 19, u8; /// GPIO de-bounce reset (NOT), active low.  
+        lp_clk_en,    23, 23, u8; /// Kilohertz clock Enable.  
+    }
+    0x11, 0x08, 4, RW, SEQ_CTRL(seq_ctrl) { /// PMSC sequencing control register 
+        ainit2idle,    8,  8, u8; /// Automatic  IDLE_RC  to  IDLE_PLL.     
+        atx2slp,      11, 11, u8; /// After TX automatically Sleep.  
+        arx2slp,      12, 12, u8; /// After RX automatically Sleep.  
+        pll_sync,     15, 15, u8; /// This enables a 1 GHz clock used for some external SYNC modes.  
+        ciarune,      17, 17, u8; /// CIA run enable. 
+        force2init,   23, 23, u8; /// Force to IDLE_RC state.  
+        lp_clk_div,   26, 31, u8; /// Kilohertz clock divisor.     
+    }
+    0x11, 0x12, 4, RW, TXFSEQ(txfseq) { /// PMSC fine grain TX sequencing control
+        txfineseq, 0, 31, u32; /// PMSC fine grain TX sequencing control
+    }
+    0x11, 0x16, 4, RW, LED_CTRL(led_ctrl) { /// PMSC fine grain TX sequencing control
+        blink_tim,   0,  7, u8; /// Blink time count value.  
+        blink_en,    8,  8, u8; /// Blink Enable.  
+        force_trig, 16, 19, u8; /// Manually triggers an LED blink. 
+    } 
+    0x11, 0x1A, 4, RW, RX_SNIFF(rx_sniff) { /// Receiver SNIFF mode configuration
+        sniff_on,   0,  3, u8; /// SNIFF Mode ON time.   
+        sniff_off,  8, 15, u8; /// SNIFF Mode OFF time specified in μs.  
+    } 
+    0x11, 0x1F, 2, RW, BIAS_CTRL(bias_ctrl) { /// Analog blocks’ calibration values
+        bias_ctrl, 0, 13, u16; /// Analog blocks’ calibration values
+    }
+    0x15, 0x00, 12288, RO, ACC_MEM(acc_mem) { /// Read access to accumulator data memory
+    } // If the code doesn't run properly, reduce the length from 12288 to 8096
+    0x16, 0x00, 127, RW, SCRATCH_RAM(scratch_ram) { /// Scratch RAM memory buffer
+    }
+    0x17, 0x00, 128, RW, AES_KEY_RAM(aes_key_ram) { /// storage for up to 8 x 128 bit AES KEYs 
+        aes_key1,   0x0,  0x7F, u128; /// 1st AES key 
+        aes_key2,  0x80,  0xFF, u128; /// 2nd AES key 
+        aes_key3, 0x100, 0x17F, u128; /// 3rd AES key 
+        aes_key4, 0x180, 0x1FF, u128; /// 4th AES key 
+        aes_key5, 0x200, 0x27F, u128; /// 5th AES key 
+        aes_key6, 0x280, 0x2FF, u128; /// 6th AES key 
+        aes_key7, 0x300, 0x37F, u128; /// 7th AES key 
+        aes_key8, 0x380, 0x3FF, u128; /// 8th AES key    
+    }
+    0x18, 0x00, 464, RO, DB_DIAG(db_diag) { /// Double buffer diagnostic register set
+    }
+    0x18, 0x00, 232, RO, DB_DIAG_SET1(db_diag_set1) { /// Double buffer diagnostic register set 1
+    }
+    0x18, 0xE8, 232, RO, DB_DIAG_SET2(db_diag_set2) { /// Double buffer diagnostic register set 2
+    }
+    0x1D, 0x00, 1, RW, INDIRECT_PTR_A(indirect_ptr_a) { /// Indirect pointer A 
+    }
+    0x1E, 0x00, 1, RW, INDIRECT_PTR_B(indirect_ptr_b) { /// Indirect pointer B 
+    }
+    0x1F, 0x00, 19, RO, IN_PTR_CFG(in_ptr_cfg) { /// Indirect pointer configuration and fast interrupt status register
+    }
+    0x1F, 0x00, 1, RO, FINT_STAT(fint_stat) { /// Fast System Event Status Register
+        txok,       0,  0,  u8; /// TXFRB or TXPRS or TXPHS or TXFRS.  
+        cca_fail,   1,  1,  u8; /// AAT or CCA_FAIL. 
+        rxtserr,    2,  2,  u8; /// CIAERR 
+        rxok,       3,  3,  u8; /// RXFR and CIADONE or RXFCG. 
+        rxerr,      4,  4,  u8; /// RXFCE or RXFSL or  RXPHE or  ARFE or  RXSTO or RXOVRR. 
+        rxto,       5,  5,  u8; /// RXFTO  or  RXPTO. 
+        sys_event,  6,  6,  u8; /// VT_DET or GPIOIRQ or RCINIT or SPIRDY.
+        sys_panic,  7,  7,  u8; /// AES_ERR or CMD_ERR or SPI_UNF or SPI_OVF or SPIERR or PLL_HILO or VWARN.
+    }
+    0x1F, 0x04, 1, RW, PTR_ADDR_A(ptr_addr_a) { /// Base address of the register to be accessed through indirect pointer A
+        ptra_base,  0,  4,  u8; /// Base address of the register to be accessed through indirect pointer A 
+    }
+    0x1F, 0x08, 2, RW, PTR_OFFSET_A(ptr_offset_a) { /// Offset address of the register to be accessed through indirect pointer A 
+        ptra_ofs,   0, 14,  u16; /// Offset address of the register to be accessed through indirect pointer A 
+    }
+    0x1F, 0x0C, 1, RW, PTR_ADDR_B(ptr_addr_b) { /// Base address of the register to be accessed through indirect pointer B
+        ptrb_base,  0,  4,  u8; /// Base address of the register to be accessed through indirect pointer B
+    }
+    0x1F, 0x10, 2, RW, PTR_OFFSET_B(ptr_offset_b) { /// Offset address of the register to be accessed through indirect pointer B 
+        ptrb_ofs,   0, 14,  u16; /// Offset address of the register to be accessed through indirect pointer B 
+    }
+
 }
 
 /*
@@ -1626,7 +1794,7 @@ impl_register! {
 pub struct TX_BUFFER;
 
 impl Register for TX_BUFFER {
-    const ID:     u8    = 0x09;
+    const ID:     u8    = 0x14;
     const SUB_ID: u16   = 0x00;
     const LEN:    usize = 127;
 }
@@ -1665,24 +1833,24 @@ pub mod tx_buffer {
 }
 
 
-/// Receive Data Buffer
+/// Receive Data Buffer 0
 ///
 /// Currently only the first 127 bytes of the buffer are supported, which is
 /// enough to support standard Standard IEEE 802.15.4 UWB frames.
 #[allow(non_camel_case_types)]
-pub struct RX_BUFFER;
+pub struct RX_BUFFER_0;
 
-impl Register for RX_BUFFER {
-    const ID:     u8    = 0x11;
+impl Register for RX_BUFFER_0 {
+    const ID:     u8    = 0x12;
     const SUB_ID: u16   = 0x00;
     const LEN:    usize = 127;
 }
 
-impl Readable for RX_BUFFER {
-    type Read = rx_buffer::R;
+impl Readable for RX_BUFFER_0 {
+    type Read = rx_buffer_0::R;
 
     fn read() -> Self::Read {
-        rx_buffer::R([0; 127 + 1])
+        rx_buffer_0::R([0; 127 + 1])
     }
 
     fn buffer(w: &mut Self::Read) -> &mut [u8] {
@@ -1692,14 +1860,78 @@ impl Readable for RX_BUFFER {
 
 impl<SPI, CS> DW1000<SPI, CS> {
     /// Receive Data Buffer
-    pub fn rx_buffer(&mut self) -> RegAccessor<RX_BUFFER, SPI, CS> {
+    pub fn rx_buffer_0(&mut self) -> RegAccessor<RX_BUFFER_0, SPI, CS> {
         RegAccessor(self, PhantomData)
     }
 }
 
 
 /// Receive Data Buffer
-pub mod rx_buffer {
+pub mod rx_buffer_0 {
+    use core::fmt;
+
+
+    const HEADER_LEN: usize = 1;
+    const LEN:        usize = 127;
+
+
+    /// Used to read from the register
+    pub struct R(pub(crate) [u8; HEADER_LEN + LEN]);
+
+    impl R {
+        /// Provides read access to the buffer contents
+        pub fn data(&self) -> &[u8] {
+            &self.0[HEADER_LEN .. HEADER_LEN + LEN]
+        }
+    }
+
+    impl fmt::Debug for R {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "0x")?;
+            for i in (0 .. LEN).rev() {
+                write!(f, "{:02x}", self.0[HEADER_LEN + i])?;
+            }
+
+            Ok(())
+        }
+    }
+}
+
+/// Receive Data Buffer 1
+///
+/// Currently only the first 127 bytes of the buffer are supported, which is
+/// enough to support standard Standard IEEE 802.15.4 UWB frames.
+#[allow(non_camel_case_types)]
+pub struct RX_BUFFER_1;
+
+impl Register for RX_BUFFER_1 {
+    const ID:     u8    = 0x13;
+    const SUB_ID: u16   = 0x00;
+    const LEN:    usize = 127;
+}
+
+impl Readable for RX_BUFFER_1 {
+    type Read = rx_buffer_1::R;
+
+    fn read() -> Self::Read {
+        rx_buffer_1::R([0; 127 + 1])
+    }
+
+    fn buffer(w: &mut Self::Read) -> &mut [u8] {
+        &mut w.0
+    }
+}
+
+impl<SPI, CS> DW1000<SPI, CS> {
+    /// Receive Data Buffer1
+    pub fn rx_buffer_1(&mut self) -> RegAccessor<RX_BUFFER_1, SPI, CS> {
+        RegAccessor(self, PhantomData)
+    }
+}
+
+
+/// Receive Data Buffer
+pub mod rx_buffer_1 {
     use core::fmt;
 
 
@@ -1783,4 +2015,5 @@ impl_bytes! {
     u16,
     u32,
     u64,
+    u128,
 }
