@@ -27,7 +27,10 @@ use embedded_hal::{
 };
 
 use rtt_target::rprintln;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 83b8685d1063d9feaac753c839ca684e8096ee01
 
 /// Entry point to the DW1000 driver's low-level API
 ///
@@ -74,9 +77,12 @@ impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
         let mut buffer = R::buffer(&mut r);
 
         init_header::<R>(false, &mut buffer);
+<<<<<<< HEAD
 
         rprintln!("{:?}", buffer);
 
+=======
+>>>>>>> 83b8685d1063d9feaac753c839ca684e8096ee01
         self.0.chip_select.set_low()
             .map_err(|err| Error::ChipSelect(err))?;
         self.0.spi.transfer(buffer)
@@ -185,29 +191,26 @@ impl<SPI, CS> fmt::Debug for Error<SPI, CS>
 fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
     let sub_id = R::SUB_ID > 0;
 
+    // bool write definit si on est en lecture ou e ecriture (premier bit)
+    // sub_id est un bool qui definit si on est en full ou short command
+    // on commmence par du full address !
     buffer[0] =
-        (((write     as u8) << 7) & 0b1000_0000) |
-        (((sub_id    as u8) << 6) & 0b0100_0000) |
-        ( (R::ID            << 1) & 0b0011_1110) |
-        (((R::SUB_ID as u8) >> 6) & 0b0000_0001);
+        (((write as u8)  << 7) & 0x80) |
+        (((sub_id as u8) << 6) & 0x40) |
+        ((R::ID          << 1)  & 0x3e) |
+        (((R::SUB_ID as u8)) >> 6);
 
     if !sub_id {
         return 1;
     }
 
-    //let ext_addr = R::SUB_ID > 127;
+    // let ext_addr = R::SUB_ID > 127;
 
     buffer[1] =
-        (((R::SUB_ID as u8) << 2) & 0b1111_1100) |
-        (0                        & 0b0000_0010) |
-        (0                        & 0b0000_0001); // lower 7 bits (of 15)
+        // (((ext_addr as u8) << 7) & 0x80) |
+        ((R::SUB_ID as u8)  << 2); 
 
-    /*if !ext_addr {
-        return 2;
-    }*/
-
-    //buffer[2] = ((R::SUB_ID & 0x7f80) >> 7) as u8; // higher 8 bits (of 15)
-
+    
     2
 }
 
@@ -625,11 +628,15 @@ macro_rules! impl_rw {
 //      <name>, <first-bit-index>, <last-bit-index>, <type>; /// <doc>
 
 impl_register! {
-    
-    0x00, 0x00, 121, RO, GEN_CFG_AES(gen_cfg_aes) { /// Device identifier
+/*
+    0x00, 0, 126, RO, GEN_CFG_AES(gen_cfg_aes) { /// Device identifier
 
     }
-    
+
+    0x00, 0, 126, RO, GEN_CFG_AES2(gen_cfg_aes2) { /// Device identifier
+
+    }
+*/
     0x00, 0x00, 4, RO, DEV_ID(dev_id) { /// Device identifier
         rev,     0,  3, u8;  /// Revision
         ver,     4,  7, u8;  /// Version
@@ -638,12 +645,12 @@ impl_register! {
     }
     0x00, 0x04, 8, RW, EUI(eui) { /// Extended Unique Identifier
         value, 0, 63, u64; /// Extended Unique Identifier
-    }
-    0x00, 48, 4, RW, PANADR(panadr) { /// PAN Identifier and Short Address
+    }    
+    0x00, 0x0C, 4, RW, PANADR(panadr) { /// PAN Identifier and Short Address
         short_addr,  0, 15, u16; /// Short Address
         pan_id,     16, 31, u16; /// PAN Identifier
     }
-    0x00, 64, 4, RW, SYS_CFG(sys_cfg) { /// System Configuration
+    0x00, 0x10, 4, RW, SYS_CFG(sys_cfg) { /// System Configuration
         ffen,        0,  0, u8; /// Frame Filtering Enable
         dis_fcs_tx,  1,  1, u8; /// disable auto-FCS Transmission
         dis_fce,     2,  2, u8; /// Disable frame check error handling
@@ -661,101 +668,95 @@ impl_register! {
         pdoa_mode,  16, 17, u8; /// configure PDoA
         fast_aat,   18, 18, u8; /// enable fast RX to TX turn around mode
     }   
-    0x00, 80, 2, RW, FF_CFG(ff_cfg) { /// comments
-        ffab,        2,  2, u8; /// Frame Filtering Allow Beacon
-        ffad,        3,  3, u8; /// Frame Filtering Allow Data
-        ffaa,        4,  4, u8; /// Frame Filtering Allow Acknowledgement
-        ffam,        5,  5, u8; /// Frame Filtering Allow MAC Command Frame
-        ffar,        6,  6, u8; /// Frame Filtering Allow Reserved
-        ffamulti,    6,  6, u8; /// Frame Filtering Allow Multipurpose
+    0x00, 0x14, 2, RW, FF_CFG(ff_cfg) { /// comments
+        ffab,        0,  0, u8; /// Frame Filtering Allow Beacon
+        ffad,        1,  1, u8; /// Frame Filtering Allow Data
+        ffaa,        2,  2, u8; /// Frame Filtering Allow Acknowledgement
+        ffam,        3,  3, u8; /// Frame Filtering Allow MAC Command Frame
+        ffar,        4,  4, u8; /// Frame Filtering Allow Reserved
+        ffamulti,    5,  5, u8; /// Frame Filtering Allow Multipurpose
         ffaf,        6,  6, u8; /// Frame Filtering Allow Fragmented
-        ffae,        6,  6, u8; /// Frame Filtering Allow extended frame
-        ffbc,        1,  1, u8; /// Frame Filtering Behave As Coordinator
-        ffib,        1,  1, u8; /// Frame Filtering Allow MAC
-        le0_pend,    1,  1, u8; /// Data pending for device at led0 addr
-        le1_pend,    1,  1, u8; /// Data pending for device at led1 addr
-        le2_pend,    1,  1, u8; /// Data pending for device at led2 addr
-        le3_pend,    1,  1, u8; /// Data pending for device at led3 addr
-        ssadrap,     1,  1, u8; /// Short Source Address Data Request
-        lsadrape,    1,  1, u8; /// Long Source Address Data Request
+        ffae,        7,  7, u8; /// Frame Filtering Allow extended frame
+        ffbc,        8,  8, u8; /// Frame Filtering Behave As Coordinator
+        ffib,        9,  9, u8; /// Frame Filtering Allow MAC
+        le0_pend,    10,  10, u8; /// Data pending for device at led0 addr
+        le1_pend,    11,  11, u8; /// Data pending for device at led1 addr
+        le2_pend,    12,  12, u8; /// Data pending for device at led2 addr
+        le3_pend,    13,  13, u8; /// Data pending for device at led3 addr
+        ssadrap,     14,  14, u8; /// Short Source Address Data Request
+        lsadrape,    15,  15, u8; /// Long Source Address Data Request
     }  
-    0x00, 88, 1, RO, SPI_RD_CRC(spi_rd_crc) { /// Commentaire
-
+    0x00, 0x18, 1, RO, SPI_RD_CRC(spi_rd_crc) { /// SPI CRC read status
+        value, 0, 7, u8; /// Comment
     }
-
-
-
-
-    0x00, 0x00, 5, RO, SYS_TIME(sys_time) { /// System Time Counter
-        value, 0, 39, u64; /// System Time Counter
+    0x00, 0x1C, 4, RO, SYS_TIME(sys_time) { ///  System Time Counter register
+        value, 0, 31, u32; /// Comment
     }
-    0x08, 0x00, 5, RW, TX_FCTRL(tx_fctrl) { /// TX Frame Control
-        tflen,     0,  6, u8;  /// TX Frame Length
-        tfle,      7,  9, u8;  /// TX Frame Length Extension
-        txbr,     13, 14, u8;  /// TX Bit Rate
-        tr,       15, 15, u8;  /// TX Ranging Enable
-        txprf,    16, 17, u8;  /// TX Pulse Repetition Frequency
-        txpsr,    18, 19, u8;  /// TX Preamble Symbol Repetitions
-        pe,       20, 21, u8;  /// Preamble Extension
-        txboffs,  22, 31, u16; /// TX Buffer Index Offset
-        ifsdelay, 32, 39, u8;  /// Inter-Frame Spacing
+    0x00, 0x24, 6, RW, TX_FCTRL(tx_fctrl) { /// TX Frame Control
+        txflen,      0,  9, u16;  /// TX Frame Length
+        txbr,       10, 10, u8; /// Transmit Bit Rate
+        tr,         11, 11, u8; /// Transmit Ranging enable
+        txpsr,      12, 15, u8; /// Transmit Preamble Symbol Repetitions
+        txb_offset, 16, 25, u16; /// Transmit buffer index offset
+        fine_plen,  40, 47, u8; /// Fine PSR control
     }
-    0x0A, 0x00, 5, RW, DX_TIME(dx_time) { /// Delayed Send or Receive Time
-        value, 0, 39, u64; /// Delayed Send or Receive Time
+    0x00, 0x2C, 4, RW, DX_TIME(dx_time) { /// Delayed Send or Receive Time
+        value, 0, 31, u32; /// Delayed Send or Receive Time
     }
-    /*
-    0x00, , , , DREF_TIME(dref_time) {
-
+    0x00, 0x30, 4, RW, DREF_TIME(dref_time) { /// commentaires
+        value, 0, 31, u32; /// Delayed send or receive reference time
     }
-    0x00, , , , RX_FWTO(r_fwto) {
-
+    0x00, 0x4, 3, RW, RX_FWTO(rx_fwto) { /// commentaires
+        value, 0, 31, u32; /// Receive frame wait timeout period
     }
-    */
-    0x0D, 0x00, 4, RW, SYS_CTRL(sys_ctrl) { /// System Control Register
-        sfcst,      0,  0, u8; /// Suppress Auto-FCS Transmission
-        txstrt,     1,  1, u8; /// Transmit Start
-        txdlys,     2,  2, u8; /// Transmitter Delayed Sending
-        cansfcs,    3,  3, u8; /// Cancel Auto-FCS Suppression
-        trxoff,     6,  6, u8; /// Transceiver Off
-        wait4resp,  7,  7, u8; /// Wait for Response
-        rxenab,     8,  8, u8; /// Enable Receiver
-        rxdlye,     9,  9, u8; /// Receiver Delayed Enable
-        hrbpt,     24, 24, u8; /// Host Side RX Buffer Pointer Toggle
+    0x00, 0x38, 1, RW, SYS_CTRL(sys_ctrl) { /// System Control Register
+        value, 0, 7, u8; /// System control
     }
-    0x0E, 0x00, 4, RW, SYS_MASK(sys_mask) { /// System Event Mask Register
-        mpclock,    1,  1, u8; /// Mask clock PLL lock
-        mesyncr,    2,  2, u8; /// Mask external sync clock reset
-        maat,       3,  3, u8; /// Mask automatic acknowledge trigger
-        mtxfrbm,    4,  4, u8; /// Mask transmit frame begins
-        mtxprs,     5,  5, u8; /// Mask transmit preamble sent
-        mtxphs,     6,  6, u8; /// Mask transmit PHY Header Sent
-        mtxfrs,     7,  7, u8; /// Mask transmit frame sent
-        mrxprd,     8,  8, u8; /// Mask receiver preamble detected
-        mrxsfdd,    9,  9, u8; /// Mask receiver SFD detected
-        mldedone,  10, 10, u8; /// Mask LDE processing done
-        mrxphd,    11, 11, u8; /// Mask receiver PHY header detect
-        mrxphe,    12, 12, u8; /// Mask receiver PHY header error
-        mrxdfr,    13, 13, u8; /// Mask receiver data frame ready
-        mrxfcg,    14, 14, u8; /// Mask receiver FCS good
-        mrxfce,    15, 15, u8; /// Mask receiver FCS error
-        mrxrfsl,   16, 16, u8; /// Mask receiver Reed Solomon Frame Sync loss
-        mrxrfto,   17, 17, u8; /// Mask Receive Frame Wait Timeout
-        mldeerr,   18, 18, u8; /// Mask leading edge detection processing error
-        mrxovrr,   20, 20, u8; /// Mask Receiver Overrun
-        mrxpto,    21, 21, u8; /// Mask Preamble detection timeout
-        mgpioirq,  22, 22, u8; /// Mask GPIO interrupt
-        mslp2init, 23, 23, u8; /// Mask SLEEP to INIT event
-        mrfpllll,  24, 24, u8; /// Mask RF PLL Losing Lock warning
-        mcpllll,   25, 25, u8; /// Mask Clock PLL Losing Lock warning
-        mrxsfdto,  26, 26, u8; /// Mask Receive SFD timeout
-        mhpdwarn,  27, 27, u8; /// Mask Half Period Delay Warning
-        mtxberr,   28, 28, u8; /// Mask Transmit Buffer Error
-        maffrej,   29, 29, u8; /// Mask Automatic Frame Filtering rejection
+    0x00, 0x3C, 6, RW, SYS_ENABLE(sys_enable) { /// A TESTER
+        cplock_en,      1,  1, u8; /// C
+        spicrce_en,     2,  2, u8; /// C
+        aat_en,         3,  3, u8; /// C
+        txfrb_en,       4,  4, u8; /// C
+        txprs_en,       5,  5, u8; /// C
+        txphs_en,       6,  6, u8; /// C
+        txfrs_en,       7,  7, u8; /// C
+        rxprd_en,       8,  8, u8; /// C
+        rxsfdd_en,      9,  9, u8; /// C
+        ciadone_en,    10,  10, u8; /// C
+        rxphd_en,      11,  11, u8; /// C
+        rxphe_en,      12,  12, u8; /// C
+        rxfr_en,       13,  13, u8; /// C
+        rxfcg_en,      14,  14, u8; /// C
+        rxfce_en,      15,  15, u8; /// C
+        rxrfsl_en,     16,  16, u8; /// C
+        rxfto_en,      17,  17, u8; /// C
+        ciaerr_en,     18,  18, u8; /// C
+        vwarn_en,      19,  19, u8; /// C
+        rxovrr_en,     20,  20, u8; /// C
+        rxpto_en,      21,  21, u8; /// C
+        spirdy_en,     23,  23, u8; /// C
+        rcinit_en,     24,  24, u8; /// C
+        pll_hilo_en,   25,  25, u8; /// C
+        rxsto_en,      26,  26, u8; /// C
+        hpdwarn_en,    27,  27, u8; /// C
+        cperr_en,      28,  28, u8; /// C
+        arfe_en,       29,  29, u8; /// C
+        rxprej_en,     33,  33, u8; /// C
+        vt_det_en,     36,  36, u8; /// C
+        gpioirq_en,    37,  37, u8; /// C
+        aes_done_en,   38,  38, u8; /// C
+        aes_err_en,    39,  39, u8; /// C
+        cdm_err_en,    40,  40, u8; /// C
+        spi_ovf_en,    41,  41, u8; /// C
+        spi_unf_en,    42,  42, u8; /// C
+        spi_err_en,    43,  43, u8; /// C
+        cca_fail_en,   44,  44, u8; /// C
     }
-    0x0F, 0x00, 5, RW, SYS_STATUS(sys_status) { /// System Event Status Register
+    0x00, 0x44, 6, RW, SYS_STATUS(sys_status) { /// System Event Status Register
+        // A TESTER
         irqs,       0,  0, u8; /// Interrupt Request Status
         cplock,     1,  1, u8; /// Clock PLL Lock
-        esyncr,     2,  2, u8; /// External Sync Clock Reset
+        spicrce,    2,  2, u8; /// External Sync Clock Reset
         aat,        3,  3, u8; /// Automatic Acknowledge Trigger
         txfrb,      4,  4, u8; /// TX Frame Begins
         txprs,      5,  5, u8; /// TX Preamble Sent
@@ -763,64 +764,76 @@ impl_register! {
         txfrs,      7,  7, u8; /// TX Frame Sent
         rxprd,      8,  8, u8; /// RX Preamble Detected
         rxsfdd,     9,  9, u8; /// RX SFD Detected
-        ldedone,   10, 10, u8; /// LDE Processing Done
+        ciadone,   10, 10, u8; /// LDE Processing Done
         rxphd,     11, 11, u8; /// RX PHY Header Detect
         rxphe,     12, 12, u8; /// RX PHY Header Error
-        rxdfr,     13, 13, u8; /// RX Data Frame Ready
+        rxfr,      13, 13, u8; /// RX Data Frame Ready
         rxfcg,     14, 14, u8; /// RX FCS Good
         rxfce,     15, 15, u8; /// RX FCS Error
-        rxrfsl,    16, 16, u8; /// RX Reed-Solomon Frame Sync Loss
-        rxrfto,    17, 17, u8; /// RX Frame Wait Timeout
-        ldeerr,    18, 18, u8; /// Leading Edge Detection Error
+        rxfsl,     16, 16, u8; /// RX Reed-Solomon Frame Sync Loss
+        rxfto,     17, 17, u8; /// RX Frame Wait Timeout
+        ciaerr,    18, 18, u8; /// Leading Edge Detection Error
+        vwarn,     19, 19, u8; /// C
         rxovrr,    20, 20, u8; /// RX Overrun
-        rxpto,     21, 21, u8; /// Preamble Detection Timeout
-        gpioirq,   22, 22, u8; /// GPIO Interrupt
-        slp2init,  23, 23, u8; /// SLEEP to INIT
-        rfpll_ll,  24, 24, u8; /// RF PLL Losing Lock
-        clkpll_ll, 25, 25, u8; /// Clock PLL Losing Lock
-        rxsfdto,   26, 26, u8; /// Receive SFD Timeout
-        hpdwarn,   27, 27, u8; /// Half Period Delay Warning
-        txberr,    28, 28, u8; /// TX Buffer Error
-        affrej,    29, 29, u8; /// Auto Frame Filtering Rejection
-        hsrbp,     30, 30, u8; /// Host Side RX Buffer Pointer
-        icrbp,     31, 31, u8; /// IC Side RX Buffer Pointer
-        rxrscs,    32, 32, u8; /// RX Reed-Solomon Correction Status
-        rxprej,    33, 33, u8; /// RX Preamble Rejection
-        txpute,    34, 34, u8; /// TX Power Up Time Error
+        rxpto,     21, 21, u8; /// C
+        spirdy,    23, 23, u8; /// C
+        rcinit,    24, 24, u8; /// C
+        pll_hilo,  25, 25, u8; /// C
+        rxsto,     26, 26, u8; /// C
+        hpdwarn,   27, 27, u8; /// C
+        cperr,     28, 28, u8; /// C
+        arfe,      29, 29, u8; /// C
+        rxprej,    29, 29, u8; /// C
+        vt_det,    33, 33, u8; /// C
+        gpioirq,   36, 36, u8; /// C
+        aes_done,  37, 37, u8; /// C
+        aes_err,   38, 38, u8; /// C
+        cmd_err,   39, 39, u8; /// C
+        spi_ovf,   40, 40, u8; /// C
+        spi_unf,   41, 41, u8; /// C
+        spierr,    42, 42, u8; /// C
+        cca_fail,  43, 43, u8; /// C
     }
-    0x10, 0x00, 4, RO, RX_FINFO(rx_finfo) { /// RX Frame Information
-        rxflen,  0,  6, u8; /// Receive Frame Length
-        rxfle,   7,  9, u8; /// Receive Frame Length Extension
+    0x00, 0x4C, 4, RO, RX_FINFO(rx_finfo) { /// RX Frame Information
+        // A TESTER
+        rxflen,  0,  9, u16; /// Receive Frame Length
         rxnspl, 11, 12, u8; /// Receive Non-Standard Preamble Length
-        rxbr,   13, 14, u8; /// Receive Bit Rate Report
+        rxbr,   13, 13, u8; /// Receive Bit Rate Report
         rng,    15, 15, u8; /// Receiver Ranging
-        rxprfr, 16, 17, u8; /// RX Pulse Repetition Rate Report
+        rxprf,  16, 17, u8; /// RX Pulse Repetition Rate Report
         rxpsr,  18, 19, u8; /// RX Preamble Repetition
+        rxpacc, 20, 31, u16; /// Preamble Accumulation Count        
     }
-    0x15, 0x00, 14, RO, RX_TIME(rx_time) { /// Receive Time Stamp
+    0x00, 0x64, 16, RO, RX_TIME(rx_time) { /// Receive Time Stamp
+        // A TESTER
         rx_stamp,  0,  39, u64; /// Fully adjusted time stamp
-        fp_index, 40,  55, u16; /// First Path Index
-        fp_ampl1, 56,  71, u16; /// First Path Amplitude Point 1
-        rx_rawst, 72, 111, u64; /// Raw time stamp
+        rx_rawst, 64, 95, u64; /// Raw time stamp
     }
-    0x17, 0x00, 10, RO, TX_TIME(tx_time) { /// Transmit Time Stamp
+    0x00, 0x74, 5, RO, TX_TIME(tx_time) { /// Transmit Time Stamp
+        // A TESTER
         tx_stamp,  0, 39, u64; /// Fully adjusted time stamp
-        tx_rawst, 40, 79, u64; /// Raw time stamp
     }
-    0x18, 0x00, 2, RW, TX_ANTD(tx_antd) { /// TX Antenna Delay
-        value, 0, 15, u16; /// TX Antenna Delay
+    0x01, 0x00, 4, RO, TX_RAWST(tx_rawst) { /// Transmit time stamp raw
+        // A TESTER
+        value, 0, 31, u32; /// C
     }
-    0x19, 0x00, 5, RO, SYS_STATE(sys_state) { /// System State information
-        tx_state,    0,  3, u8; /// Current Transmit State Machine value
-        rx_state,    8, 12, u8; /// Current Receive State Machine value
-        pmsc_state, 16, 23, u8; /// Current PMSC State Machine value
+    0x01, 0x04, 2, RW, TX_ANTD(tx_antd) { /// Transmitter antenna delay
+        // A TESTER
+        value, 0, 15, u16; /// C
     }
-    0x1E, 0x00, 4, RW, TX_POWER(tx_power) { /// TX Power Control
+    0x01, 0x08, 4, RW, ACK_RESP(ack_resp) { /// Acknowledgement delay time and response time
+        // A TESTER
+        w4r_tim,  0, 19, u32; /// C
+        ack_tim,  24, 31, u8; /// C
+    }
+    0x01, 0x0C, 4, RW, TX_POWER(tx_power) { /// TX Power Control
+        // A TESTER
         // The TX_POWER register has multiple sets of fields defined, depending
         // on the smart TX power control setting. I don't know how to model
         // this, so I've opted to provide just a single `value` field for
         // maximum flexibility.
         value, 0, 31, u32; /// TX Power Control value
+<<<<<<< HEAD
     }/*
     0x1F, 0x00, 4, RW, CHAN_CTRL(chan_ctrl) { /// Channel Control Register
         tx_chan, 0, 3, u8; /// Selects the transmit channel.
@@ -831,7 +844,113 @@ impl_register! {
         rnssfd, 21, 21, u8; /// This bit enables the use of a user specified (non-standard) SFDin the receiver.
         tx_pcode, 22, 26, u8; /// This field selects the preamble code used in the transmitter.
         rx_pcode, 27, 31, u8; /// This field selects the preamble code used in the receiver.
+=======
     }
+    0x01, 0x14, 2, RW, CHAN_CTRL(chan_ctrl) { /// Channel Control Register
+        // A TESTER
+        rf_chan,   0, 0, u8; /// Selects the receive channel.
+        sfd_type,  1, 2, u8; /// Enables the non-standard Decawave proprietary SFD sequence.
+        tx_pcode,  3, 7, u8; /// This field selects the preamble code used in the transmitter.
+        rx_pcode,  8, 12, u8; /// This field selects the preamble code used in the receiver.
+    }
+    0x01, 0x18, 4, RW, LE_PEND_01(le_pend_01) { /// C
+        // A TESTER
+        le_addr0,  0, 15, u16; /// CC
+        le_addr1, 16, 31, u16; /// CC
+    }
+    0x01, 0x1C, 4, RW, LE_PEND_23(le_pend_23) { /// C
+        // A TESTER
+        le_addr2,  0, 15, u16; /// CC
+        le_addr3, 16, 31, u16; /// CC
+    }
+    0x01, 0x20, 1, RW, SPI_COLLISION(spi_collision) { /// C
+        // A TESTER
+        value,  0, 7, u8; /// Fully adjusted time stamp
+    }
+    0x01, 0x24, 1, RW, RDB_STATUS(rdb_status) { /// RX double buffer status
+        // A TESTER
+        rxfcg0,     0, 0, u8; /// CC
+        rxfr0,      1, 1, u8; /// CC
+        ciadone0,   2, 2, u8; /// CC
+        cp_err0,    3, 3, u8; /// CC
+        rxfcg1,     4, 4, u8; /// CC
+        rxfr1,      5, 5, u8; /// CC
+        ciadone1,   6, 6, u8; /// CC
+        cp_err1,    7, 7, u8; /// CC
+    }
+    0x01, 0x28, 1, RW, RDB_DIAG(rdb_diag) { /// C
+        // A TESTER
+        rdb_dmode,    0, 2, u8; /// CC
+    }
+    0x01, 0x30, 2, RW, AES_CFG(aes_cfg) { /// C
+        // A TESTER
+        mode,        0, 0, u8; /// CC
+        key_size,    1, 2, u8; /// CC
+        key_addr,    3, 5, u8; /// CC
+        key_load,    6, 6, u8; /// CC
+        key_src,     7, 7, u8; /// CC
+        tag_size,    8, 10, u8; /// CC
+        core_sel,    11, 11, u8; /// CC
+        key_otp,     12, 12, u8; /// CC
+    }
+    0x01, 0x34, 4, RW, AES_IV0(aes_iv0) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// CC
+    }
+    0x01, 0x38, 4, RW, AES_IV1(aes_iv1) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// CC
+    }
+    0x01, 0x3C, 4, RW, AES_IV2(aes_iv2) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// CC
+    }
+    0x01, 0x40, 2, RW, AES_IV3(aes_iv3) { /// C
+        // A TESTER
+        value,  0, 15, u16; /// CC
+    }
+    0x01, 0x42, 2, RW, AES_IV4(aes_iv4) { /// C
+        // A TESTER
+        value,  0, 15, u16; /// CC
+    }
+    0x01, 0x44, 8, RW, DMA_CFG(dma_cfg) { /// C
+        // A TESTER
+        src_port,   0, 2, u8; /// CC
+        src_addr,   3, 12, u16; /// CC
+        dst_port,   13, 15, u8; /// CC
+        dst_addr,   16, 25, u16; /// CC
+        cp_end_sel, 26, 26, u8; /// CC
+        hdr_size,   32, 38, u8; /// CC
+        pyld_size,  39, 48, u8; /// CC
+    }
+    0x01, 0x4C, 1, RW, AES_START(aes_start) { /// C
+        // A TESTER
+        value,  0, 0, u8; /// CC
+    }
+    0x01, 0x50, 4, RW, AES_STS(aes_sts) { /// C
+        // A TESTER
+        aes_done,  0, 0, u8; /// CC
+        auth_err,  1, 1, u8; /// CC
+        trans_err,  2, 2, u8; /// CC
+        mem_conf,  3, 3, u8; /// CC
+        ram_empty,  4, 4, u8; /// CC
+        ram_full,  5, 5, u8; /// CC
+    }
+    0x01, 0x54, 16, RW, AES_KEY(aes_key) { /// C
+        // A FINIR
+        //value,  0, 127, u128; /// CC
+    }
+
+    // STS_CFG
+
+
+    0x19, 0x00, 5, RO, SYS_STATE(sys_state) { /// System State information
+        tx_state,    0,  3, u8; /// Current Transmit State Machine value
+        rx_state,    8, 12, u8; /// Current Receive State Machine value
+        pmsc_state, 16, 23, u8; /// Current PMSC State Machine value
+>>>>>>> 83b8685d1063d9feaac753c839ca684e8096ee01
+    }
+    
     0x21, 0x00, 1, RW, SFD_LENGTH(sfd_length) { /// This is the length of the SFD sequence used when the data rate is 850kbps and higher.
         value, 0, 7, u8; /// This is the length of the SFD sequence used when the data rate is 850kbps and higher.
     }
