@@ -1163,7 +1163,42 @@ impl_register! {
     /*******************************************************************/
     /*****************     RF_CONF REGISTER    *************************/
     /*******************************************************************/
+    0x07, 0x00, 4, RW, RF_ENABLE(rf_enable) { /// RF control enable
+        value,  0,  31, u32; /// value  
+    }
+    0x07, 0x04, 4, RW, RF_CTRL_MASK(rf_ctrl_mask) { /// RF enable mask
+        value,  0,  31, u32; /// value  
+    }
+    0x07, 0x14, 4, RW, RF_SWITCH(rf_switch) { /// RF switch configuration
+        antswnotoggle,  0,  0, u8; /// CC  
+        antswpdoaport,  1,  1, u8; /// CC 
+        antswen,        8,  8, u8; /// CC 
+        antswctrl,     12, 14, u8; /// CC 
+        trxswen,       16, 16, u8; /// CC 
+        trxswctrl,     24, 29, u8; /// CC 
+    }
+    0x07, 0x1A, 1, RW, RF_TX_CTRL_1(rf_tx_ctrl_1) { /// RF transmitter configuration
+        value,  0,  7, u8; /// value  
+    }
+    0x07, 0x1C, 4, RW, RF_TX_CTRL_2(rf_tx_ctrl_2) { /// RF transmitter configuration
+        pg_delay,  0,  5, u8; /// Pulse Generator Delay value 
+    }
+    0x07, 0x28, 1, RW, TX_TEST(tx_test) { /// Transmitter test configuration
+        tx_entest,  0,  3, u8; /// Transmitter test enable 
+    }
+    0x07, 0x34, 1, RW, SAR_TEST(rsar_test) { /// Transmitter Calibration – SAR temperaturesensor read enable
+        sar_rden,  2,  2, u8; /// Writing 1 enables the SAR temperature sensor reading
+    }
+    0x07, 0x40, 8, RW, LDO_TUNE(ldo_tune) { /// Internal LDO voltage tuning parameter
+        value,  0x00,  0x3C, u128; ///  used to control the output voltage levels of the on chip LDOs
+    }
+    0x07, 0x48, 4, RW, LDO_CTRL(ldo_ctrl) { /// LDO control
 
+        value,  0,  31, u32; ///  LDO control
+    }
+    0x07, 0x51, 1, RW, LDO_RLOAD(ldo_rload) { /// LDO tuning register
+        value,  0,  7, u8; ///  LDO tuning register
+    }
 
   
 
