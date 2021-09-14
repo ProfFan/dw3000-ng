@@ -1456,6 +1456,48 @@ impl_register! {
         blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
     }
 */  
+    0x08, 0x00, 1, RW, SAR_CTRL(sar_ctrl) { /// Transmitter Calibration – SAR control
+        sar_start, 0, 0, u8; /// Writing 1 sets SAR enable and writing 0 clears the enable. 
+    }
+    0x08, 0x04, 1, RW, SAR_STATUS(sar_status) { /// Transmitter Calibration – SAR  status
+        sar_done, 0, 0, u8; /// Set to 1 when the data is ready to be read. 
+    }
+    0x08, 0x08, 3, RO, SAR_READING(sar_reading) { /// Transmitter Calibration –Latest SAR readings
+        sar_lvbat, 0,  7, u8; /// Latest SAR reading for Voltage level.   
+        sar_ltemp, 8, 15, u8; /// Latest SAR reading for Temperature level.    
+    }
+    0x08, 0x0C, 2, RO, SAR_WAKE_RD(sar_wake_rd) { /// Transmitter Calibration – SAR readings at last wake-up
+        sar_wvbat, 0,  7, u8; /// SAR reading of Voltage level taken at last wake up event.  
+        sar_wtemp, 8, 15, u8; /// To read the temp, use SAR_READING instead.
+    }
+    0x08, 0x10, 2, RW, PGC_CTRL(pgc_ctrl) { /// Transmitter Calibration – Pulse Generator control
+        pg_start,     0, 0, u8; /// Start the pulse generator calibration.  
+        pgc_auto_cal, 1, 1, u8; /// Start the pulse generator auto-calibration.  
+        pgc_tmeas,    2, 5, u8; /// Number of clock cycles over which to run the pulse generator calibration counter.  
+    }
+    0x08, 0x14, 2, RO, PGC_STATUS(pgc_status) { /// Transmitter Calibration – Pulse Generator status 
+        pg_delay_cnt,  0, 11, u16; /// Pulse generator count value 
+        autocal_done, 12, 12, u8; /// Auto-calibration of the PG_DELAY  has completed. 
+    }
+    0x08, 0x18, 2, RW, PG_TEST(pg_test) { /// Transmitter Calibration – Pulse Generator test
+    }
+    0x08, 0x1C, 2, RO, PG_CAL_TARGET(pg_cal_target) { /// Transmitter Calibration – Pulse Generator count target value 
+        pg_target, 0, 11, u16; /// Pulse generator target value of PG_COUNT at which point PG auto cal will complete. 
+    }
+    0x09, 0x00, 2, RW, PLL_CFG(pll_cfg) { /// PLL configuration
+    }
+    0x09, 0x04, 1, RW, PLL_CC(pll_cc) { /// PLL coarse code – starting code for calibration procedure
+        ch9_code, 0,  7, u8; /// PLL calibration coarse code for channel 5. 
+        ch5_code, 8, 21, u8; /// PLL calibration coarse code for channel 9.
+    }
+    0x09, 0x08, 2, RW, PLL_CAL(pll_cal) { /// PLL calibration configuration
+        use_old,    1, 1, u8; /// Use the coarse code value as set in PLL_CC register as starting point for PLL calibration. 
+        pll_cfg_ld, 4, 7, u8; /// PLL calibration configuration value. 
+        cal_en,     8, 8, u8; /// PLL  calibration  enable  bit.  
+    }
+    0x09, 0x14, 1, RW, XTAL(xtal) { /// Frequency synthesiser – Crystal trim
+        xtal_trim, 0, 7, u8; /// Crystal Trim.  
+    }
     0x0A, 0x00, 23, RO, AON(aon) { /// Always on system control interface block
     }
     0x0A, 0x00, 3, RW, AON_DIG_CFG(aon_dig_cfg) { /// AON wake up configuration register
@@ -1488,7 +1530,6 @@ impl_register! {
         wake_wup,   4, 4, u8; /// Wake using WAKEUP pin.  
         pres_sleep, 5, 5, u8; /// Preserve Sleep. 
     }
-
     0x0B, 0x00, 23, RO, OTP_IF(otp_if) { /// One Time Programmable memory interface
     } 
     0x0B, 0x00, 4, RW, OTP_WDATA(otp_wdata) { /// OTP data to program to a particular address
