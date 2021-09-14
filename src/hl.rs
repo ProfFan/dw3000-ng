@@ -827,7 +827,7 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
         Ok(tx_antenna_delay)
     }
     */
-    /*
+
     /// Returns the network id and address used for sending and receiving
     pub fn get_address(&mut self)
         -> Result<mac::Address, Error<SPI, CS>>
@@ -839,7 +839,7 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
             mac::ShortAddress(panadr.short_addr()),
         ))
     }
-    */
+
     /*
     /// Returns the current system time
     pub fn sys_time(&mut self) -> Result<Instant, Error<SPI, CS>> {
