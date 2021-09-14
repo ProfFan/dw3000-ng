@@ -81,15 +81,6 @@ fn main() -> ! {
         .expect("Failed to read DEV_ID register");
     rprintln!("dev-id = {:?}", dev_id);
 
-    // test du registre EUI
-    let eui = dw3000.ll().eui().read()
-        .expect("Failed to read DEV_ID register");
-    rprintln!("eui = {:?}", eui);
-
-    // test du registre PANADR
-    let panadr = dw3000.ll().panadr().read()
-        .expect("Failed to read DEV_ID register");
-    rprintln!("panadr = {:?}", panadr);
 
     //dw3000.ll.lde_cfg2().write(|w| w.value(0x1607))
 
