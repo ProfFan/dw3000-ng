@@ -1163,8 +1163,145 @@ impl_register! {
         blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
     }
 */
+    // 0x0B, 0x00, 
+    0x0C, 0x00, 8, RO, IP_TS(ip_ts) { /// Preamble sequence receive time stamp and status  
+        ip_toa,    0,  39, u64; /// Preamble sequence Time of Arrival estimate.  
+        ip_poa,   40,  53, u16; /// Phase of arrival as computed from the preamble CIR.
+        ip_toast, 56,  63, u8; /// Preamble sequence Time of Arrival status indicator.  
+    }
+    0x0C, 0x08, 8, RO, STS_TS(sts_ts) { /// STS receive time stamp and status
+        sts_toa,    0,  39, u64; /// STS Time of Arrival estimate. 
+        sts_poa,   40,  53, u16; /// Phase of arrival as computed from the STS CIR.
+        sts_toast, 55,  63, u16; /// STS sequence Time of Arrival status indicator.  
+    }
+    0x0C, 0x10, 8, RO, STS1_TS(sts1_ts) { /// 2nd STS receive time stamp and status
+        sts1_toa,    0,  39, u64; /// STS second Time of Arrival estimate. 
+        sts1_poa,   40,  53, u16; /// Phase of arrival as computed from the STS based CIR estimate.
+        sts1_toast, 55,  63, u16; /// STS second Time of Arrival status indicator.  
+    }
+    0x0C, 0x18, 6, RO, TDOA(tdoa) { /// The TDoA between the two CIRs 
+    }
+    0x0C, 0x1E, 2, RO, PDOA(pdoa) { /// The PDoA between the two CIRs 
+        pdoa,      0, 13, u16; /// Phase difference result.
+        fp_th_md, 14, 14, u8; /// First path threshold test mode.  
+    }
+    0x0C, 0x20, 4, RO, CIA_DIAG_0(cia_diag_0) { /// CIA Diagnostic 0 
+        coe_ppm, 0, 12, u16; /// Clock offset estimate. 
+    }
+    0x0C, 0x24, 4, RO, CIA_DIAG_1(cia_diag_1) { /// Reserved diagnostic data
+    }
+    0x0C, 0x28, 4, RO, IP_DIAG_0(ip_diag_0) { /// Preamble Diagnostic 0 – peak
+        ip_peaka,  0, 20, u32; /// Amplitude of the sample accumulated using the preamble sequence.  
+        ip_peaki, 21, 30, u16; /// Index of the sample accumulated using the preamble sequence.  
+    }
+    0x0C, 0x2C, 4, RO, IP_DIAG_1(ip_diag_1) { /// Preamble Diagnostic 1 – power indication
+        ip_carea, 0, 16, u32; /// Channel area accumulated using the preamble sequence.  
+    }
+    0x0C, 0x30, 4, RO, IP_DIAG_2(ip_diag_2) { /// Preamble Diagnostic 2 – magnitude @ FP + 1
+        ip_fp1m, 0, 21, u32; /// Magnitude of the sample at the first index immediately after the estimated first path position accumulated using the preamble sequence.  
+    }
+    0x0C, 0x34, 4, RO, IP_DIAG_3(ip_diag_3) { /// Preamble Diagnostic 3 – magnitude @ FP + 2
+        ip_fp2m, 0, 21, u32; /// Magnitude of the sample at the second index immediately after the estimated first path position accumulated using the preamble sequence.  
+    }
+    0x0C, 0x38, 4, RO, IP_DIAG_4(ip_diag_4) { /// Preamble Diagnostic 4 – magnitude @ FP + 3
+        ip_fp3m, 0, 21, u32; /// Magnitude of the sample at the third index immediately after the estimated first path position accumulated using the preamble sequence.  
+    }
+    0x0C, 0x3C, 12, RO, IP_DIAG_RES1(ip_diag_res1) { /// Reserved diagnostic data 
+    }
+    0x0C, 0x48, 4, RO, IP_DIAG_8(ip_diag_8) { /// Preamble Diagnostic 8 – first path 
+        ip_fp, 0, 15, u16; /// Estimated first path location accumulated using the preamble sequence.  
+    }
+    0x0C, 0x4C, 12, RO, IP_DIAG_RES2(ip_diag_res2) { /// Reserved diagnostic data 
+    }
+    0x0C, 0x58, 4, RO, IP_DIAG_12(ip_diag_12) { /// Preamble Diagnostic 12 – symbols accumulated
+        ip_nacc, 0, 11, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.  
+    }
+    0x0C, 0x5C, 4, RO, STS_DIAG_0(sts_diag_0) { /// STS 0 Diagnostic 0 – STS CIA peak amplitude
+        cp0_peaka,  0, 20, u32; /// Amplitude of the sample accumulated using the STS
+        cp0_peaki, 21, 29, u16; /// Index of the sample accumulated using the STS
+    }
+    0x0C, 0x60, 4, RO, STS_DIAG_1(sts_diag_1) { /// STS 0 Diagnostic 1 – STS power indication 
+        cp0_carea, 0, 15, u16; /// Channel area accumulated using the the STS
+    }
+    0x0C, 0x64, 4, RO, STS_DIAG_2(sts_diag_2) { /// STS 0 Diagnostic 2 – STS magnitude @ FP + 1
+        cp0_fp1m, 0, 21, u32; /// Magnitude of the sample at the first index immediately after the estimated first path position accumulated using the STS
+    }
+    0x0C, 0x68, 4, RO, STS_DIAG_3(sts_diag_3) { /// STS 0 Diagnostic 3 – STS magnitude @ FP + 2
+        cp0_fp2m, 0, 21, u32; /// Magnitude of the sample at the second index immediately after the estimated first path position accumulated using the STS
+    }
+    0x0D, 0x00, 4, RO, STS_DIAG_4(sts_diag_4) { /// STS 0 Diagnostic 4 – STS magnitude @ FP + 3
+        cp0_fp3m, 0, 21, u32; /// Magnitude of the sample at the third index immediately after the estimated first path position accumulated using the STS
+    }
+    0x0D, 0x04, 12, RO, STS0_DIAG_RES1(sts0_diag_res1) { /// Reserved diagnostic data 
+    }
+    0x0D, 0x10, 4, RO, STS_DIAG_8(sts_diag_8) { /// STS 0 Diagnostic 8 – STS first path
+        cp0_fp, 0, 14, u16; /// Estimated first path location accumulated using the STS
+    }
+    0x0D, 0x14, 12, RO, STS0_DIAG_RES2(sts0_diag_res2) { /// Reserved diagnostic data 
+    }
+    0x0D, 0x20, 4, RO, STS_DIAG_12(sts_diag_12) { /// STS 0 diagnostic 12 – accumulated STS length
+        cp0_nacc, 0, 10, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.  
+    }
+    0x0D, 0x24, 20, RO, STS0_DIAG_RES3(sts0_diag_res3) { /// Reserved diagnostic data 
+    }
+    0x0D, 0x38, 4, RO, STS1_DIAG_0(sts1_diag_0) { /// STS 1 Diagnostic 0 – STS CIA peak amplitude
+        cp1_peaka,  0, 20, u32; /// Amplitude of the sample accumulated using the STS
+        cp1_peaki, 21, 29, u16; /// Index of the sample accumulated using the STS
+    }
+    0x0D, 0x3C, 4, RO, STS1_DIAG_1(sts1_diag_1) { /// STS 1 Diagnostic 1 – STS power indication
+        cp1_carea, 0, 15, u16; /// Channel area accumulated using the the STS
+    }
+    0x0D, 0x40, 4, RO, STS1_DIAG_2(sts1_diag_2) { /// STS 1 Diagnostic 2 – STS magnitude @ FP + 1 
+        cp1_fp1m, 0, 21, u32; /// Magnitude of the sample at the first index immediately after the estimated first path position accumulated using the STS
+    }
+    0x0D, 0x44, 4, RO, STS1_DIAG_3(sts1_diag_3) { /// STS 1 Diagnostic 3 – STS magnitude @ FP + 2
+        cp1_fp2m, 0, 21, u32; /// Magnitude of the sample at the second index immediately after the estimated first path position accumulated using the STS
+    }
+    0x0D, 0x48, 4, RO, STS1_DIAG_4(sts1_diag_4) { /// STS 1 Diagnostic 4 – STS magnitude @ FP + 3
+        cp1_fp3m, 0, 21, u32; /// Magnitude of the sample at the third index immediately after the estimated first path position accumulated using the STS
+    }
+    0x0D, 0x4C, 12, RO, STS1_DIAG_RES1(sts1_diag_res1) { /// Reserved diagnostic data 
+    }
+    0x0D, 0x58, 4, RO, STS1_DIAG_8(sts1_diag_8) { /// STS 1 Diagnostic 8 – STS first path
+        cp1_fp, 0, 14, u16; /// Estimated first path location accumulated using the STS
+    }
+    0x0D, 0x5C, 12, RO, STS1_DIAG_RES2(sts1_diag_res2) { /// Reserved diagnostic data 
+    }
+    0x0D, 0x68, 4, RO, STS1_DIAG_12(sts1_diag_12) { /// STS 1 Diagnostic 12 – STS accumulated STS length
+        cp1_nacc, 0, 10, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.  
+    }
+    0x0E, 0x00, 4, RW, CIA_CONF(cia_conf) { /// CIA general configuration
+        rxantd,   0, 15, u16; /// Configures the receive antenna delay. 
+        mindiag, 20, 20, u8; ///  Minimum Diagnostics.  
+    }
+    0x0E, 0x04, 4, RW, FP_CONF(fp_conf) { /// First path temp adjustment and thresholds
+        fp_agreed_th, 8, 10, u8; /// The threshold to use when performing the FP_AGREE test.  
+        cal_temp,    11, 18, u8; /// Temperature at which the device was calibrated.  
+        tc_rxdly_en, 20, 20, u8; /// Temperature compensation for RX antenna delay. 
+    }
+    0x0E, 0x0C, 4, RW, IP_CONF(ip_conf) { /// Preamble Config – CIA preamble configuration
+        ip_ntm,   0, 4,  u8; /// Preamble Noise Threshold Multiplier.  
+        ip_pmult, 5, 6,  u8; /// Preamble Peak Multiplier.  
+        ip_rtm,  16, 20, u8; /// Preamble replica threshold multiplier
+    }
+    0x0E, 0x12, 4, RW, STS_CONF_0(sts_conf_0) { /// STS Config 0 – CIA STS configuration
+        sts_ntm,   0,  4, u8; /// STS Noise Threshold Multiplier.  
+        sts_pmult, 5,  6, u8; /// STS Peak Multiplier.  
+        sts_rtm,  16, 22, u8; /// STS replica threshold multiplier
+    }
+    0x0E, 0x16, 4, RW, STS_CONF_1(sts_conf_1) { /// STS Config 1 – CIA STS configuration
+        res_b0,        0,  7, u8; /// Tuning value
+        fp_agreed_en, 28, 28, u8; /// Checks to see if the two ToA estimates are within allowed tolerances.  
+        sts_cq_en,    29, 29, u8; /// Checks how consistent the impulse response stays during the accumulation of the STS.  
+        sts_ss_en,    30, 30, u8; /// Compare the sampling statistics of the STS reception to those of the earlier reception of the preamble sequence.  
+        sts_pgr_en,   31, 31, u8; /// Test the growth rate of the STS based CIR to the earlier growth rate of the preamble based CIR.  
+    }
+    0x0E, 0x1A, 2, RO, CIA_ADJUST(cia_adjust) { /// User adjustment to the PDoA 
+        pdoa_adj, 0, 13, u8; /// Adjustment value to account for non-balanced antenna circuits.  
+    }
+
     
-    0x0F, 0x00, 79, RO, DIG_DIAG(dig_dial) { /// Digital diagnostics interface 
+    0x0F, 0x00, 79, RO, DIG_DIAG(dig_diag) { /// Digital diagnostics interface 
     }
     0x0F, 0x00, 1, RW, EVC_CTRL(evc_ctrl) { /// Event counter control 
         evc_en,  0, 0, u8; /// Event Counters Enable.  
@@ -1201,28 +1338,43 @@ impl_register! {
         evc_txfs, 0, 11, u16; /// TX Frame Sent Event Counter. 
     }
     0x0F, 0x18, 1, RO, EVC_HPW(evc_hpw) { /// Half period warning counter 
-        evc_hpw, 0, 7, u8; ///
-    }/*
-    0x0F, 0x1A, 79, RO, DIG_DIAG(dig_dial) { /// SPI write CRC error counter 
+        evc_hpw, 0, 7, u8; /// Half Period Warning Event Counter.  
     }
-    0x0F, 0x1C, 79, RO, DIG_DIAG(dig_dial) { /// Digital diagnostics reserved area 1  
+    0x0F, 0x1A, 1, RO, EVC_SWCE(evc_swce) { /// SPI write CRC error counter 
+        evc_swce, 0, 7, u8; /// SPI write CRC error counter.  
     }
-    0x0F, 0x24, 79, RO, DIG_DIAG(dig_dial) { /// Test mode control register 
+    0x0F, 0x1C, 8, RO, EVC_RES1(evc_res1) { /// Digital diagnostics reserved area 1  
+        evc_res1, 0, 63, u64; /// Digital diagnostics reserved area 1
     }
-    0x0F, 0x28, 79, RO, DIG_DIAG(dig_dial) { /// STS quality error counter 
+    0x0F, 0x24, 4, RW, DIAG_TMC(diag_tmc) { /// Test mode control register 
+        tx_pstm,    4,  4, u8; /// Transmit Power Spectrum Test Mode.
+        hirq_pol,  21, 21, u8; /// Host interrupt polarity. 
+        cia_wden,  24, 24, u8; /// Enable the CIA watchdog.
+        cia_run,   26, 26, u8; /// Run the CIA manually. 
     }
-    0x0F, 0x2A, 79, RO, DIG_DIAG(dig_dial) { /// Low voltage warning error counter 
+    0x0F, 0x28, 1, RO, EVC_CPQE(evc_cpqe) { /// STS quality error counter 
+        evc_cpqe, 0, 7, u8; /// STS quality error counter 
     }
-    0x0F, 0x2C, 79, RO, DIG_DIAG(dig_dial) { /// SPI mode 
+    0x0F, 0x2A, 1, RO, EVC_VWARN(evc_vwarn) { /// Low voltage warning error counter 
+        evc_vwarn, 0, 7, u8; /// Low voltage warning error counter 
     }
-    0x0F, 0x30, 79, RO, DIG_DIAG(dig_dial) { /// System state 
+    0x0F, 0x2C, 1, RO, SPI_MODE(spi_mode) { /// SPI mode 
+        spi_mode, 0, 1, u8; /// SPI mode
     }
-    0x0F, 0x3C, 79, RO, DIG_DIAG(dig_dial) { /// Fast command status 
+    0x0F, 0x30, 4, RO, SYS_STATE(sys_state) { /// System states *
+        tx_state,    0,  3, u8; /// Current Transmit State Machine value
+        rx_state,    8, 11, u8; /// Current Receive State Machine value
+        pmsc_state, 16, 23, u8; /// Current PMSC State Machine value
     }
-    0x0F, 0x48, 79, RO, DIG_DIAG(dig_dial) { /// Current value of  the low 32-bits of the STS IV 
+    0x0F, 0x3C, 1, RO, FCMD_STAT(fcmd_stat) { /// Fast command status 
+        fcmd_stat, 0, 4, u8; /// Fast command status. 
     }
-    0x0F, 0x4C, 79, RO, DIG_DIAG(dig_dial) { /// SPI CRC LFSR initialisation code
-    }*/
+    0x0F, 0x48, 4, RO, CTR_DBG(ctr_dbg) { /// Current value of  the low 32-bits of the STS IV 
+        ctr_dbg, 0, 31, u32; /// Current value of  the low 32-bits of the STS IV 
+    }
+    0x0F, 0x4C, 1, RO, SPICRCINIT(spicrcinit) { /// SPI CRC LFSR initialisation code
+        spicrcinit, 0, 7, u8; /// SPI CRC LFSR initialisation code for the SPI CRC function. 
+    }
     0x11, 0x00, 24, RO, PMSC_CTRL(pmsc_ctrl) { /// Power management, timing and seq control
     }
     0x11, 0x00, 2, RW, SOFT_RST(soft_rst) { /// Soft reset of the device blocks
