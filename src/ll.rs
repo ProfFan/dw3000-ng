@@ -1163,7 +1163,34 @@ impl_register! {
         blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
     }
 */
-    // 0x0B, 0x00, 
+    0x0B, 0x00, 23, RO, OTP_IF(otp_if) { /// One Time Programmable memory interface
+    } 
+    0x0B, 0x00, 4, RW, OTP_WDATA(otp_wdata) { /// OTP data to program to a particular address
+    }
+    0x0B, 0x04, 4, RW, OTP_ADDR(otp_addr) { /// OTP address to which to program the data
+        otp_addr, 0, 10, u16; /// Address within OTP memory that will be accessed read or written.  
+    }
+    0x0B, 0x08, 2, RW, OTP_CFG(otp_cfg) { /// OTP configuration register
+        otp_man,       0,  0, u8; /// Enable manual control over OTP interface.   
+        otp_read,      1,  1, u8; /// OTP read enable.   
+        otp_write,     2,  2, u8; /// OTP write enable.   
+        otp_write_mr,  3,  3, u8; /// OTP write mode.   
+        dgc_kick,      6,  6, u8; /// Loading of the RX_TUNE_CAL parameter   
+        ldo_kick,      7,  7, u8; /// Loading of the LDOTUNE_CAL parameter 
+        bias_kick,     8,  8, u8; /// Loading of the BIASTUNE_CAL parameter 
+        ops_kick,     10, 10, u8; /// Loading of the operating parameter set selected by the OPS_SEL configuration 
+        ops_sel,      11, 12, u8; /// Operating parameter set selection.    
+        dgc_sel,      13, 13, u8; /// RX_TUNE parameter set selection.    
+    }
+    0x0B, 0x0C, 1, RW, OTP_STAT(otp_cfg) { /// OTP memory programming status register
+        otp_prog_done, 0,  0, u8; /// OTP Programming Done
+        otp_vpp_ok,    1,  1, u8; /// OTP Programming Voltage OK.  
+    }
+    0x0B, 0x10, 4, RO, OTP_RDATA(otp_rdata) { /// OTP data read from given address
+    }
+    0x0B, 0x14, 4, RW, OTP_SRDATA(otp_srdata) { /// OTP Special Register (SR) read data
+    }
+
     0x0C, 0x00, 8, RO, IP_TS(ip_ts) { /// Preamble sequence receive time stamp and status  
         ip_toa,    0,  39, u64; /// Preamble sequence Time of Arrival estimate.  
         ip_poa,   40,  53, u16; /// Phase of arrival as computed from the preamble CIR.
