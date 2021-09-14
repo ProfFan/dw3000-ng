@@ -1165,262 +1165,11 @@ impl_register! {
     /*******************************************************************/
 
 
-/*
-    0x19, 0x00, 5, RO, SYS_STATE(sys_state) { /// System State information
-        tx_state,    0,  3, u8; /// Current Transmit State Machine value
-        rx_state,    8, 12, u8; /// Current Receive State Machine value
-        pmsc_state, 16, 23, u8; /// Current PMSC State Machine value
-    }
-    
-    0x21, 0x00, 1, RW, SFD_LENGTH(sfd_length) { /// This is the length of the SFD sequence used when the data rate is 850kbps and higher.
-        value, 0, 7, u8; /// This is the length of the SFD sequence used when the data rate is 850kbps and higher.
-    }
-    0x23, 0x04, 2, RW, AGC_TUNE1(agc_tune1) { /// AGC Tuning register 1
-        value, 0, 15, u16; /// AGC Tuning register 1 value
-    }
-    0x23, 0x0C, 4, RW, AGC_TUNE2(agc_tune2) { /// AGC Tuning register 2
-        value, 0, 31, u32; /// AGC Tuning register 2 value
-    }
-    0x24, 0x00, 4, RW, EC_CTRL(ec_ctrl) { /// External Clock Sync Counter Config
-        ostsm,   0,  0, u8; /// External Transmit Synchronization Mode Enable
-        osrsm,   1,  1, u8; /// External Receive Synchronization Mode Enable
-        pllldt,  2,  2, u8; /// Clock PLL Lock Detect Tune
-        wait,    3, 10, u8; /// Wait Counter
-        ostrm,  11, 11, u8; /// External Timebase Reset Mode Enable
-    }
-    0x26, 0x00, 4, RW, GPIO_MODE(gpio_mode) { /// GPIO Mode Control Register
-        msgp0,  6,  7, u8; /// Mode Selection for GPIO0/RXOKLED
-        msgp1,  8,  9, u8; /// Mode Selection for GPIO1/SFDLED
-        msgp2, 10, 11, u8; /// Mode Selection for GPIO2/RXLED
-        msgp3, 12, 13, u8; /// Mode Selection for GPIO3/TXLED
-        msgp4, 14, 15, u8; /// Mode Selection for GPIO4/EXTPA
-        msgp5, 16, 17, u8; /// Mode Selection for GPIO5/EXTTXE
-        msgp6, 18, 19, u8; /// Mode Selection for GPIO6/EXTRXE
-        msgp7, 20, 21, u8; /// Mode Selection for SYNC/GPIO7
-        msgp8, 22, 23, u8; /// Mode Selection for IRQ/GPIO8
-    }
-    0x26, 0x08, 4, RW, GPIO_DIR(gpio_dir) { /// GPIO Direction Control Register
-        gdp0,  0,  0, u8; /// Direction Selection for GPIO0
-        gdp1,  1,  1, u8; /// Direction Selection for GPIO1
-        gdp2,  2,  2, u8; /// Direction Selection for GPIO2
-        gdp3,  3,  3, u8; /// Direction Selection for GPIO3
-        gdm0,  4,  4, u8; /// Mask for setting the direction of GPIO0
-        gdm1,  5,  5, u8; /// Mask for setting the direction of GPIO1
-        gdm2,  6,  6, u8; /// Mask for setting the direction of GPIO2
-        gdm3,  7,  7, u8; /// Mask for setting the direction of GPIO3
-        gdp4,  8,  8, u8; /// Direction Selection for GPIO4
-        gdp5,  9,  9, u8; /// Direction Selection for GPIO5
-        gdp6, 10, 10, u8; /// Direction Selection for GPIO6
-        gdp7, 11, 11, u8; /// Direction Selection for GPIO7
-        gdm4, 12, 12, u8; /// Mask for setting the direction of GPIO4
-        gdm5, 13, 13, u8; /// Mask for setting the direction of GPIO5
-        gdm6, 14, 14, u8; /// Mask for setting the direction of GPIO6
-        gdm7, 15, 15, u8; /// Mask for setting the direction of GPIO7
-        gdp8, 16, 16, u8; /// Direction Selection for GPIO8
-        gdm8, 20, 20, u8; /// Mask for setting the direction of GPIO8
-    }
-    0x26, 0x0C, 4, RW, GPIO_DOUT(gpio_dout) { /// GPIO Data Output register
-        gop0,  0,  0, u8; /// Output state setting for GPIO0
-        gop1,  1,  1, u8; /// Output state setting for GPIO1
-        gop2,  2,  2, u8; /// Output state setting for GPIO2
-        gop3,  3,  3, u8; /// Output state setting for GPIO3
-        gom0,  4,  4, u8; /// Mask for setting the output state of GPIO0
-        gom1,  5,  5, u8; /// Mask for setting the output state of GPIO1
-        gom2,  6,  6, u8; /// Mask for setting the output state of GPIO2
-        gom3,  7,  7, u8; /// Mask for setting the output state of GPIO3
-        gop4,  8,  8, u8; /// Output state setting for GPIO4
-        gop5,  9,  9, u8; /// Output state setting for GPIO5
-        gop6, 10, 10, u8; /// Output state setting for GPIO6
-        gop7, 11, 11, u8; /// Output state setting for GPIO7
-        gom4, 12, 12, u8; /// Mask for setting the output state of GPIO4
-        gom5, 13, 13, u8; /// Mask for setting the output state of GPIO5
-        gom6, 14, 14, u8; /// Mask for setting the output state of GPIO6
-        gom7, 15, 15, u8; /// Mask for setting the output state of GPIO7
-        gop8, 16, 16, u8; /// Output state setting for GPIO8
-        gom8, 20, 20, u8; /// Mask for setting the output state of GPIO8
-    }
-    0x26, 0x10, 4, RW, GPIO_IRQE(gpio_irqe) { /// GPIO Interrupt Enable
-        girqe0,  0,  0, u8; /// GPIO IRQ Enable for GPIO0 input
-        girqe1,  1,  1, u8; /// GPIO IRQ Enable for GPIO1 input
-        girqe2,  2,  2, u8; /// GPIO IRQ Enable for GPIO2 input
-        girqe3,  3,  3, u8; /// GPIO IRQ Enable for GPIO3 input
-        girqe4,  4,  4, u8; /// GPIO IRQ Enable for GPIO4 input
-        girqe5,  5,  5, u8; /// GPIO IRQ Enable for GPIO5 input
-        girqe6,  6,  6, u8; /// GPIO IRQ Enable for GPIO6 input
-        girqe7,  7,  7, u8; /// GPIO IRQ Enable for GPIO7 input
-        girqe8,  8,  8, u8; /// GPIO IRQ Enable for GPIO8 input
-    }
-    0x26, 0x14, 4, RW, GPIO_ISEN(gpio_isen) { /// GPIO Interrupt Sense Selection
-        gisen0,  0,  0, u8; /// GPIO IRQ sense for GPIO0 input
-        gisen1,  1,  1, u8; /// GPIO IRQ sense for GPIO1 input
-        gisen2,  2,  2, u8; /// GPIO IRQ sense for GPIO2 input
-        gisen3,  3,  3, u8; /// GPIO IRQ sense for GPIO3 input
-        gisen4,  4,  4, u8; /// GPIO IRQ sense for GPIO4 input
-        gisen5,  5,  5, u8; /// GPIO IRQ sense for GPIO5 input
-        gisen6,  6,  6, u8; /// GPIO IRQ sense for GPIO6 input
-        gisen7,  7,  7, u8; /// GPIO IRQ sense for GPIO7 input
-        gisen8,  8,  8, u8; /// GPIO IRQ sense for GPIO8 input
-    }
-    0x26, 0x18, 4, RW, GPIO_IMODE(gpio_imode) { /// GPIO Interrupt Mode (Level / Edge)
-        gimod0,  0,  0, u8; /// GPIO IRQ mode selection for GPIO0 input
-        gimod1,  1,  1, u8; /// GPIO IRQ mode selection for GPIO1 input
-        gimod2,  2,  2, u8; /// GPIO IRQ mode selection for GPIO2 input
-        gimod3,  3,  3, u8; /// GPIO IRQ mode selection for GPIO3 input
-        gimod4,  4,  4, u8; /// GPIO IRQ mode selection for GPIO4 input
-        gimod5,  5,  5, u8; /// GPIO IRQ mode selection for GPIO5 input
-        gimod6,  6,  6, u8; /// GPIO IRQ mode selection for GPIO6 input
-        gimod7,  7,  7, u8; /// GPIO IRQ mode selection for GPIO7 input
-        gimod8,  8,  8, u8; /// GPIO IRQ mode selection for GPIO8 input
-    }
-    0x26, 0x1C, 4, RW, GPIO_IBES(gpio_ibes) { /// GPIO Interrupt “Both Edge” Select
-        gibes0,  0,  0, u8; /// GPIO IRQ "Both Edges" selection for GPIO0 input
-        gibes1,  1,  1, u8; /// GPIO IRQ "Both Edges" selection for GPIO1 input
-        gibes2,  2,  2, u8; /// GPIO IRQ "Both Edges" selection for GPIO2 input
-        gibes3,  3,  3, u8; /// GPIO IRQ "Both Edges" selection for GPIO3 input
-        gibes4,  4,  4, u8; /// GPIO IRQ "Both Edges" selection for GPIO4 input
-        gibes5,  5,  5, u8; /// GPIO IRQ "Both Edges" selection for GPIO5 input
-        gibes6,  6,  6, u8; /// GPIO IRQ "Both Edges" selection for GPIO6 input
-        gibes7,  7,  7, u8; /// GPIO IRQ "Both Edges" selection for GPIO7 input
-        gibes8,  8,  8, u8; /// GPIO IRQ "Both Edges" selection for GPIO8 input
-    }
-    0x26, 0x20, 4, RW, GPIO_ICLR(gpio_iclr) { /// GPIO Interrupt Latch Clear
-        giclr0,  0,  0, u8; /// GPIO IRQ latch clear for GPIO0 input
-        giclr1,  1,  1, u8; /// GPIO IRQ latch clear for GPIO1 input
-        giclr2,  2,  2, u8; /// GPIO IRQ latch clear for GPIO2 input
-        giclr3,  3,  3, u8; /// GPIO IRQ latch clear for GPIO3 input
-        giclr4,  4,  4, u8; /// GPIO IRQ latch clear for GPIO4 input
-        giclr5,  5,  5, u8; /// GPIO IRQ latch clear for GPIO5 input
-        giclr6,  6,  6, u8; /// GPIO IRQ latch clear for GPIO6 input
-        giclr7,  7,  7, u8; /// GPIO IRQ latch clear for GPIO7 input
-        giclr8,  8,  8, u8; /// GPIO IRQ latch clear for GPIO8 input
-    }
-    0x26, 0x24, 4, RW, GPIO_IDBE(gpio_idbe) { /// GPIO Interrupt De-bounce Enable
-        gidbe0,  0,  0, u8; /// GPIO IRQ de-bounce enable for GPIO0
-        gidbe1,  1,  1, u8; /// GPIO IRQ de-bounce enable for GPIO1
-        gidbe2,  2,  2, u8; /// GPIO IRQ de-bounce enable for GPIO2
-        gidbe3,  3,  3, u8; /// GPIO IRQ de-bounce enable for GPIO3
-        gidbe4,  4,  4, u8; /// GPIO IRQ de-bounce enable for GPIO4
-        gidbe5,  5,  5, u8; /// GPIO IRQ de-bounce enable for GPIO5
-        gidbe6,  6,  6, u8; /// GPIO IRQ de-bounce enable for GPIO6
-        gidbe7,  7,  7, u8; /// GPIO IRQ de-bounce enable for GPIO7
-        gidbe8,  8,  8, u8; /// GPIO IRQ de-bounce enable for GPIO8
-    }
-    0x26, 0x28, 4, RW, GPIO_RAW(gpio_raw) { /// GPIO raw state
-        grawp0,  0,  0, u8; /// GPIO0 port raw state
-        grawp1,  1,  1, u8; /// GPIO1 port raw state
-        grawp2,  2,  2, u8; /// GPIO2 port raw state
-        grawp3,  3,  3, u8; /// GPIO3 port raw state
-        grawp4,  4,  4, u8; /// GPIO4 port raw state
-        grawp5,  5,  5, u8; /// GPIO5 port raw state
-        grawp6,  6,  6, u8; /// GPIO6 port raw state
-        grawp7,  7,  7, u8; /// GPIO7 port raw state
-        grawp8,  8,  8, u8; /// GPIO8 port raw state
-    }
-    0x27, 0x02, 2, RW, DRX_TUNE0B(drx_tune0b) { /// Digital Tuning Register 0b
-        value, 0, 15, u16; /// DRX_TUNE0B tuning value
-    }
-    0x27, 0x04, 2, RW, DRX_TUNE1A(drx_tune1a) { /// Digital Tuning Register 1a
-        value, 0, 15, u16; /// DRX_TUNE1A tuning value
-    }
-    0x27, 0x06, 2, RW, DRX_TUNE1B(drx_tune1b) { /// Digital Tuning Register 1b
-        value, 0, 15, u16; /// DRX_TUNE1B tuning value
-    }
-    0x27, 0x08, 4, RW, DRX_TUNE2(drx_tune2) { /// Digital Tuning Register 2
-        value, 0, 31, u32; /// DRX_TUNE2 tuning value
-    }
-    0x27, 0x20, 2, RW, DRX_SFDTOC(drx_sfdtoc) { /// SFD timeout
-        count, 0, 15, u16; /// SFD detection timeout count
-    }
-    0x27, 0x24, 2, RW, DRX_PRETOC(drx_pretoc) { /// Preamble detection timeou
-        count, 0, 15, u16; /// Preamble detection timeout count
-    }
-    0x27, 0x26, 2, RW, DRX_TUNE4H(drx_tune4h) { /// Digital Tuning Register 4h
-        value, 0, 15, u16; /// DRX_TUNE4H tuning value
-    }
-    0x27, 0x28, 2, RO, DRX_CAR_INT(dxr_car_int) { /// Carrier Recovery Integrator Register
-        value, 0, 15, u16; /// value
-    }
-    0x27, 0x2C, 2, RO, RXPACC_NOSAT(rxpacc_nosat) { /// Digital debug register. Unsaturated accumulated preamble symbols.
-        value, 0, 15, u16; /// value
-    }
-    0x28, 0x0B, 1, RW, RF_RXCTRLH(rf_rxctrlh) { /// Analog RX Control Register
-        value, 0, 7, u8; /// Analog RX Control Register
-    }
-    0x28, 0x0C, 3, RW, RF_TXCTRL(rf_txctrl) { /// Analog TX Control Register
-        txmtune, 5,  8, u8; /// Transmit mixer tuning register
-        txmq,    9, 11, u8; /// Transmit mixer Q-factor tuning register
-        value, 0, 23, u32; /// The entire register
-    }
-    0x28, 0x30, 5, RW, LDOTUNE(ldotune) { /// LDO voltage tuning parameter
-        value, 0, 39, u64; /// Internal LDO voltage tuning parameter
-    }
-    0x2A, 0x0B, 1, RW, TC_PGDELAY(tc_pgdelay) { /// Pulse Generator Delay
-        value, 0, 7, u8; /// Transmitter Calibration - Pulse Generator Delay
-    }
-    0x2B, 0x07, 4, RW, FS_PLLCFG(fs_pllcfg) { /// Frequency synth - PLL configuration
-        value, 0, 31, u32; /// Frequency synth - PLL configuration
-    }
-    0x2B, 0x0B, 1, RW, FS_PLLTUNE(fs_plltune) { /// Frequency synth - PLL Tuning
-        value, 0, 7, u8; /// Frequency synthesiser - PLL Tuning
-    }
-    0x2D, 0x04, 2, RW, OTP_ADDR(otp_addr) { /// OTP Address
-        value, 0, 10, u16; /// OTP Address
-    }
-    0x2D, 0x06, 2, RW, OTP_CTRL(otp_ctrl) { /// OTP Control
-        otprden,  0,  0, u8; /// Forces OTP into manual read mode
-        otpread,  1,  1, u8; /// Commands a read operation
-        otpmrwr,  3,  3, u8; /// OTP mode register write
-        otpprog,  6,  6, u8; /// Write OTP_WDAT to OTP_ADDR
-        otpmr,    7, 10, u8; /// OTP mode register
-        ldeload, 15, 15, u8; /// Force load of LDE microcode
-    }
-    0x2D, 0x0A, 4, RO, OTP_RDAT(otp_rdat) { /// OTP Read Data
-        value, 0, 31, u32; /// OTP Read Data
-    }
-    0x2E, 0x0806, 1, RW, LDE_CFG1(lde_cfg1) { /// LDE Configuration Register 1
-        ntm,   0, 4, u8; /// Noise Threshold Multiplier
-        pmult, 5, 7, u8; /// Peak Multiplier
-    }
-    0x2E, 0x1804, 2, RW, LDE_RXANTD(lde_rxantd) { /// RX Antenna Delay
-        value, 0, 15, u16; /// RX Antenna Delay
-    }
-    0x2E, 0x1806, 2, RW, LDE_CFG2(lde_cfg2) { /// LDE Configuration Register 2
-        value, 0, 15, u16; /// The LDE_CFG2 configuration value
-    }
-    0x2F, 0x1A, 2, RO, EVC_TPW(evc_tpw) { /// TX Power-Up Warning Counter
-        value, 0, 11, u16; /// TX Power-Up Warning Event Counter
-    }
-    0x36, 0x00, 4, RW, PMSC_CTRL0(pmsc_ctrl0) { /// PMSC Control Register 0
-        sysclks,    0,  1, u8; /// System Clock Selection
-        rxclks,     2,  3, u8; /// Receiver Clock Selection
-        txclks,     4,  5, u8; /// Transmitter Clock Selection
-        face,       6,  6, u8; /// Force Accumulator Clock Enable
-        adcce,     10, 10, u8; /// ADC Clock Enable
-        amce,      15, 15, u8; /// Accumulator Memory Clock Enable
-        gpce,      16, 16, u8; /// GPIO Clock Enable
-        gprn,      17, 17, u8; /// GPIO Reset (Not), active low
-        gpdce,     18, 18, u8; /// GPIO De-bounce Clock Enable
-        gpdrn,     19, 19, u8; /// GPIO De-bounce Reset (Not), active low
-        khzclken,  23, 23, u8; /// Kilohertz Clock Enable
-        softreset, 28, 31, u8; /// Soft Reset
-    }
-    0x36, 0x04, 4, RW, PMSC_CTRL1(pmsc_ctrl1) { /// PMSC Control Register 1
-        arx2init,   1,  1, u8; /// Automatic transition from receive to init
-        pktseq,     3, 10, u8; /// Control PMSC control of analog RF subsystem
-        atxslp,    11, 11, u8; /// After TX automatically sleep
-        arxslp,    12, 12, u8; /// After RX automatically sleep
-        snoze,     13, 13, u8; /// Snooze Enable
-        snozr,     14, 14, u8; /// Snooze Repeat
-        pllsyn,    15, 15, u8; /// Enable clock used for external sync modes
-        lderune,   17, 17, u8; /// LDE Run Enable
-        khzclkdiv, 26, 31, u8; /// Kilohertz Clock Divisor
-    }
-    0x36, 0x28, 4, RW, PMSC_LEDC(pmsc_ledc) { /// PMSC LED Control Register
-        blink_tim, 0, 7, u8; /// Blink time count value
-        blnken, 8, 8, u8; /// Blink Enable
-        blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
-    }
-*/  
+  
+
+    /*******************************************************************/
+    /*****************     RF_CAL REGISTER    **************************/
+    /*******************************************************************/
     0x08, 0x00, 1, RW, SAR_CTRL(sar_ctrl) { /// Transmitter Calibration – SAR control
         sar_start, 0, 0, u8; /// Writing 1 sets SAR enable and writing 0 clears the enable. 
     }
@@ -1449,6 +1198,10 @@ impl_register! {
     0x08, 0x1C, 2, RO, PG_CAL_TARGET(pg_cal_target) { /// Transmitter Calibration – Pulse Generator count target value 
         pg_target, 0, 11, u16; /// Pulse generator target value of PG_COUNT at which point PG auto cal will complete. 
     }
+
+    /*******************************************************************/
+    /*****************     FS_CTRL REGISTER    *************************/
+    /*******************************************************************/
     0x09, 0x00, 2, RW, PLL_CFG(pll_cfg) { /// PLL configuration
     }
     0x09, 0x04, 1, RW, PLL_CC(pll_cc) { /// PLL coarse code – starting code for calibration procedure
@@ -1463,6 +1216,10 @@ impl_register! {
     0x09, 0x14, 1, RW, XTAL(xtal) { /// Frequency synthesiser – Crystal trim
         xtal_trim, 0, 7, u8; /// Crystal Trim.  
     }
+
+    /*******************************************************************/
+    /*********************     AON REGISTER    *************************/
+    /*******************************************************************/
     0x0A, 0x00, 23, RO, AON(aon) { /// Always on system control interface block
     }
     0x0A, 0x00, 3, RW, AON_DIG_CFG(aon_dig_cfg) { /// AON wake up configuration register
@@ -1495,6 +1252,10 @@ impl_register! {
         wake_wup,   4, 4, u8; /// Wake using WAKEUP pin.  
         pres_sleep, 5, 5, u8; /// Preserve Sleep. 
     }
+
+    /*******************************************************************/
+    /******************     OTP_IF REGISTER    *************************/
+    /*******************************************************************/
     0x0B, 0x00, 23, RO, OTP_IF(otp_if) { /// One Time Programmable memory interface
     } 
     0x0B, 0x00, 4, RW, OTP_WDATA(otp_wdata) { /// OTP data to program to a particular address
@@ -1522,6 +1283,10 @@ impl_register! {
     }
     0x0B, 0x14, 4, RW, OTP_SRDATA(otp_srdata) { /// OTP Special Register (SR) read data
     }
+
+    /*******************************************************************/
+    /*********************     CIA REGISTER    *************************/
+    /*******************************************************************/
     0x0C, 0x00, 8, RO, IP_TS(ip_ts) { /// Preamble sequence receive time stamp and status  
         ip_toa,    0,  39, u64; /// Preamble sequence Time of Arrival estimate.  
         ip_poa,   40,  53, u16; /// Phase of arrival as computed from the preamble CIR.
@@ -1658,7 +1423,9 @@ impl_register! {
         pdoa_adj, 0, 13, u8; /// Adjustment value to account for non-balanced antenna circuits.  
     }
 
-    
+    /*******************************************************************/
+    /*****************     DIG_DIAG REGISTER    ************************/
+    /*******************************************************************/    
     0x0F, 0x00, 79, RO, DIG_DIAG(dig_diag) { /// Digital diagnostics interface 
     }
     0x0F, 0x00, 1, RW, EVC_CTRL(evc_ctrl) { /// Event counter control 
@@ -1733,6 +1500,10 @@ impl_register! {
     0x0F, 0x4C, 1, RO, SPICRCINIT(spicrcinit) { /// SPI CRC LFSR initialisation code
         spicrcinit, 0, 7, u8; /// SPI CRC LFSR initialisation code for the SPI CRC function. 
     }
+
+    /*******************************************************************/
+    /********************     PMSC REGISTER    *************************/
+    /*******************************************************************/
     0x11, 0x00, 24, RO, PMSC_CTRL(pmsc_ctrl) { /// Power management, timing and seq control
     }
     0x11, 0x00, 2, RW, SOFT_RST(soft_rst) { /// Soft reset of the device blocks
@@ -1783,10 +1554,22 @@ impl_register! {
     0x11, 0x1F, 2, RW, BIAS_CTRL(bias_ctrl) { /// Analog blocks’ calibration values
         bias_ctrl, 0, 13, u16; /// Analog blocks’ calibration values
     }
+
+    /*******************************************************************/
+    /*****************     ACC_MEM REGISTER    *************************/
+    /*******************************************************************/
     0x15, 0x00, 12288, RO, ACC_MEM(acc_mem) { /// Read access to accumulator data memory
     } // If the code doesn't run properly, reduce the length from 12288 to 8096
+    
+    /*******************************************************************/
+    /*****************     SCRATCH_RAM REGISTER    *********************/
+    /*******************************************************************/
     0x16, 0x00, 127, RW, SCRATCH_RAM(scratch_ram) { /// Scratch RAM memory buffer
     }
+
+    /*******************************************************************/
+    /*****************     AES_RAM REGISTER    *************************/
+    /*******************************************************************/
     0x17, 0x00, 128, RW, AES_KEY_RAM(aes_key_ram) { /// storage for up to 8 x 128 bit AES KEYs 
         aes_key1,   0x0,  0x7F, u128; /// 1st AES key 
         aes_key2,  0x80,  0xFF, u128; /// 2nd AES key 
@@ -1797,16 +1580,32 @@ impl_register! {
         aes_key7, 0x300, 0x37F, u128; /// 7th AES key 
         aes_key8, 0x380, 0x3FF, u128; /// 8th AES key    
     }
+
+    /*******************************************************************/
+    /*****************     SET_1, SET2 REGISTERS    ********************/
+    /*******************************************************************/
     0x18, 0x00, 464, RO, DB_DIAG(db_diag) { /// Double buffer diagnostic register set
     }
     0x18, 0x00, 232, RO, DB_DIAG_SET1(db_diag_set1) { /// Double buffer diagnostic register set 1
     }
     0x18, 0xE8, 232, RO, DB_DIAG_SET2(db_diag_set2) { /// Double buffer diagnostic register set 2
     }
+
+    /*******************************************************************/
+    /*****************     INDIRECT_PTR_A REGISTER    ******************/
+    /*******************************************************************/
     0x1D, 0x00, 1, RW, INDIRECT_PTR_A(indirect_ptr_a) { /// Indirect pointer A 
     }
+
+    /*******************************************************************/
+    /*****************     INDIRECT_PTR_B REGISTER    ******************/
+    /*******************************************************************/
     0x1E, 0x00, 1, RW, INDIRECT_PTR_B(indirect_ptr_b) { /// Indirect pointer B 
     }
+
+    /*******************************************************************/
+    /*****************     IN_PTR_CFG REGISTER    **********************/
+    /*******************************************************************/
     0x1F, 0x00, 19, RO, IN_PTR_CFG(in_ptr_cfg) { /// Indirect pointer configuration and fast interrupt status register
     }
     0x1F, 0x00, 1, RO, FINT_STAT(fint_stat) { /// Fast System Event Status Register
