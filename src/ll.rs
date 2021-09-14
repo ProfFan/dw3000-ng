@@ -26,7 +26,6 @@ use embedded_hal::{
     digital::v2::OutputPin,
 };
 
-use rtt_target::rprintln;
 
 /// Entry point to the DW1000 driver's low-level API
 ///
@@ -194,7 +193,7 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
         return 1;
     }
 
-    buffer[1] = ((R::SUB_ID as u8)  << 2); 
+    buffer[1] = (R::SUB_ID as u8)  << 2; 
 
     2
 }
@@ -1162,7 +1161,40 @@ impl_register! {
         blnken, 8, 8, u8; /// Blink Enable
         blnknow, 16, 19, u8; /// Manually triggers an LED blink. There is one trigger bit per LED IO
     }
-*/
+*/  
+    0x0A, 0x00, 23, RO, AON(aon) { /// Always on system control interface block
+    }
+    0x0A, 0x00, 3, RW, AON_DIG_CFG(aon_dig_cfg) { /// AON wake up configuration register
+        onw_aon_dld, 0,  0, u8; /// On Wake-up download the AON array.
+        onw_run_sar, 1,  1, u8; /// On Wake-up Run the (temperature and voltage) Analog-to-Digital Convertors.  
+        onw_go2idle, 8,  8, u8; /// On Wake-up go to  IDLE_PLL state. 
+        onw_go2rx,   9,  9, u8; /// On Wake-up go to RX. 
+        onw_pgfcal, 11, 11, u8; /// On Wake-up perform RX calibration
+    }
+    0x0A, 0x04, 1, RW, AON_CTRL(aon_ctrl) { /// AON control register
+        restore,      0, 0, u8; /// Copy the user configurations from the AON memory to the host interface register set.  
+        save,         1, 1, u8; /// Copy the user configurations from the host interface register  set  into  the  AON  memory.  
+        cfg_upload,   2, 2, u8; /// Upload  the  AON  block  configurations  to  the  AON.    
+        dca_read,     3, 3, u8; /// Direct AON memory access read.  
+        dca_write,    4, 4, u8; /// Direct AON memory write access
+        dca_write_hi, 5, 5, u8; /// Direct AON memory write access. Needs to be set when using address > 0xFF
+        dca_enab,     7, 7, u8; /// Direct  AON  memory  access  enable  bit.    
+    }
+    0x0A, 0x08, 1, RW, AON_RDATA(aon_rdata) { /// AON direct access read data result
+    }
+    0x0A, 0x0C, 2, RW, AON_ADDR(aon_addr) { /// AON direct access address
+    }
+    0x0A, 0x10, 1, RW, AON_WDATA(aon_wdata) { /// AON direct access write data
+    }
+    0x0A, 0x14, 1, RW, AON_CFG(aon_cfg) { /// AON configuration register
+        sleep_en,   0, 0, u8; /// Sleep enable configuration bit.  
+        wake_cnt,   1, 1, u8; /// Wake when sleep counter elapses.  
+        brout_en,   2, 2, u8; /// Enable the BROWNOUT detector during SLEEP or DEEPSLEEP.   
+        wake_csn,   3, 3, u8; /// Wake using SPI access.    
+        wake_wup,   4, 4, u8; /// Wake using WAKEUP pin.  
+        pres_sleep, 5, 5, u8; /// Preserve Sleep. 
+    }
+
     0x0B, 0x00, 23, RO, OTP_IF(otp_if) { /// One Time Programmable memory interface
     } 
     0x0B, 0x00, 4, RW, OTP_WDATA(otp_wdata) { /// OTP data to program to a particular address
@@ -1182,7 +1214,7 @@ impl_register! {
         ops_sel,      11, 12, u8; /// Operating parameter set selection.    
         dgc_sel,      13, 13, u8; /// RX_TUNE parameter set selection.    
     }
-    0x0B, 0x0C, 1, RW, OTP_STAT(otp_cfg) { /// OTP memory programming status register
+    0x0B, 0x0C, 1, RW, OTP_STAT(otp_stat) { /// OTP memory programming status register
         otp_prog_done, 0,  0, u8; /// OTP Programming Done
         otp_vpp_ok,    1,  1, u8; /// OTP Programming Voltage OK.  
     }
@@ -1190,7 +1222,6 @@ impl_register! {
     }
     0x0B, 0x14, 4, RW, OTP_SRDATA(otp_srdata) { /// OTP Special Register (SR) read data
     }
-
     0x0C, 0x00, 8, RO, IP_TS(ip_ts) { /// Preamble sequence receive time stamp and status  
         ip_toa,    0,  39, u64; /// Preamble sequence Time of Arrival estimate.  
         ip_poa,   40,  53, u16; /// Phase of arrival as computed from the preamble CIR.
