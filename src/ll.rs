@@ -1138,6 +1138,32 @@ impl_register! {
         grawp7,  7,  7, u8; ///   GPIO port raw state
         grawp8,  8,  8, u8; ///   GPIO port raw state
     }
+    /*******************************************************************/
+    /*****************    DRX_CONF REGISTER    *************************/
+    /*******************************************************************/
+    0x06, 0x00, 2, RW, DTUNE0(dtune0) { /// PAC configuration
+        pac,    0,  1, u8; ///   Preamble Acquisition Chunk size
+        dt0b4,  4,  4, u8; ///   Tuning bit 4 of digital tuning reg0
+    }
+    0x06, 0x02, 2, RW, RX_SFD_TOC(rx_sfd_toc) { /// SFD timeout 
+        value,  0,  15, u16; /// don't set to 0  
+    }
+    0x06, 0x04, 2, RW, PRE_TOC(pre_toc) { /// Preamble detection timeout
+        value,  0,  15, u16; /// digital receiver configuration  
+    }
+    0x06, 0x0C, 4, RW, DTUNE3(dtune3) { /// Receiver tuning register
+        value,  0,  31, u32; /// value
+    }
+    0x06, 0x14, 4, RO, DTUNE5(dtune5) { /// Digital Tuning Reserved register
+        value,  0,  31, u32; /// value  
+    }
+    0x06, 0x29, 3, RO, DRX_CAR_INT(drx_car_int) { /// Carrier recovery integrator register
+        //  formule de math !! A FINIR
+    }
+    /*******************************************************************/
+    /*****************     RF_CONF REGISTER    *************************/
+    /*******************************************************************/
+
 
 /*
     0x19, 0x00, 5, RO, SYS_STATE(sys_state) { /// System State information
