@@ -901,11 +901,244 @@ impl_register! {
         ram_empty,  4, 4, u8; /// CC
         ram_full,  5, 5, u8; /// CC
     }
-    0x01, 0x54, 16, RW, AES_KEY(aes_key) { /// C
-        // A FINIR
-        //value,  0, 127, u128; /// CC
+    0x01, 0x54, 16, RW, AES_KEY(aes_key) { /// The 128-bit KEY for the AES GCM/CCM core
+        // A TESTER
+        value,  0x0, 0x7F, u128; /// value
     }
-
+    /*******************************************************************/
+    /**************    STS CONFIG REGISTER   ***************************/
+    /*******************************************************************/  
+    0x02, 0x00, 2, RW, STS_CFG(sts_cfg) { /// STS configuration
+        // A TESTER
+        cps_len,  0, 7, u8; /// STS length
+    }
+    0x02, 0x04, 1, RW, STS_CTRL(sts_ctrl) { /// STS control
+        // A TESTER
+        load_iv,  0, 0, u8; /// Load STS_IV bit into the AES-128 block for the generation of STS
+        rst_last, 1, 1, u8; /// Start from last, when it is set to 1 the STS generation starts from the last count that was used by the AES-128 block for the generation of the previous STS.
+    }
+    0x02, 0x08, 2, RW, STS_STS(sts_sts) { /// STS status
+        // A TESTER
+        acc_qual,  0, 11, u16; /// STS accumulation quality
+    }
+    0x02, 0x0C, 16, RW, STS_KEY(sts_key) { /// STS 128-bit KEY
+        // A TESTER
+        value,  0x0, 0x7F, u128; /// value
+    }
+    0x02, 0x1C, 16, RW, STS_IV(sts_iv) { /// STS 128-bit IV
+        // A TESTER
+        value,  0x0, 0x7F, u128; /// value
+    }
+    /*******************************************************************/
+    /*****************    RX_TUNE REGISTER   ***************************/
+    /*******************************************************************/
+    0x03, 0x18, 2, RW, DGC_CFG(dgc_cfg) { /// RX tuning configuration register
+        // A TESTER
+        rx_tune_en,  0,  0, u8; /// RX tuning enable bit
+        thr_64,      9, 14, u8; /// RX tuning threshold configuration for 64 MHz PRF
+    }
+    0x03, 0x1C, 4, RW, DGC_CFG0(dgc_cfg0) { /// RX tuning configuration register
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x20, 4, RW, DGC_CFG1(dgc_cfg1) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x38, 4, RW, DGC_LUT_0(dgc_lut_0) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x3C, 4, RW, DGC_LUT_1(dgc_lut_1) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x40, 4, RW, DGC_LUT_2(dgc_lut_2) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x44, 4, RW, DGC_LUT_3(dgc_lut_3) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x48, 4, RW, DGC_LUT_4(dgc_lut_4) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x4C, 4, RW, DGC_LUT_5(dgc_lut_5) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x50, 4, RW, DGC_LUT_6(dgc_lut_6) { /// C
+        // A TESTER
+        value,  0, 31, u32; /// Value
+    }
+    0x03, 0x60, 4, RW, DGC_DBG(dgc_dbg) { /// Reports DGC information
+        // A TESTER
+        dgc_decision,  28,  30, u8; /// DGC decision index.
+    }
+    /*******************************************************************/
+    /*****************    EXT_SYNC REGISTER   **************************/
+    /*******************************************************************/
+    0x04, 0x00, 4, RW, EC_CTRL(ec_ctrl) { /// External clock synchronisation counter configuration
+        // A TESTER
+        osts_wait,  3,  10, u8; /// Wait counter used for external timebase reset
+        ostr_mode,  11,  11, u8; /// External timebase reset mode enable bit
+    }
+    0x04, 0x0C, 4, RW, RX_CAL(rx_cal) { /// RX calibration block configuration
+        // A TESTER
+        cal_mode,   0,   1, u8; /// RX calibration mode
+        cal_en,     4,   7, u8; /// RX calibration enable
+        comp_dly,  16,  19, u8; /// RX calibration tuning value
+    }
+    0x04, 0x14, 4, RW, RX_CAL_RESI(rx_cal_resi) { /// RX calibration block result
+        // A TESTER
+        value,  0,  28, u32; /// reports the result once the RX calibration is complete
+    }
+    0x04, 0x1C, 4, RW, RX_CAL_RESQ(rx_cal_resq) { /// RX calibration block result
+        // A TESTER
+        value,  0,  28, u32; /// reports the result once the RX calibration is complete
+    }
+    0x04, 0x20, 1, RW, RX_CAL_STS(rx_cal_sts) { /// RX calibration block status
+        // A TESTER
+        value,  0,  0, u8; ///  reports the status once the RX calibration is complete
+    }
+    /*******************************************************************/
+    /*****************    GPIO_CTRL REGISTER   *************************/
+    /*******************************************************************/
+    0x05, 0x00, 4, RW, GPIO_MODE(gpio_mode) { /// GPIO Mode Control Register
+        // A TESTER
+        msgp0,  0,  2, u8; ///  Mode Selection for GPIO0/RXOKLED
+        msgp1,  3,  5, u8; ///  Mode Selection for GPIO1/SFDLED
+        msgp2,  6,  8, u8; ///  Mode Selection for GPIO2/RXLED
+        msgp3,  9,  11, u8; ///  Mode Selection for GPIO3/TXLED
+        msgp4,  12,  14, u8; ///  Mode Selection for GPIO4/EXTPA
+        msgp5,  15,  17, u8; ///  Mode Selection for GPIO5/EXTTXE
+        msgp6,  18,  20, u8; ///  Mode Selection for GPIO6/EXTRXE
+        msgp7,  21,  23, u8; ///  Mode Selection for GPIO7
+        msgp8,  24,  26, u8; ///  Mode Selection for GPIO8
+    }
+    0x05, 0x04, 2, RW, GPIO_PULL_EN(gpio_pull_en) { /// GPIO Drive Strength and Pull Control
+        mgpen0,  0,  0, u8; ///  Setting to 0 will lower the drive strength
+        mgpen1,  1,  1, u8; ///  Setting to 0 will lower the drive strength
+        mgpen2,  2,  2, u8; ///  Setting to 0 will lower the drive strength
+        mgpen3,  3,  3, u8; ///  Setting to 0 will lower the drive strength
+        mgpen4,  4,  4, u8; ///  Setting to 0 will lower the drive strength
+        mgpen5,  5,  5, u8; ///  Setting to 0 will lower the drive strength
+        mgpen6,  6,  6, u8; ///  Setting to 0 will lower the drive strength
+        mgpen7,  7,  7, u8; ///  Setting to 0 will lower the drive strength
+        mgpen8,  8,  8, u8; ///  Setting to 0 will lower the drive strength
+    }
+    0x05, 0x08, 2, RW, GPIO_DIR(gpio_dir) { /// GPIO Direction Control Register
+        gpd0,  0,  0, u8; ///   value of 0 means the pin is an output
+        gpd1,  1,  1, u8; ///   value of 0 means the pin is an output
+        gpd2,  2,  2, u8; ///   value of 0 means the pin is an output
+        gpd3,  3,  3, u8; ///   value of 0 means the pin is an output
+        gpd4,  4,  4, u8; ///   value of 0 means the pin is an output
+        gpd5,  5,  5, u8; ///   value of 0 means the pin is an output
+        gpd6,  6,  6, u8; ///   value of 0 means the pin is an output
+        gpd7,  7,  7, u8; ///   value of 0 means the pin is an output
+        gpd8,  8,  8, u8; ///   value of 0 means the pin is an output
+    }
+    0x05, 0x0C, 2, RW, GPIO_OUT(gpio_out) { /// GPIO Data Output Register
+        gop0,  0,  0, u8; ///   show the current output setting 
+        gop1,  1,  1, u8; ///   show the current output setting
+        gop2,  2,  2, u8; ///   show the current output setting
+        gop3,  3,  3, u8; ///   show the current output setting
+        gop4,  4,  4, u8; ///   show the current output setting
+        gop5,  5,  5, u8; ///   show the current output setting
+        gop6,  6,  6, u8; ///   show the current output setting
+        gop7,  7,  7, u8; ///   show the current output setting
+        gop8,  8,  8, u8; ///   show the current output setting
+    }
+    0x05, 0x10, 2, RW, GPIO_IRQE(gpio_irqe) { /// GPIO Interrupt Enable
+        girqe0,  0,  0, u8; ///   selected as interrupt source 
+        girqe1,  1,  1, u8; ///   selected as interrupt source
+        girqe2,  2,  2, u8; ///   selected as interrupt source
+        girqe3,  3,  3, u8; ///   selected as interrupt source
+        girqe4,  4,  4, u8; ///   selected as interrupt source
+        girqe5,  5,  5, u8; ///   selected as interrupt source
+        girqe6,  6,  6, u8; ///   selected as interrupt source
+        girqe7,  7,  7, u8; ///   selected as interrupt source
+        girqe8,  8,  8, u8; ///   selected as interrupt source
+    }
+    0x05, 0x14, 4, RW, GPIO_ISTS(gpio_ists) { /// GPIO Interrupt Status
+        gists0,  0,  0, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+        gists1,  1,  1, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+        gists2,  2,  2, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+        gists3,  3,  3, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+        gists4,  4,  4, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+        gists5,  5,  5, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+        gists6,  6,  6, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+        gists7,  7,  7, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+        gists8,  8,  8, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
+    }
+    0x05, 0x18, 2, RW, GPIO_ISEN(gpio_isen) { /// GPIO Interrupt Sense Selection
+        gisen0,  0,  0, u8; ///   GPIO IRQ Sense selection GPIO input
+        gisen1,  1,  1, u8; ///   GPIO IRQ Sense selection GPIO input
+        gisen2,  2,  2, u8; ///   GPIO IRQ Sense selection GPIO input
+        gisen3,  3,  3, u8; ///   GPIO IRQ Sense selection GPIO input
+        gisen4,  4,  4, u8; ///   GPIO IRQ Sense selection GPIO input
+        gisen5,  5,  5, u8; ///   GPIO IRQ Sense selection GPIO input
+        gisen6,  6,  6, u8; ///   GPIO IRQ Sense selection GPIO input
+        gisen7,  7,  7, u8; ///   GPIO IRQ Sense selection GPIO input
+        gisen8,  8,  8, u8; ///   GPIO IRQ Sense selection GPIO input
+    }
+    0x05, 0x1C, 2, RW, GPIO_IMODE(gpio_imode) { /// GPIO Interrupt Mode (Level / Edge)
+        gimod0,  0,  0, u8; ///   GPIO IRQ Mode selection for GPIO input
+        gimod1,  1,  1, u8; ///   GPIO IRQ Mode selection for GPIO input
+        gimod2,  2,  2, u8; ///   GPIO IRQ Mode selection for GPIO input
+        gimod3,  3,  3, u8; ///   GPIO IRQ Mode selection for GPIO input
+        gimod4,  4,  4, u8; ///   GPIO IRQ Mode selection for GPIO input
+        gimod5,  5,  5, u8; ///   GPIO IRQ Mode selection for GPIO input
+        gimod6,  6,  6, u8; ///   GPIO IRQ Mode selection for GPIO input
+        gimod7,  7,  7, u8; ///   GPIO IRQ Mode selection for GPIO input
+        gimod8,  8,  8, u8; ///   GPIO IRQ Mode selection for GPIO input
+    }
+    0x05, 0x20, 2, RW, GPIO_IBES(gpio_ibes) { /// GPIO Interrupt “Both Edge” Select
+        gibes0,  0,  0, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+        gibes1,  1,  1, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+        gibes2,  2,  2, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+        gibes3,  3,  3, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+        gibes4,  4,  4, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+        gibes5,  5,  5, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+        gibes6,  6,  6, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+        gibes7,  7,  7, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+        gibes8,  8,  8, u8; ///   GPIO IRQ “Both Edge” selection for GPIO input
+    }
+    0x05, 0x24, 4, RW, GPIO_ICLR(gpio_iclr) { /// GPIO Interrupt Latch Clear
+        giclr0,  0,  0, u8; ///   GPIO IRQ latch clear for GPIO input
+        giclr1,  1,  1, u8; ///   GPIO IRQ latch clear for GPIO input
+        giclr2,  2,  2, u8; ///   GPIO IRQ latch clear for GPIO input
+        giclr3,  3,  3, u8; ///   GPIO IRQ latch clear for GPIO input
+        giclr4,  4,  4, u8; ///   GPIO IRQ latch clear for GPIO input
+        giclr5,  5,  5, u8; ///   GPIO IRQ latch clear for GPIO input
+        giclr6,  6,  6, u8; ///   GPIO IRQ latch clear for GPIO input
+        giclr7,  7,  7, u8; ///   GPIO IRQ latch clear for GPIO input
+        giclr8,  8,  8, u8; ///   GPIO IRQ latch clear for GPIO input
+    }
+    0x05, 0x28, 4, RW, GPIO_IDBE(gpio_idbe) { /// GPIO Interrupt De-bounce Enable
+        gidbe0,  0,  0, u8; ///   GPIO IRQ de-bounce enable for GPIO
+        gidbe1,  1,  1, u8; ///   GPIO IRQ de-bounce enable for GPIO
+        gidbe2,  2,  2, u8; ///   GPIO IRQ de-bounce enable for GPIO
+        gidbe3,  3,  3, u8; ///   GPIO IRQ de-bounce enable for GPIO
+        gidbe4,  4,  4, u8; ///   GPIO IRQ de-bounce enable for GPIO
+        gidbe5,  5,  5, u8; ///   GPIO IRQ de-bounce enable for GPIO
+        gidbe6,  6,  6, u8; ///   GPIO IRQ de-bounce enable for GPIO
+        gidbe7,  7,  7, u8; ///   GPIO IRQ de-bounce enable for GPIO
+        gidbe8,  8,  8, u8; ///   GPIO IRQ de-bounce enable for GPIO
+    }
+    0x05, 0x2C, 4, RW, GPIO_RAW(gpio_raw) { /// GPIO Raw State
+        grawp0,  0,  0, u8; ///   GPIO port raw state
+        grawp1,  1,  1, u8; ///   GPIO port raw state
+        grawp2,  2,  2, u8; ///   GPIO port raw state
+        grawp3,  3,  3, u8; ///   GPIO port raw state
+        grawp4,  4,  4, u8; ///   GPIO port raw state
+        grawp5,  5,  5, u8; ///   GPIO port raw state
+        grawp6,  6,  6, u8; ///   GPIO port raw state
+        grawp7,  7,  7, u8; ///   GPIO port raw state
+        grawp8,  8,  8, u8; ///   GPIO port raw state
+    }
 
 /*
     0x19, 0x00, 5, RO, SYS_STATE(sys_state) { /// System State information
