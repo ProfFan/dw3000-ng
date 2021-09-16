@@ -40,6 +40,7 @@
 //! [examples]: https://github.com/braun-robotics/rust-dwm1001/tree/master/examples
 //! [this DWM1001 issue]: https://github.com/braun-robotics/rust-dwm1001/issues/55
 
+#![allow(unused_imports)]
 
 use core::mem::size_of;
 

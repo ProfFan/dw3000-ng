@@ -9,6 +9,7 @@
 //!
 //! [register-level interface]: ../ll/index.html
 
+#![allow(unused_imports)]
 
 use core::{
     fmt,
@@ -40,6 +41,7 @@ use crate::{
 };
 
 /// Entry point to the DW1000 driver API
+#[allow(dead_code)]
 pub struct DW1000<SPI, CS, State> {
     ll:    ll::DW1000<SPI, CS>,
     seq:   Wrapping<u8>,
