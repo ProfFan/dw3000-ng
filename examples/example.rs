@@ -76,13 +76,15 @@ fn main() -> ! {
     rprintln!("dm3000 = {:?}", dw3000);
     */
 
+/*
     // test du registre dev_id
     let dev_id = dw3000.ll().dev_id().read()
         .expect("Failed to read DEV_ID register");
     rprintln!("dev-id = {:?}", dev_id);
+*/
 
-
-    //dw3000.ll.lde_cfg2().write(|w| w.value(0x1607))
+    let panadr = dw3000.get_address();
+    rprintln!("panadr = {:?}", panadr);
 
     loop {
         
