@@ -16,7 +16,7 @@ use stm32f1xx_hal::{
     //delay::Delay,
 };
 
-use dw3000::{hl};
+use dw3000::{hl, mac};
 
 #[entry]
 fn main() -> ! {
@@ -83,8 +83,23 @@ fn main() -> ! {
     rprintln!("dev-id = {:?}", dev_id);
 */
 
+    let antenna_delay = dw3000.get_tx_antenna_delay();
+    rprintln!("tx_antenna_delay = {:#x?}", antenna_delay);
+
     let panadr = dw3000.get_address();
-    rprintln!("panadr = {:?}", panadr);
+    rprintln!("panadr = {:#x?}", panadr);
+
+    let mut dw3000initiated = dw3000.init().unwrap();
+
+    dw3000initiated.set_address( mac::PanId(0x0d57),
+                                 mac::ShortAddress(50))
+                    .expect("Failed to set address.");
+
+    let panadr1 = dw3000initiated.get_address();
+    rprintln!("panadr = {:#x?}", panadr1);
+    
+    let sys_time = dw3000initiated.sys_time();
+    rprintln!("sys_time = {:?}", sys_time);
 
     loop {
         

@@ -70,10 +70,9 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
         }
     }
 
-    // Initialize the DW1000
-
-    /*
+    /// Initialize the DW1000
     pub fn init(mut self) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
+        /*
         // Set AGC_TUNE1. See user manual, section 2.5.5.1.
         self.ll.agc_tune1().write(|w| w.value(0x8870))?;
 
@@ -135,14 +134,14 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
             let ldotune = ldotune_low as u64 | (ldotune_high as u64) << 32;
             self.ll.ldotune().write(|w| w.value(ldotune))?;
         }
-
+        */
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,
             state: Ready,
         })
     }
-    */
+    
 }
 
 impl<SPI, CS> DW1000<SPI, CS, Ready>
@@ -150,24 +149,22 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         SPI: spi::Transfer<u8> + spi::Write<u8>,
         CS:  OutputPin,
 {
-    // Sets the RX and TX antenna delays
-    /*
+    /// Sets the RX and TX antenna delays
     pub fn set_antenna_delay(&mut self, rx_delay: u16, tx_delay: u16)
         -> Result<(), Error<SPI, CS>>
     {
         self.ll
-            .lde_rxantd()
-            .write(|w| w.value(rx_delay))?;
+            .cia_conf()
+            .modify(|_,w| w.rxantd(rx_delay))?;
         self.ll
             .tx_antd()
             .write(|w| w.value(tx_delay))?;
 
         Ok(())
     }
-    */
+    
 
-    // Sets the network id and address used for sending and receiving
-    /*
+    /// Sets the network id and address used for sending and receiving
     pub fn set_address(&mut self, pan_id: mac::PanId, addr: mac::ShortAddress)
         -> Result<(), Error<SPI, CS>>
     {
@@ -181,7 +178,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
 
         Ok(())
     }
-    */
+    
 
     // Send an IEEE 802.15.4 MAC frame
     /*
@@ -816,7 +813,7 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
         SPI: spi::Transfer<u8> + spi::Write<u8>,
         CS:  OutputPin,
 {
-    /*
+    
     /// Returns the TX antenna delay
     pub fn get_tx_antenna_delay(&mut self)
         -> Result<Duration, Error<SPI, CS>>
@@ -828,7 +825,7 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
 
         Ok(tx_antenna_delay)
     }
-    */
+    
 
     /// Returns the network id and address used for sending and receiving
     pub fn get_address(&mut self)
@@ -842,16 +839,17 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
         ))
     }
 
-    /*
+    
     /// Returns the current system time
+    /// 
     pub fn sys_time(&mut self) -> Result<Instant, Error<SPI, CS>> {
         let sys_time = self.ll.sys_time().read()?.value();
 
         // Since hardware timestamps fit within 40 bits, the following should
         // never panic.
-        Ok(Instant::new(sys_time).unwrap())
+        Ok(Instant::new(sys_time.into()).unwrap())
     }
-    */
+    
     
     /// Provides direct access to the register-level API
     ///

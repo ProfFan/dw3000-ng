@@ -1199,7 +1199,6 @@ impl_register! {
         value,  0x00,  0x3C, u128; ///  used to control the output voltage levels of the on chip LDOs
     }
     0x07, 0x48, 4, RW, LDO_CTRL(ldo_ctrl) { /// LDO control
-
         value,  0,  31, u32; ///  LDO control
     }
     0x07, 0x51, 1, RW, LDO_RLOAD(ldo_rload) { /// LDO tuning register
@@ -1233,15 +1232,17 @@ impl_register! {
         autocal_done, 12, 12, u8; /// Auto-calibration of the PG_DELAY  has completed. 
     }
     0x08, 0x18, 2, RW, PG_TEST(pg_test) { /// Transmitter Calibration – Pulse Generator test
+        value, 0, 15, u16; /// Pulse Generator test
     }
     0x08, 0x1C, 2, RO, PG_CAL_TARGET(pg_cal_target) { /// Transmitter Calibration – Pulse Generator count target value 
-        pg_target, 0, 11, u16; /// Pulse generator target value of PG_COUNT at which point PG auto cal will complete. 
+        value, 0, 11, u16; /// Pulse generator target value of PG_COUNT at which point PG auto cal will complete. 
     }
 
     /*******************************************************************/
     /*****************     FS_CTRL REGISTER    *************************/
     /*******************************************************************/
     0x09, 0x00, 2, RW, PLL_CFG(pll_cfg) { /// PLL configuration
+        value, 0, 15, u16; /// PLL configuration
     }
     0x09, 0x04, 1, RW, PLL_CC(pll_cc) { /// PLL coarse code – starting code for calibration procedure
         ch9_code, 0,  7, u8; /// PLL calibration coarse code for channel 5. 
@@ -1253,14 +1254,12 @@ impl_register! {
         cal_en,     8, 8, u8; /// PLL  calibration  enable  bit.  
     }
     0x09, 0x14, 1, RW, XTAL(xtal) { /// Frequency synthesiser – Crystal trim
-        xtal_trim, 0, 7, u8; /// Crystal Trim.  
+        value, 0, 7, u8; /// Crystal Trim.  
     }
 
     /*******************************************************************/
     /*********************     AON REGISTER    *************************/
     /*******************************************************************/
-    0x0A, 0x00, 23, RO, AON(aon) { /// Always on system control interface block
-    }
     0x0A, 0x00, 3, RW, AON_DIG_CFG(aon_dig_cfg) { /// AON wake up configuration register
         onw_aon_dld, 0,  0, u8; /// On Wake-up download the AON array.
         onw_run_sar, 1,  1, u8; /// On Wake-up Run the (temperature and voltage) Analog-to-Digital Convertors.  
@@ -1278,10 +1277,13 @@ impl_register! {
         dca_enab,     7, 7, u8; /// Direct  AON  memory  access  enable  bit.    
     }
     0x0A, 0x08, 1, RW, AON_RDATA(aon_rdata) { /// AON direct access read data result
+        value, 0, 7, u8; /// AON direct access read data result
     }
     0x0A, 0x0C, 2, RW, AON_ADDR(aon_addr) { /// AON direct access address
+        value, 0, 15, u16; /// AON direct access address
     }
     0x0A, 0x10, 1, RW, AON_WDATA(aon_wdata) { /// AON direct access write data
+        value, 0, 7, u8; /// AON direct access write data
     }
     0x0A, 0x14, 1, RW, AON_CFG(aon_cfg) { /// AON configuration register
         sleep_en,   0, 0, u8; /// Sleep enable configuration bit.  
@@ -1295,9 +1297,8 @@ impl_register! {
     /*******************************************************************/
     /******************     OTP_IF REGISTER    *************************/
     /*******************************************************************/
-    0x0B, 0x00, 23, RO, OTP_IF(otp_if) { /// One Time Programmable memory interface
-    } 
     0x0B, 0x00, 4, RW, OTP_WDATA(otp_wdata) { /// OTP data to program to a particular address
+        value, 0, 31, u32; /// OTP data to program to a particular address
     }
     0x0B, 0x04, 4, RW, OTP_ADDR(otp_addr) { /// OTP address to which to program the data
         otp_addr, 0, 10, u16; /// Address within OTP memory that will be accessed read or written.  
@@ -1319,8 +1320,10 @@ impl_register! {
         otp_vpp_ok,    1,  1, u8; /// OTP Programming Voltage OK.  
     }
     0x0B, 0x10, 4, RO, OTP_RDATA(otp_rdata) { /// OTP data read from given address
+        value, 0, 31, u32; /// OTP data read from given address
     }
     0x0B, 0x14, 4, RW, OTP_SRDATA(otp_srdata) { /// OTP Special Register (SR) read data
+        value, 0, 31, u32; /// OTP Special Register (SR) read data
     }
 
     /*******************************************************************/
@@ -1342,6 +1345,7 @@ impl_register! {
         sts1_toast, 55,  63, u16; /// STS second Time of Arrival status indicator.  
     }
     0x0C, 0x18, 6, RO, TDOA(tdoa) { /// The TDoA between the two CIRs 
+        value, 0, 47, u64; /// The TDoA between the two CIRs
     }
     0x0C, 0x1E, 2, RO, PDOA(pdoa) { /// The PDoA between the two CIRs 
         pdoa,      0, 13, u16; /// Phase difference result.
@@ -1459,56 +1463,54 @@ impl_register! {
         sts_pgr_en,   31, 31, u8; /// Test the growth rate of the STS based CIR to the earlier growth rate of the preamble based CIR.  
     }
     0x0E, 0x1A, 2, RO, CIA_ADJUST(cia_adjust) { /// User adjustment to the PDoA 
-        pdoa_adj, 0, 13, u8; /// Adjustment value to account for non-balanced antenna circuits.  
+        value, 0, 13, u8; /// Adjustment value to account for non-balanced antenna circuits.  
     }
 
     /*******************************************************************/
     /*****************     DIG_DIAG REGISTER    ************************/
     /*******************************************************************/    
-    0x0F, 0x00, 79, RO, DIG_DIAG(dig_diag) { /// Digital diagnostics interface 
-    }
     0x0F, 0x00, 1, RW, EVC_CTRL(evc_ctrl) { /// Event counter control 
         evc_en,  0, 0, u8; /// Event Counters Enable.  
         evc_clr, 1, 1, u8; /// Event Counters Clear.   
     }
     0x0F, 0x04, 2, RO, EVC_PHE(evc_phe) { /// PHR error counter
-        evc_phe, 0, 11, u16; /// PHR Error Event Counter.  
+        value, 0, 11, u16; /// PHR Error Event Counter.  
     }
     0x0F, 0x06, 2, RO, EVC_RSE(evc_rse) { /// RSD error counter 
-        evc_rse, 0, 11, u16; /// Reed Solomon decoder (Sync Loss) Error Event Counter.   
+        value, 0, 11, u16; /// Reed Solomon decoder (Sync Loss) Error Event Counter.   
     }
     0x0F, 0x08, 2, RO, EVC_FCG(evc_fcg) { /// Frame check sequence good counter
-        evc_fcg, 0, 11, u16; /// Frame Check Sequence Good Event Counter.  
+        value, 0, 11, u16; /// Frame Check Sequence Good Event Counter.  
     }
     0x0F, 0x08, 2, RO, EVC_FCE(evc_fce) { /// Frame Check Sequence error counter 
-        evc_fce, 0, 11, u16; /// Frame Check Sequence Error Event Counter. 
+        value, 0, 11, u16; /// Frame Check Sequence Error Event Counter. 
     }
     0x0F, 0x0C, 1, RO, EVC_FFR(evc_ffr) { /// Frame filter rejection counter 
-        evc_ffr, 0,  7, u8; /// Frame Filter Rejection Event Counter.  
+        value, 0,  7, u8; /// Frame Filter Rejection Event Counter.  
     }
     0x0F, 0x0E, 1, RO, EVC_OVR (evc_ovr) { /// RX overrun error counter   
-        evc_ovr, 0,  7, u8; /// RX Overrun Error Event Counter. 
+        value, 0,  7, u8; /// RX Overrun Error Event Counter. 
     }
     0x0F, 0x10, 2, RO, EVC_STO(evc_sto) { /// SFD timeout counter 
-        evc_sto, 0, 11, u16; /// SFD timeout errors Event Counter.  
+        value, 0, 11, u16; /// SFD timeout errors Event Counter.  
     }
     0x0F, 0x12, 2, RO, EVC_PTO(evc_pto) { /// Preamble timeout counter 
-        evc_pto, 0, 11, u16; /// Preamble  Detection  Timeout  Event  Counter.    
+        value, 0, 11, u16; /// Preamble  Detection  Timeout  Event  Counter.    
     }
     0x0F, 0x14, 1, RO, EVC_FWTO(evc_fwto) { /// RX frame wait timeout counter 
-        evc_fwto, 0, 7, u8; /// RX  Frame  Wait  Timeout  Event  Counter.   
+        value, 0, 7, u8; /// RX  Frame  Wait  Timeout  Event  Counter.   
     }
     0x0F, 0x16, 2, RO, EVC_TXFS(evc_txfs) { /// TX frame sent counter 
-        evc_txfs, 0, 11, u16; /// TX Frame Sent Event Counter. 
+        value, 0, 11, u16; /// TX Frame Sent Event Counter. 
     }
     0x0F, 0x18, 1, RO, EVC_HPW(evc_hpw) { /// Half period warning counter 
-        evc_hpw, 0, 7, u8; /// Half Period Warning Event Counter.  
+        value, 0, 7, u8; /// Half Period Warning Event Counter.  
     }
     0x0F, 0x1A, 1, RO, EVC_SWCE(evc_swce) { /// SPI write CRC error counter 
-        evc_swce, 0, 7, u8; /// SPI write CRC error counter.  
+        value, 0, 7, u8; /// SPI write CRC error counter.  
     }
     0x0F, 0x1C, 8, RO, EVC_RES1(evc_res1) { /// Digital diagnostics reserved area 1  
-        evc_res1, 0, 63, u64; /// Digital diagnostics reserved area 1
+        value, 0, 63, u64; /// Digital diagnostics reserved area 1
     }
     0x0F, 0x24, 4, RW, DIAG_TMC(diag_tmc) { /// Test mode control register 
         tx_pstm,    4,  4, u8; /// Transmit Power Spectrum Test Mode.
@@ -1517,13 +1519,13 @@ impl_register! {
         cia_run,   26, 26, u8; /// Run the CIA manually. 
     }
     0x0F, 0x28, 1, RO, EVC_CPQE(evc_cpqe) { /// STS quality error counter 
-        evc_cpqe, 0, 7, u8; /// STS quality error counter 
+        value, 0, 7, u8; /// STS quality error counter 
     }
     0x0F, 0x2A, 1, RO, EVC_VWARN(evc_vwarn) { /// Low voltage warning error counter 
-        evc_vwarn, 0, 7, u8; /// Low voltage warning error counter 
+        value, 0, 7, u8; /// Low voltage warning error counter 
     }
     0x0F, 0x2C, 1, RO, SPI_MODE(spi_mode) { /// SPI mode 
-        spi_mode, 0, 1, u8; /// SPI mode
+        value, 0, 1, u8; /// SPI mode
     }
     0x0F, 0x30, 4, RO, SYS_STATE(sys_state) { /// System states *
         tx_state,    0,  3, u8; /// Current Transmit State Machine value
@@ -1531,20 +1533,18 @@ impl_register! {
         pmsc_state, 16, 23, u8; /// Current PMSC State Machine value
     }
     0x0F, 0x3C, 1, RO, FCMD_STAT(fcmd_stat) { /// Fast command status 
-        fcmd_stat, 0, 4, u8; /// Fast command status. 
+        value, 0, 4, u8; /// Fast command status. 
     }
     0x0F, 0x48, 4, RO, CTR_DBG(ctr_dbg) { /// Current value of  the low 32-bits of the STS IV 
-        ctr_dbg, 0, 31, u32; /// Current value of  the low 32-bits of the STS IV 
+        value, 0, 31, u32; /// Current value of  the low 32-bits of the STS IV 
     }
     0x0F, 0x4C, 1, RO, SPICRCINIT(spicrcinit) { /// SPI CRC LFSR initialisation code
-        spicrcinit, 0, 7, u8; /// SPI CRC LFSR initialisation code for the SPI CRC function. 
+        value, 0, 7, u8; /// SPI CRC LFSR initialisation code for the SPI CRC function. 
     }
 
     /*******************************************************************/
     /********************     PMSC REGISTER    *************************/
     /*******************************************************************/
-    0x11, 0x00, 24, RO, PMSC_CTRL(pmsc_ctrl) { /// Power management, timing and seq control
-    }
     0x11, 0x00, 2, RW, SOFT_RST(soft_rst) { /// Soft reset of the device blocks
         arm_rst,  0, 0, u8; /// Soft ARM reset
         prgn_rst, 1, 1, u8; /// Soft PRGN reset
@@ -1579,7 +1579,7 @@ impl_register! {
         lp_clk_div,   26, 31, u8; /// Kilohertz clock divisor.     
     }
     0x11, 0x12, 4, RW, TXFSEQ(txfseq) { /// PMSC fine grain TX sequencing control
-        txfineseq, 0, 31, u32; /// PMSC fine grain TX sequencing control
+        value, 0, 31, u32; /// PMSC fine grain TX sequencing control
     }
     0x11, 0x16, 4, RW, LED_CTRL(led_ctrl) { /// PMSC fine grain TX sequencing control
         blink_tim,   0,  7, u8; /// Blink time count value.  
@@ -1591,7 +1591,7 @@ impl_register! {
         sniff_off,  8, 15, u8; /// SNIFF Mode OFF time specified in μs.  
     } 
     0x11, 0x1F, 2, RW, BIAS_CTRL(bias_ctrl) { /// Analog blocks’ calibration values
-        bias_ctrl, 0, 13, u16; /// Analog blocks’ calibration values
+        value, 0, 13, u16; /// Analog blocks’ calibration values
     }
 
     /*******************************************************************/
@@ -1634,19 +1634,19 @@ impl_register! {
     /*****************     INDIRECT_PTR_A REGISTER    ******************/
     /*******************************************************************/
     0x1D, 0x00, 1, RW, INDIRECT_PTR_A(indirect_ptr_a) { /// Indirect pointer A 
+        value, 0, 7, u8; /// Indirect pointer A 
     }
 
     /*******************************************************************/
     /*****************     INDIRECT_PTR_B REGISTER    ******************/
     /*******************************************************************/
     0x1E, 0x00, 1, RW, INDIRECT_PTR_B(indirect_ptr_b) { /// Indirect pointer B 
+        value, 0, 7, u8; /// Indirect pointer B 
     }
 
     /*******************************************************************/
     /*****************     IN_PTR_CFG REGISTER    **********************/
     /*******************************************************************/
-    0x1F, 0x00, 19, RO, IN_PTR_CFG(in_ptr_cfg) { /// Indirect pointer configuration and fast interrupt status register
-    }
     0x1F, 0x00, 1, RO, FINT_STAT(fint_stat) { /// Fast System Event Status Register
         txok,       0,  0,  u8; /// TXFRB or TXPRS or TXPHS or TXFRS.  
         cca_fail,   1,  1,  u8; /// AAT or CCA_FAIL. 
@@ -1669,7 +1669,6 @@ impl_register! {
     0x1F, 0x10, 2, RW, PTR_OFFSET_B(ptr_offset_b) { /// Offset address of the register to be accessed through indirect pointer B 
         ptrb_ofs,   0, 14,  u16; /// Offset address of the register to be accessed through indirect pointer B 
     }
-
 }
 
 /// Transmit Data Buffer
