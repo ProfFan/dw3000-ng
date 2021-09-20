@@ -288,8 +288,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
     }
     */
 
-    // Attempt to receive an IEEE 802.15.4 MAC frame
-    /*
+    /// Attempt to receive an IEEE 802.15.4 MAC frame
     pub fn receive(mut self, config: RxConfig)
         -> Result<DW1000<SPI, CS, Receiving>, Error<SPI, CS>>
     {
@@ -297,6 +296,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         // receiving anything, after receiving one good frame. Reset the
         // receiver to make sure its in a valid state before attempting to
         // receive anything.
+        /*
         self.ll
             .pmsc_ctrl0()
             .modify(|_, w|
@@ -405,14 +405,14 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
             .modify(|_, w|
                 w.rxenab(0b1)
             )?;
-
+            */
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,
             state: Receiving { finished: false },
         })
     }
-    */
+    
     /*
     /// Enables transmit interrupts for the events that `wait` checks
     ///

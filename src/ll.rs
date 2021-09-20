@@ -37,7 +37,8 @@ pub struct DW1000<SPI, CS> {
     chip_select: CS,
 }
 
-impl<SPI, CS> DW1000<SPI, CS> {
+impl<SPI, CS> DW1000<SPI, CS> 
+{
     /// Create a new instance of `DW1000`
     ///
     /// Requires the SPI peripheral and the chip select pin that are connected
@@ -47,6 +48,28 @@ impl<SPI, CS> DW1000<SPI, CS> {
             spi,
             chip_select,
         }
+    }
+
+    /// commentaire
+    pub fn fast_command(&mut self, fast: u8)
+            -> Result<(), Error<SPI, CS>>
+        where
+            SPI: spi::Transfer<u8> + spi::Write<u8>,
+            CS:  OutputPin,
+        {
+        let mut buffer = [0];
+        buffer[0] =
+        ((0x1            << 7) & 0x80) |
+        ((fast   << 1) & 0x3e) | 0x1;
+
+        self.chip_select.set_low()
+            .map_err(|err| Error::ChipSelect(err))?;
+        <SPI as spi::Write<u8>>::write(&mut self.spi, &buffer)
+            .map_err(|err| Error::Write(err))?;
+        self.chip_select.set_high()
+            .map_err(|err| Error::ChipSelect(err))?;
+
+        Ok(())
     }
 }
 
@@ -104,6 +127,7 @@ impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
 
         Ok(())
     }
+
 
     /// Modify the register
     pub fn modify<F>(&mut self, f: F)
@@ -180,7 +204,7 @@ impl<SPI, CS> fmt::Debug for Error<SPI, CS>
 fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
     let sub_id = R::SUB_ID > 0;
 
-    // bool write definit si on est en lecture ou e ecriture (premier bit)
+    // bool write definit si on est en lecture ou en ecriture (premier bit)
     // sub_id est un bool qui definit si on est en full ou short command
     // on commmence par du full address !
     buffer[0] =
@@ -188,6 +212,13 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
         (((sub_id as u8) << 6) & 0x40) |
         ((R::ID          << 1) & 0x3e) |
         (((R::SUB_ID as u8)) >> 6);
+
+// fast command buffer
+/*
+    buffer[0] =
+        (((0x1            << 7) & 0x80) |
+        ((fast_command   << 1) & 0x3e) | 0x1;
+*/
 
     if !sub_id {
         return 1;

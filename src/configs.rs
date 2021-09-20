@@ -119,7 +119,7 @@ pub enum PulseRepetitionFrequency {
 
 impl Default for PulseRepetitionFrequency {
     fn default() -> Self {
-        PulseRepetitionFrequency::Mhz16
+        PulseRepetitionFrequency::Mhz64
     }
 }
 
@@ -196,7 +196,7 @@ pub enum PreambleLength {
 
 impl Default for PreambleLength {
     fn default() -> Self {
-        PreambleLength::Symbols128
+        PreambleLength::Symbols64
     }
 }
 
