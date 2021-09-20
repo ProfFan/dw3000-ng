@@ -19,7 +19,7 @@ use stm32f1xx_hal::{
     //delay::Delay,
 };
 
-use dw1000::{hl, TxConfig, mac, ranging};
+use dw3000::{configs, hl};
 
 #[entry]
 fn main() -> ! {
@@ -85,8 +85,8 @@ fn main() -> ! {
         .expect("Failed to enable RX interrupts");
     */
     // [1] https://github.com/Decawave/dwm1001-examples
-    //dw1000.set_antenna_delay(16456, 16300)
-    //    .expect("Failed to set antenna delay");
+    dw1000.set_antenna_delay(16456, 16300)
+        .expect("Failed to set antenna delay");
 
     // Set network address
     /*
@@ -105,12 +105,6 @@ fn main() -> ! {
     //task_timer.start_count_down(1.hz());
 
     
-
-
-
-
-
-
 
 
     loop {

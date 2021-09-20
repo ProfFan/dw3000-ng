@@ -89,8 +89,10 @@ fn main() -> ! {
     rprintln!("ainit2idle = {:?}", ainit2idle);
     rprintln!("onw_go2idle = {:?}", onw_go2idle);
 
-    dw3000.ll().seq_ctrl().write(|w| w.ainit2idle(1)).unwrap();
-    dw3000.ll().aon_dig_cfg().write(|w| w.onw_go2idle(1)).unwrap();
+    dw3000.ll().seq_ctrl()
+                .write(|w| w.ainit2idle(1)).unwrap();
+    dw3000.ll().aon_dig_cfg()
+                .write(|w| w.onw_go2idle(1)).unwrap();
     
     while dw3000.ll().sys_status().read().unwrap().rcinit() == 0 {
         delay.delay_ms(2u8);

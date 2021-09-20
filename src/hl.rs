@@ -72,46 +72,12 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
 
     /// Initialize the DW1000
     pub fn init(mut self) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
-        /*
-        // Set AGC_TUNE1. See user manual, section 2.5.5.1.
-        self.ll.agc_tune1().write(|w| w.value(0x8870))?;
+        
+        // no need for basic initialisation anymore !!!
 
-        // Set AGC_TUNE2. See user manual, section 2.5.5.2.
-        self.ll.agc_tune2().write(|w| w.value(0x2502A907))?;
-
-        // Set DRX_TUNE2. See user manual, section 2.5.5.3.
-        self.ll.drx_tune2().write(|w| w.value(0x311A002D))?;
-
-        // Set NTM. See user manual, section 2.5.5.4. This improves performance
-        // in line-of-sight conditions, but might not be the best choice if non-
-        // line-of-sight performance is important.
-        self.ll.lde_cfg1().modify(|_, w| w.ntm(0xD))?;
-
-        // Set LDE_CFG2. See user manual, section 2.5.5.5.
-        self.ll.lde_cfg2().write(|w| w.value(0x1607))?;
-
-        // Set TX_POWER. See user manual, section 2.5.5.6.
-        self.ll.tx_power().write(|w| w.value(0x0E082848))?;
-
-        // Set RF_TXCTRL. See user manual, section 2.5.5.7.
-        self.ll.rf_txctrl().modify(|_, w|
-            w
-                .txmtune(0b1111)
-                .txmq(0b111)
-        )?;
-
-        // Set TC_PGDELAY. See user manual, section 2.5.5.8.
-        self.ll.tc_pgdelay().write(|w| w.value(0xC0))?;
-
-        // Set FS_PLLTUNE. See user manual, section 2.5.5.9.
-        self.ll.fs_plltune().write(|w| w.value(0xBE))?;
-
-        // Set LDELOAD. See user manual, section 2.5.5.10.
-        self.ll.pmsc_ctrl0().modify(|_, w| w.sysclks(0b01))?;
-        self.ll.otp_ctrl().modify(|_, w| w.ldeload(0b1))?;
-        while self.ll.otp_ctrl().read()?.ldeload() == 0b1 {}
-        self.ll.pmsc_ctrl0().modify(|_, w| w.sysclks(0b00))?;
-
+        // Much of the systeme conf is conf in SYS_CFG register
+        // page 26 section 2.5.2
+/*
         // Set LDOTUNE. See user manual, section 2.5.5.11.
         self.ll.otp_addr().write(|w| w.value(0x004))?;
         self.ll.otp_ctrl().modify(|_, w|
@@ -134,7 +100,7 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
             let ldotune = ldotune_low as u64 | (ldotune_high as u64) << 32;
             self.ll.ldotune().write(|w| w.value(ldotune))?;
         }
-        */
+ */   
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,
