@@ -5,18 +5,19 @@
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 
-//use stm32f1::stm32f103;
-//use stm32f1::stm32f103::interrupt;
-
 use cortex_m_rt::entry;
 use stm32f1xx_hal::{
+    delay::Delay,
     pac,
     prelude::*,
     spi::{Spi, Mode, Phase, Polarity},
-    //delay::Delay,
 };
 
+use embedded_hal::digital::v2::OutputPin;
+
 use dw3000::{hl, mac};
+
+
 
 #[entry]
 fn main() -> ! {
@@ -30,7 +31,7 @@ fn main() -> ! {
 
     // Get access to the device specific peripherals from the peripheral access crate
     let dp = pac::Peripherals::take().unwrap();
-    //let cp = cortex_m::Peripherals::take().unwrap();
+    let cp = cortex_m::Peripherals::take().unwrap();
 
     // Take ownership over the raw flash and rcc devices and convert them into the corresponding
     // HAL structs
@@ -61,45 +62,56 @@ fn main() -> ! {
     };
     let spi = Spi::spi1(dp.SPI1, pins, &mut afio.mapr, spi_mode, 100.khz(), clocks, &mut rcc.apb2);
 
-    //let mut delay = Delay::new(cp.SYST, clocks);
+    /****************************************************************************************/
+    /*****************              CONFIGURATION DU RESET              *********************/
+    /****************************************************************************************/
+
+    let mut delay = Delay::new(cp.SYST, clocks);
+
+    let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
 
     /****************************************************************************************/
     /*****************              CONFIGURATION du DW3000               *******************/
     /****************************************************************************************/
 
-    let mut dw3000 = hl::DW1000::new(spi, cs);
-    rprintln!("dm3000 = {:?}", dw3000);
-
-    /* // BLOQUE !!!!!
     let mut dw3000 = hl::DW1000::new(spi, cs).init()
-        .expect("Failed to initialize DW1000");
+                        .expect("Failed init.");
     rprintln!("dm3000 = {:?}", dw3000);
-    */
 
-/*
-    // test du registre dev_id
-    let dev_id = dw3000.ll().dev_id().read()
-        .expect("Failed to read DEV_ID register");
-    rprintln!("dev-id = {:?}", dev_id);
-*/
 
-    let antenna_delay = dw3000.get_tx_antenna_delay();
-    rprintln!("tx_antenna_delay = {:#x?}", antenna_delay);
+    // rst_n.set_low().unwrap();
+    // rst_n.set_high().unwrap();
 
-    let panadr = dw3000.get_address();
-    rprintln!("panadr = {:#x?}", panadr);
+    delay.delay_ms(2u8);
 
-    let mut dw3000initiated = dw3000.init().unwrap();
+    let ainit2idle = dw3000.ll().seq_ctrl().read().unwrap().ainit2idle();
+    let onw_go2idle = dw3000.ll().aon_dig_cfg().read().unwrap().onw_go2idle();
+    rprintln!("ainit2idle = {:?}", ainit2idle);
+    rprintln!("onw_go2idle = {:?}", onw_go2idle);
 
-    dw3000initiated.set_address( mac::PanId(0x0d57),
-                                 mac::ShortAddress(50))
-                    .expect("Failed to set address.");
-
-    let panadr1 = dw3000initiated.get_address();
-    rprintln!("panadr = {:#x?}", panadr1);
+    dw3000.ll().seq_ctrl().write(|w| w.ainit2idle(1)).unwrap();
+    dw3000.ll().aon_dig_cfg().write(|w| w.onw_go2idle(1)).unwrap();
     
-    let sys_time = dw3000initiated.sys_time();
-    rprintln!("sys_time = {:?}", sys_time);
+    while dw3000.ll().sys_status().read().unwrap().rcinit() == 0 {
+        delay.delay_ms(2u8);
+    };
+
+    let ainit2idle = dw3000.ll().seq_ctrl().read().unwrap().ainit2idle();
+    let onw_go2idle = dw3000.ll().aon_dig_cfg().read().unwrap().onw_go2idle();
+    rprintln!("ainit2idle = {:?}", ainit2idle);
+    rprintln!("onw_go2idle = {:?}", onw_go2idle);
+    if (ainit2idle == 0) || (onw_go2idle == 0) {
+        rprintln!("Init failed. Impossible to reach INIT_PLL.");
+    } 
+    delay.delay_ms(2u8);
+
+    rprintln!("Is in Ready / IDLE_PLL.");
+
+
+    dw3000.set_address( mac::PanId(0x0d57),
+                        mac::ShortAddress(50))
+            .expect("Failed to set address.");
+
 
     loop {
         

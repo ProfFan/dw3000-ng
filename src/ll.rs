@@ -186,7 +186,7 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
     buffer[0] =
         (((write as u8)  << 7) & 0x80) |
         (((sub_id as u8) << 6) & 0x40) |
-        ((R::ID          << 1)  & 0x3e) |
+        ((R::ID          << 1) & 0x3e) |
         (((R::SUB_ID as u8)) >> 6);
 
     if !sub_id {
@@ -1263,18 +1263,18 @@ impl_register! {
     0x0A, 0x00, 3, RW, AON_DIG_CFG(aon_dig_cfg) { /// AON wake up configuration register
         onw_aon_dld, 0,  0, u8; /// On Wake-up download the AON array.
         onw_run_sar, 1,  1, u8; /// On Wake-up Run the (temperature and voltage) Analog-to-Digital Convertors.  
-        onw_go2idle, 8,  8, u8; /// On Wake-up go to  IDLE_PLL state. 
+        onw_go2idle, 8,  8, u8; /// On Wake-up go to IDLE_PLL state. 
         onw_go2rx,   9,  9, u8; /// On Wake-up go to RX. 
         onw_pgfcal, 11, 11, u8; /// On Wake-up perform RX calibration
     }
     0x0A, 0x04, 1, RW, AON_CTRL(aon_ctrl) { /// AON control register
         restore,      0, 0, u8; /// Copy the user configurations from the AON memory to the host interface register set.  
         save,         1, 1, u8; /// Copy the user configurations from the host interface register  set  into  the  AON  memory.  
-        cfg_upload,   2, 2, u8; /// Upload  the  AON  block  configurations  to  the  AON.    
+        cfg_upload,   2, 2, u8; /// Upload the AON block configurations to the AON.    
         dca_read,     3, 3, u8; /// Direct AON memory access read.  
         dca_write,    4, 4, u8; /// Direct AON memory write access
         dca_write_hi, 5, 5, u8; /// Direct AON memory write access. Needs to be set when using address > 0xFF
-        dca_enab,     7, 7, u8; /// Direct  AON  memory  access  enable  bit.    
+        dca_enab,     7, 7, u8; /// Direct AON memory access enable bit.    
     }
     0x0A, 0x08, 1, RW, AON_RDATA(aon_rdata) { /// AON direct access read data result
         value, 0, 7, u8; /// AON direct access read data result
