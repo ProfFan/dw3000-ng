@@ -80,13 +80,22 @@ fn main() -> ! {
                         .expect("Failed init.");
     rprintln!("dm3000 = {:?}", dw3000);
 
+    rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
+    dw3000.ll().rx_cal().write(|w| w.cal_mode(1)).unwrap();
+    rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
 
+    rprintln!("onw_pgfcal = {:#x?}",dw3000.ll().aon_dig_cfg().read().unwrap().onw_pgfcal());
+    dw3000.ll().aon_dig_cfg()
+        .modify(|_,w| w.onw_pgfcal(1)).unwrap();    
+    rprintln!("onw_pgfcal = {:#x?}",dw3000.ll().aon_dig_cfg().read().unwrap().onw_pgfcal());
+
+/*
     dw3000.set_address( mac::PanId(0x0d57),
                         mac::ShortAddress(50))
             .expect("Failed to set address.");
 
     let panadr = dw3000.get_address();
-    rprintln!("panadr = {:#x?}", panadr);
+    rprintln!("panadr = {:#x?}", panadr);*/
 
     loop {
         

@@ -113,7 +113,7 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
         while self.ll.sys_status()
                 .read()?
                 .rcinit() == 0 
-        {   };
+        {   }
 
         Ok(DW1000 {
             ll:    self.ll,
@@ -160,8 +160,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
     }
     
 
-    // Send an IEEE 802.15.4 MAC frame
-    /*
+    /// Send an IEEE 802.15.4 MAC frame
     pub fn send(mut self,
         data:         &[u8],
         destination:  Option<mac::Address>,
@@ -183,7 +182,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         // all subsequent send operations will fail. Let's disable the
         // transceiver and force the chip into IDLE mode to make sure that
         // doesn't happen.
-        self.force_idle()?;
+        
+        //self.force_idle()?;
 
         let seq = self.seq.0;
         self.seq += Wrapping(1);
@@ -208,8 +208,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         delayed_time.map(|time| {
             self.ll
                 .dx_time()
-                .write(|w|
-                    w.value(time.value())
+                .write(|w| // 32-bits value of the most significant bits
+                    w.value( (time.value() >> 8) as u32 )
                 )
         });
 
@@ -227,41 +227,40 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
 
                 w
             })?;
+        let txb_offset = 0; // no offset in TX_BUFFER
+        let mut txb_offset_errata = txb_offset;
+        if txb_offset > 127 { // Errata in DW3000, see page 86 
+            txb_offset_errata += 128;
+        }
         self.ll
             .tx_fctrl()
             .modify(|_, w| {
-                let tflen = len as u8 + 2;
+                let txflen = len as u16 + 2;
                 w
-                    .tflen(tflen) // data length + two-octet CRC
-                    .tfle(0)      // no non-standard length extension
-                    .txboffs(0)   // no offset in TX_BUFFER
+                    .txflen(txflen) // data length + two-octet CRC
                     .txbr(config.bitrate as u8) // configured bitrate
                     .tr(config.ranging_enable as u8) // configured ranging bit
-                    .txprf(config.pulse_repetition_frequency as u8) // configured PRF
-                    .txpsr(((config.preamble_length as u8) & 0b1100) >> 2) // first two bits of configured preamble length
-                    .pe((config.preamble_length as u8) & 0b0011) // last two bits of configured preamble length
-            })?;
+                    .txpsr(config.preamble_length as u8) // first two bits of configured preamble length
+                    .txb_offset(txb_offset_errata)   // no offset in TX_BUFFER
+                    .fine_plen(0) // Not implemented, replacing txpsr
+                })?;
 
         // Set the channel and sfd settings
         self.ll
             .chan_ctrl()
             .modify(|_, w| {
                 w
-                    .tx_chan(config.channel as u8)
-                    .rx_chan(config.channel as u8)
-                    .dwsfd((config.sfd_sequence == SfdSequence::Decawave || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
-                    .rxprf(config.pulse_repetition_frequency as u8)
-                    .tnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
-                    .rnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
+                    .rf_chan(config.channel as u8)
+                    .sfd_type((config.sfd_sequence == SfdSequence::IEEE) as u8)
                     .tx_pcode(config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency))
                     .rx_pcode(config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency))
             })?;
-
+/*
         match config.sfd_sequence {
-            SfdSequence::IEEE => {}, // IEEE has predefined sfd lengths and the register has no effect.
-            SfdSequence::Decawave => self.ll.sfd_length().write(|w| w.value(8))?, // This isn't entirely necessary as the Decawave8 settings in chan_ctrl already force it to 8
-            SfdSequence::DecawaveAlt => self.ll.sfd_length().write(|w| w.value(16))?, // Set to 16
-            SfdSequence::User => {}, // Users are responsible for setting the lengths themselves
+            SfdSequence::IEEEshort => {}, // IEEE has predefined sfd lengths and the register has no effect.
+            SfdSequence::Decawave8 => self.ll.sfd_length().write(|w| w.value(8))?, // This isn't entirely necessary as the Decawave8 settings in chan_ctrl already force it to 8
+            SfdSequence::Decawave16 => self.ll.sfd_length().write(|w| w.value(16))?, // Set to 16
+            SfdSequence::IEEE => {}, // Users are responsible for setting the lengths themselves
         }
 
         // Tune for the correct channel
@@ -279,14 +278,15 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
                 if delayed_time.is_some() { w.txdlys(0b1) } else { w }
                     .txstrt(0b1)
             )?;
-
+*/
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,
             state: Sending { finished: false },
         })
+        
     }
-    */
+    
 
     // Attempt to receive an IEEE 802.15.4 MAC frame
     /*
@@ -413,7 +413,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         })
     }
     */
-    /*
+    
     /// Enables transmit interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
@@ -421,11 +421,19 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
     pub fn enable_tx_interrupts(&mut self)
         -> Result<(), Error<SPI, CS>>
     {
-        self.ll.sys_mask().modify(|_, w| w.mtxfrs(0b1))?;
+        self.ll
+            .sys_enable()
+            .modify(|_, w| 
+                w
+                    .txfrb_en(0b1)
+                    .txprs_en(0b1)
+                    .txphs_en(0b1)
+                    .txfrs_en(0b1)
+                )?;
         Ok(())
     }
-    */
-    /*
+    
+    
     /// Enables receive interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
@@ -433,24 +441,27 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         -> Result<(), Error<SPI, CS>>
     {
         self.ll()
-            .sys_mask()
+            .sys_enable()
             .modify(|_, w|
                 w
-                    .mrxdfr(0b1)
-                    .mrxfce(0b1)
-                    .mrxphe(0b1)
-                    .mrxrfsl(0b1)
-                    .mrxrfto(0b1)
-                    .mrxovrr(0b1)
-                    .mrxpto(0b1)
-                    .mrxsfdto(0b1)
-                    .maffrej(0b1)
-                    .mldedone(0b1)
+                    .rxprd_en(0b1)
+                    .rxsfdd_en(0b1)
+                    .rxphd_en(0b1)
+                    .rxphe_en(0b1)
+                    .rxfr_en(0b1)
+                    .rxfcg_en(0b1)
+                    .rxfce_en(0b1)
+                    .rxrfsl_en(0b1)
+                    .rxfto_en(0b1)
+                    .rxovrr_en(0b1)
+                    .rxpto_en(0b1)
+                    .rxsto_en(0b1)
+                    .rxprej_en(0b1)
             )?;
 
         Ok(())
     }
-    */
+    
     /*
     /// Disables all interrupts
     

@@ -262,18 +262,18 @@ impl PreambleLength {
 pub enum SfdSequence {
     /// The standard sequence defined by the IEEE standard.
     /// Most likely the best choice for 6.8 Mbps connections.
-    IEEE,
+    IEEEshort,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
     /// Most likely the best choice for 110 Kbps connections.
-    Decawave,
+    Decawave8,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
     /// Most likely the best choice for 850 Kbps connections.
-    DecawaveAlt,
+    Decawave16,
     /// Uses the sequence that is programmed in by the user.
     /// This is an unofficial addition.
-    User,
+    IEEE,
 }
 
 impl Default for SfdSequence {
@@ -334,7 +334,7 @@ impl UwbChannel {
             (UwbChannel::Channel2, PulseRepetitionFrequency::Mhz64) => 10,
             (UwbChannel::Channel3, PulseRepetitionFrequency::Mhz64) => 11,
             (UwbChannel::Channel4, PulseRepetitionFrequency::Mhz64) => 17,
-            (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz64) => 12,
+            (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz64) => 9, // Previoulsy 12,
             (UwbChannel::Channel7, PulseRepetitionFrequency::Mhz64) => 18,
         }
     }
