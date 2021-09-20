@@ -77,6 +77,9 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
 
         // Much of the systeme conf is conf in SYS_CFG register
         // page 26 section 2.5.2
+
+        // A VOIR SI BESOIN DE CONFIGURER LE LDOTUNE
+        // A PRIORI NON
 /*
         // Set LDOTUNE. See user manual, section 2.5.5.11.
         self.ll.otp_addr().write(|w| w.value(0x004))?;
@@ -100,7 +103,7 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
             let ldotune = ldotune_low as u64 | (ldotune_high as u64) << 32;
             self.ll.ldotune().write(|w| w.value(ldotune))?;
         }
- */   
+*/   
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,
