@@ -78,42 +78,29 @@ fn main() -> ! {
                         .expect("Failed init.");
     rprintln!("dm3000 = {:?}", dw3000);
 
-
     // rst_n.set_low().unwrap();
     // rst_n.set_high().unwrap();
 
-    delay.delay_ms(2u8);
-
     let ainit2idle = dw3000.ll().seq_ctrl().read().unwrap().ainit2idle();
     let onw_go2idle = dw3000.ll().aon_dig_cfg().read().unwrap().onw_go2idle();
     rprintln!("ainit2idle = {:?}", ainit2idle);
     rprintln!("onw_go2idle = {:?}", onw_go2idle);
 
-    dw3000.ll().seq_ctrl()
-                .write(|w| w.ainit2idle(1)).unwrap();
-    dw3000.ll().aon_dig_cfg()
-                .write(|w| w.onw_go2idle(1)).unwrap();
-    
-    while dw3000.ll().sys_status().read().unwrap().rcinit() == 0 {
-        delay.delay_ms(2u8);
-    };
+    delay.delay_ms(10u8);
 
-    let ainit2idle = dw3000.ll().seq_ctrl().read().unwrap().ainit2idle();
-    let onw_go2idle = dw3000.ll().aon_dig_cfg().read().unwrap().onw_go2idle();
-    rprintln!("ainit2idle = {:?}", ainit2idle);
-    rprintln!("onw_go2idle = {:?}", onw_go2idle);
-    if (ainit2idle == 0) || (onw_go2idle == 0) {
-        rprintln!("Init failed. Impossible to reach INIT_PLL.");
-    } 
-    delay.delay_ms(2u8);
+    let test = dw3000.ll().sys_status()
+                .read().unwrap()
+                .rcinit();
+    rprintln!("test = {:?}", test);   
+
 
     rprintln!("Is in Ready / IDLE_PLL.");
 
-
+/*
     dw3000.set_address( mac::PanId(0x0d57),
                         mac::ShortAddress(50))
             .expect("Failed to set address.");
-
+*/
 
     loop {
         
