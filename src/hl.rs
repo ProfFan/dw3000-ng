@@ -103,7 +103,20 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
             let ldotune = ldotune_low as u64 | (ldotune_high as u64) << 32;
             self.ll.ldotune().write(|w| w.value(ldotune))?;
         }
-*/   
+ */   
+
+        // Set the automatic switch from idle RC to idle PLL
+        self.ll.seq_ctrl()
+                .write(|w| w.ainit2idle(1))?;
+        // Set the on wake up switch from idle RC to idle PLL
+        self.ll.aon_dig_cfg()
+                .write(|w| w.onw_go2idle(1))?;
+
+        // Check the device has gone from Init to Idle (RC or PLL)
+        while self.ll.sys_status()
+                .read()?
+                .rcinit() == 0 {};
+
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,
