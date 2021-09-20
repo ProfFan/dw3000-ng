@@ -77,9 +77,6 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
 
         // Much of the systeme conf is conf in SYS_CFG register
         // page 26 section 2.5.2
-
-        // A VOIR SI BESOIN DE CONFIGURER LE LDOTUNE
-        // A PRIORI NON
 /*
         // Set LDOTUNE. See user manual, section 2.5.5.11.
         self.ll.otp_addr().write(|w| w.value(0x004))?;
@@ -112,10 +109,11 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
         self.ll.aon_dig_cfg()
                 .write(|w| w.onw_go2idle(1))?;
 
-        // Check the device has gone from Init to Idle (RC or PLL)
+        // Wait for the IDLE_RC state
         while self.ll.sys_status()
                 .read()?
-                .rcinit() == 0 {};
+                .rcinit() == 0 
+        {   };
 
         Ok(DW1000 {
             ll:    self.ll,

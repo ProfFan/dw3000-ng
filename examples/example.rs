@@ -63,12 +63,14 @@ fn main() -> ! {
     let spi = Spi::spi1(dp.SPI1, pins, &mut afio.mapr, spi_mode, 100.khz(), clocks, &mut rcc.apb2);
 
     /****************************************************************************************/
-    /*****************              CONFIGURATION DU RESET              *********************/
+    /************              CONFIGURATION DU RESET du DW3000             *****************/
     /****************************************************************************************/
 
     let mut delay = Delay::new(cp.SYST, clocks);
 
     let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
+    rst_n.set_low().unwrap();
+    rst_n.set_high().unwrap();
 
     /****************************************************************************************/
     /*****************              CONFIGURATION du DW3000               *******************/
@@ -79,41 +81,12 @@ fn main() -> ! {
     rprintln!("dm3000 = {:?}", dw3000);
 
 
-    // rst_n.set_low().unwrap();
-    // rst_n.set_high().unwrap();
-
-    delay.delay_ms(2u8);
-
-    let ainit2idle = dw3000.ll().seq_ctrl().read().unwrap().ainit2idle();
-    let onw_go2idle = dw3000.ll().aon_dig_cfg().read().unwrap().onw_go2idle();
-    rprintln!("ainit2idle = {:?}", ainit2idle);
-    rprintln!("onw_go2idle = {:?}", onw_go2idle);
-
-    dw3000.ll().seq_ctrl()
-                .write(|w| w.ainit2idle(1)).unwrap();
-    dw3000.ll().aon_dig_cfg()
-                .write(|w| w.onw_go2idle(1)).unwrap();
-    
-    while dw3000.ll().sys_status().read().unwrap().rcinit() == 0 {
-        delay.delay_ms(2u8);
-    };
-
-    let ainit2idle = dw3000.ll().seq_ctrl().read().unwrap().ainit2idle();
-    let onw_go2idle = dw3000.ll().aon_dig_cfg().read().unwrap().onw_go2idle();
-    rprintln!("ainit2idle = {:?}", ainit2idle);
-    rprintln!("onw_go2idle = {:?}", onw_go2idle);
-    if (ainit2idle == 0) || (onw_go2idle == 0) {
-        rprintln!("Init failed. Impossible to reach INIT_PLL.");
-    } 
-    delay.delay_ms(2u8);
-
-    rprintln!("Is in Ready / IDLE_PLL.");
-
-
     dw3000.set_address( mac::PanId(0x0d57),
                         mac::ShortAddress(50))
             .expect("Failed to set address.");
 
+    let panadr = dw3000.get_address();
+    rprintln!("panadr = {:#x?}", panadr);
 
     loop {
         
