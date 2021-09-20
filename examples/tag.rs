@@ -16,7 +16,7 @@ use stm32f1xx_hal::{
     //delay::Delay,
 };
 
-use dw1000::{configs, hl};
+use dw3000::{configs, hl};
 
 #[entry]
 fn main() -> ! {
@@ -62,9 +62,9 @@ fn main() -> ! {
 
     //let mut delay = Delay::new(cp.SYST, clocks);
 
-    let mut dw1000 = hl::DW1000::new(spi, cs).init()
-        .expect("Failed to initialize DW1000");
-    rprintln!("dm1000 = {:?}", dw1000);
+    let mut dw3000 = hl::DW1000::new(spi, cs).init()
+        .expect("Failed to initialize DW3000");
+    rprintln!("dm1000 = {:?}", dw3000);
 
 
     loop {

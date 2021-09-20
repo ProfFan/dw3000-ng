@@ -67,14 +67,10 @@ fn main() -> ! {
     /*****************              CONFIGURATION du DW3000               *******************/
     /****************************************************************************************/
 
-    let mut dw3000 = hl::DW1000::new(spi, cs);
-    rprintln!("dm3000 = {:?}", dw3000);
-
-    /* // BLOQUE !!!!!
     let mut dw3000 = hl::DW1000::new(spi, cs).init()
         .expect("Failed to initialize DW1000");
     rprintln!("dm3000 = {:?}", dw3000);
-    */
+    
 
 /*
     // test du registre dev_id
@@ -83,23 +79,18 @@ fn main() -> ! {
     rprintln!("dev-id = {:?}", dev_id);
 */
 
-    let antenna_delay = dw3000.get_tx_antenna_delay();
-    rprintln!("tx_antenna_delay = {:#x?}", antenna_delay);
 
-    let panadr = dw3000.get_address();
-    rprintln!("panadr = {:#x?}", panadr);
-
-    let mut dw3000initiated = dw3000.init().unwrap();
-
+/*
     dw3000initiated.set_address( mac::PanId(0x0d57),
                                  mac::ShortAddress(50))
                     .expect("Failed to set address.");
-
-    let panadr1 = dw3000initiated.get_address();
-    rprintln!("panadr = {:#x?}", panadr1);
+*/
     
-    let sys_time = dw3000initiated.sys_time();
-    rprintln!("sys_time = {:?}", sys_time);
+    let sys_clk = dw3000.ll().clk_ctrl().read().unwrap().sys_clk();
+    rprintln!("sys_clk = {:#x?}", sys_clk);
+
+    let ainit2idle = dw3000.ll().seq_ctrl().read().unwrap().ainit2idle();
+    rprintln!("ainit2idle = {:#x?}", ainit2idle);
 
     loop {
         
