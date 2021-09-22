@@ -17,6 +17,8 @@ use embedded_hal::digital::v2::OutputPin;
 
 use dw3000::{hl, mac};
 
+use nb::block;
+
 
 
 #[entry]
@@ -69,6 +71,8 @@ fn main() -> ! {
     let mut delay = Delay::new(cp.SYST, clocks);
 
     let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
+
+    // UWB module reset 
     rst_n.set_low().unwrap();
     rst_n.set_high().unwrap();
 
@@ -80,52 +84,34 @@ fn main() -> ! {
                         .expect("Failed init.");
     rprintln!("dm3000 = {:?}", dw3000);
 
-    rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
-    dw3000.ll().rx_cal().write(|w| w.cal_mode(1)).unwrap();
-    rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
-
-    dw3000.ll().fast_command(2).unwrap();
-
-/*
-    dw3000.set_address( mac::PanId(0x0d57),
-                        mac::ShortAddress(50))
-            .expect("Failed to set address.");
-*/
-
-
-/*
-    // ONW_PGFCAL : activate RX calibration on wake-up
-    let onw_pgfcal = dw3000.ll().aon_dig_cfg().read().unwrap().onw_pgfcal();
-    rprintln!("onw_pgfcal = {:?}", onw_pgfcal);
-
-    dw3000.ll().aon_dig_cfg().write(|w|
-                w.onw_pgfcal(1)); // activate RX config in wakeup
-
-    rst_n.set_low().unwrap();
-    rst_n.set_high().unwrap();
-
-    delay.delay_ms(10u8);
-
-    let onw_pgfcal = dw3000.ll().aon_dig_cfg().read().unwrap().onw_pgfcal();
-    rprintln!("onw_pgfcal = {:?}", onw_pgfcal);
-
-
-    // CAL_MODE : 0 for normal mode
-    let cal_mode = dw3000.ll().rx_cal().read().unwrap().cal_mode();
-    rprintln!("cal_mode = {:?}", cal_mode);
-    // CAL_EN : calibration enable, RX_CAL_STS set when finish
-    let cal_en = dw3000.ll().rx_cal().read().unwrap().cal_en();
-    rprintln!("cal_en = {:?}", cal_en);
-    let rx_cal_sts = dw3000.ll().rx_cal_sts().read().unwrap().value();
-    rprintln!("rx_cal_sts = {:?}", rx_cal_sts);
-    // COMP_DLY : doit etre mis à 0x2 pour optimisation
-    let comp_dly = dw3000.ll().rx_cal().read().unwrap().comp_dly();
-    rprintln!("comp_dly = {:?}", comp_dly);
-*/
 
 
     loop {
-        
+        let mut receiving = dw3000.receive()
+                        .expect("Failed configure receiver.");
+
+        rprintln!("receiver = {:?}", receiving);
+
+
+        let cmd_status = receiving.ll().fcmd_stat().read().unwrap().value();
+        rprintln!("cmd_status = {:#x?}", cmd_status);
+        let state = receiving.ll().sys_state().read().unwrap().pmsc_state();
+        rprintln!("state = {:#x?}", state);
+
+        // on cré un buffer pour stoquer le resultat message du receveur
+        let mut buffer = [0; 1024];
+        delay.delay_ms(10u8);
+
+        // on recupère un message avec une fonction bloquante
+        rprintln!("on commence une fonction qui bloque !");
+        let result = block!(receiving.wait(&mut buffer));
+        rprintln!("on est sorti de la fonction qui bloque !");
+
+        // on affiche le resultat
+        rprintln!("result = {:?}", result);
+
+        dw3000 = receiving.finish_receiving()
+                .expect("Failed to finish receiving");
     }    
 
 }
