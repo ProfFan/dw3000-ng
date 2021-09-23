@@ -169,6 +169,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
     )
         -> Result<DW1000<SPI, CS, Sending>, Error<SPI, CS>>
     {
+        /*
         // Clear event counters
         self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
         while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
@@ -184,7 +185,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         // doesn't happen.
         
         //self.force_idle()?;
-
+*/
         let seq = self.seq.0;
         self.seq += Wrapping(1);
 
@@ -244,7 +245,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
                     .txb_offset(txb_offset_errata)   // no offset in TX_BUFFER
                     .fine_plen(0) // Not implemented, replacing txpsr
                 })?;
-
+/*
         // Set the channel and sfd settings
         self.ll
             .chan_ctrl()
@@ -255,7 +256,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
                     .tx_pcode(config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency))
                     .rx_pcode(config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency))
             })?;
-/*
+
         match config.sfd_sequence {
             SfdSequence::IEEEshort => {}, // IEEE has predefined sfd lengths and the register has no effect.
             SfdSequence::Decawave8 => self.ll.sfd_length().write(|w| w.value(8))?, // This isn't entirely necessary as the Decawave8 settings in chan_ctrl already force it to 8
@@ -279,6 +280,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
                     .txstrt(0b1)
             )?;
 */
+        self.ll.fast_command(0x1)?; // Start TX
+
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,
@@ -877,6 +880,21 @@ impl<SPI, CS, State> DW1000<SPI, CS, State>
         Ok(())
     }
     */
+/*
+    /// Get DW3000's state
+    pub fn get_dw3000_state(&mut self) -> Result<States, Error<SPI, CS>> {
+        let state = self.ll.sys_state().read()?.pmsc_state();
+        let x : Result<States, Error<SPI, CS>>;
+        match state {
+            0x0         => x = Ok(States::WakeUp),
+            0x1 | 0x2   => x = Ok(States::IdleRc),
+            0x3         => x = Ok(States::Idle),
+            0x8..=0xF   => x = Ok(States::Rx),
+            0x12..=0x19 => x = Ok(States::Tx),
+            _           => x = Err(Error::Fcs), /// Error::Spi(ll::Error::Transfer(_))),
+        }
+        x
+    }*/
 }
 
 // Can't be derived without putting requirements on `SPI` and `CS`.
@@ -891,6 +909,21 @@ impl<SPI, CS, State> fmt::Debug for DW1000<SPI, CS, State>
 
         Ok(())
     }
+}
+
+/// Possible PMSC states of the DW3000
+#[derive(Debug, Copy, Clone)]
+pub enum States {
+    /// DW3000 is in WAKEUP
+    WakeUp,
+    /// DW3000 is in IDLE_RC
+    IdleRc,
+    /// DW3000 is in IDLE
+    Idle,
+    /// DW3000 is in TX states
+    Tx,
+    /// DW3000 is in RX states
+    Rx,
 }
 
 /// An error that can occur when sending or receiving data

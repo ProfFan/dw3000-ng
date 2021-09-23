@@ -14,8 +14,9 @@ use stm32f1xx_hal::{
 };
 
 use embedded_hal::digital::v2::OutputPin;
+use core::ops::Add;
 
-use dw3000::{hl, mac};
+use dw3000::{hl, mac, time, TxConfig};
 
 
 
@@ -79,12 +80,28 @@ fn main() -> ! {
     let mut dw3000 = hl::DW1000::new(spi, cs).init()
                         .expect("Failed init.");
     rprintln!("dm3000 = {:?}", dw3000);
-
+/*
     rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
     dw3000.ll().rx_cal().write(|w| w.cal_mode(1)).unwrap();
     rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
 
     dw3000.ll().fast_command(2).unwrap();
+*/
+delay.delay_ms(10_u8);
+    let x = dw3000.sys_time().unwrap();
+                    //.add(time::Duration::from_nanos(20));
+    let mut dw3001 = dw3000.send(
+        b"ping",
+        mac::Address::broadcast(&mac::AddressMode::Short),
+        Some(x),
+        TxConfig::default(),
+    ).expect("alo");
+
+    let state = dw3001.ll().sys_state().read().unwrap().pmsc_state();
+    rprintln!("state = {:#x?}", state);
+    rprintln!("dx = {:#x?}", x);
+    rprintln!("now = {:#x?}", dw3001.sys_time().unwrap());
+    
 
 /*
     dw3000.set_address( mac::PanId(0x0d57),
