@@ -641,7 +641,6 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
         SPI: spi::Transfer<u8> + spi::Write<u8>,
         CS:  OutputPin,
 {
-    /*
     /// Wait for receive operation to finish
     ///
     /// This method returns an `nb::Result` to indicate whether the transmission
@@ -665,19 +664,20 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
             .read()
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
-        // Is a frame ready?
-        if sys_status.rxdfr() == 0b0 {
+         // Is a frame ready?
+         if sys_status.rxfr() == 0b0 {
             // No frame ready. Check for errors.
             if sys_status.rxfce() == 0b1 {
                 return Err(nb::Error::Other(Error::Fcs));
             }
+            /*
             if sys_status.rxphe() == 0b1 {
                 return Err(nb::Error::Other(Error::Phy));
-            }
-            if sys_status.rxrfsl() == 0b1 {
+            }$*/
+            if sys_status.rxfsl() == 0b1 {
                 return Err(nb::Error::Other(Error::ReedSolomon));
             }
-            if sys_status.rxrfto() == 0b1 {
+            if sys_status.rxfto() == 0b1 {
                 return Err(nb::Error::Other(Error::FrameWaitTimeout));
             }
             if sys_status.rxovrr() == 0b1 {
@@ -686,12 +686,14 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
             if sys_status.rxpto() == 0b1 {
                 return Err(nb::Error::Other(Error::PreambleDetectionTimeout));
             }
-            if sys_status.rxsfdto() == 0b1 {
+            if sys_status.rxsto() == 0b1 {
                 return Err(nb::Error::Other(Error::SfdTimeout));
             }
+            /*
             if sys_status.affrej() == 0b1 {
                 return Err(nb::Error::Other(Error::FrameFilteringRejection))
             }
+            */
             // Some error flags that sound like valid errors aren't checked here,
             // because experience has shown that they seem to occur spuriously
             // without preventing a good frame from being received. Those are:
@@ -707,7 +709,7 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
 
         // Wait until LDE processing is done. Before this is finished, the RX
         // time stamp is not available.
-        if sys_status.ldedone() == 0b0 {
+        if sys_status.ciadone() == 0b0 {
             return Err(nb::Error::WouldBlock);
         }
         let rx_time = self.ll()
@@ -729,19 +731,19 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
                 w
                     .rxprd(0b1)   // Receiver Preamble Detected
                     .rxsfdd(0b1)  // Receiver SFD Detected
-                    .ldedone(0b1) // LDE Processing Done
+                    .ciadone(0b1) // LDE Processing Done
                     .rxphd(0b1)   // Receiver PHY Header Detected
                     .rxphe(0b1)   // Receiver PHY Header Error
-                    .rxdfr(0b1)   // Receiver Data Frame Ready
+                    .rxfr(0b1)   // Receiver Data Frame Ready
                     .rxfcg(0b1)   // Receiver FCS Good
                     .rxfce(0b1)   // Receiver FCS Error
-                    .rxrfsl(0b1)  // Receiver Reed Solomon Frame Sync Loss
-                    .rxrfto(0b1)  // Receiver Frame Wait Timeout
-                    .ldeerr(0b1)  // Leading Edge Detection Processing Error
+                    .rxfsl(0b1)  // Receiver Reed Solomon Frame Sync Loss
+                    .rxfto(0b1)  // Receiver Frame Wait Timeout
+                    .ciaerr(0b1)  // Leading Edge Detection Processing Error
                     .rxovrr(0b1)  // Receiver Overrun
                     .rxpto(0b1)   // Preamble Detection Timeout
-                    .rxsfdto(0b1) // Receiver SFD Timeout
-                    .rxrscs(0b1)  // Receiver Reed-Solomon Correction Status
+                    .rxsto(0b1) // Receiver SFD Timeout
+                    //.rxrscs(0b1)  // Receiver Reed-Solomon Correction Status
                     .rxprej(0b1)  // Receiver Preamble Rejection
             )
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
@@ -752,7 +754,7 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
             .read()
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
         let rx_buffer = self.ll()
-            .rx_buffer()
+            .rx_buffer_0()
             .read()
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
@@ -774,8 +776,7 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
             frame,
         })
     }
-    */
-    /*
+    
     /// Finishes receiving and returns to the `Ready` state
     ///
     /// If the receive operation has finished, as indicated by `wait`, this is a
@@ -798,7 +799,7 @@ impl<SPI, CS> DW1000<SPI, CS, Receiving>
             state: Ready,
         })
     }
-    */
+
 }
 
 impl<SPI, CS, State> DW1000<SPI, CS, State>
