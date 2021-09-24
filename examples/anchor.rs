@@ -101,6 +101,8 @@ fn main() -> ! {
         // on cré un buffer pour stoquer le resultat message du receveur
         let mut buffer = [0; 127];
         delay.delay_ms(10u8);
+        let state = receiving.ll().sys_state().read().unwrap().pmsc_state();
+        rprintln!("state = {:#x?}", state);
 
         // on recupère un message avec une fonction bloquante
         rprintln!("on commence une fonction qui bloque !");

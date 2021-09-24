@@ -77,9 +77,15 @@ fn main() -> ! {
     /*****************              CONFIGURATION du DW3000               *******************/
     /****************************************************************************************/
 
-    let mut dw3000 = hl::DW1000::new(spi, cs).init()
+    let mut dw3000 = hl::DW1000::new(spi, cs).init( )
                         .expect("Failed init.");
     rprintln!("dm3000 = {:?}", dw3000);
+    let mut state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
+    // while state != 0x3 {
+        // rprintln!("state = {:#x?}", state);
+        // delay.delay_ms(1_u8);
+        // state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
+    // }
 /*
     rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
     dw3000.ll().rx_cal().write(|w| w.cal_mode(1)).unwrap();
@@ -98,10 +104,19 @@ delay.delay_ms(10_u8);
     ).expect("alo");
 
     let state = dw3001.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("state = {:#x?}", state);
+    rprintln!("state3 = {:#x?}", state);
     rprintln!("dx = {:#x?}", x);
     rprintln!("now = {:#x?}", dw3001.sys_time().unwrap());
+    let mut dw3002 = dw3001.finish_sending();
     
+    //dw3002.state.finished = true;
+    let mut dw3003 = dw3002.send(
+        b"ping",
+        mac::Address::broadcast(&mac::AddressMode::Short),
+        Some(x),
+        TxConfig::default(),
+    ).expect("alo");let state = dw3001.ll().sys_state().read().unwrap().pmsc_state();
+    rprintln!("state3 = {:#x?}", state);
 
 /*
     dw3000.set_address( mac::PanId(0x0d57),

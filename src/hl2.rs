@@ -15,6 +15,7 @@ use core::{
     fmt,
     num::Wrapping,
 };
+use rtt_target::{rprintln};
 
 use byte::BytesExt as _;
 use embedded_hal::{
@@ -206,6 +207,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
             footer: [0; 2],
         };
 
+        let state = self.ll.sys_state().read()?.pmsc_state();
+        rprintln!("state = {:#x?}", state);
         delayed_time.map(|time| {
             self.ll
                 .dx_time()
@@ -214,6 +217,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
                 )
         });
 
+        let state = self.ll.sys_state().read()?.pmsc_state();
+        rprintln!("state = {:#x?}", state);
         // Prepare transmitter
         let mut len = 0;
         self.ll
@@ -228,6 +233,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
 
                 w
             })?;
+            let state = self.ll.sys_state().read()?.pmsc_state();
+            rprintln!("state = {:#x?}", state);
         let txb_offset = 0; // no offset in TX_BUFFER
         let mut txb_offset_errata = txb_offset;
         if txb_offset > 127 { // Errata in DW3000, see page 86 
@@ -245,6 +252,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
                     .txb_offset(txb_offset_errata)   // no offset in TX_BUFFER
                     .fine_plen(0) // Not implemented, replacing txpsr
                 })?;
+                let state = self.ll.sys_state().read()?.pmsc_state();
+                rprintln!("state = {:#x?}", state);
 /*
         // Set the channel and sfd settings
         self.ll
@@ -281,6 +290,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
             )?;
 */
         self.ll.fast_command(0x1)?; // Start TX
+        let state = self.ll.sys_state().read()?.pmsc_state();
+        rprintln!("stateD = {:#x?}", state);
 
         Ok(DW1000 {
             ll:    self.ll,
@@ -591,14 +602,14 @@ impl<SPI, CS> DW1000<SPI, CS, Sending>
         Ok(())
     }
     */
-    /*
+    
     /// Finishes sending and returns to the `Ready` state
     ///
     /// If the send operation has finished, as indicated by `wait`, this is a
     /// no-op. If the send operation is still ongoing, it will be aborted.
     pub fn finish_sending(mut self)
         -> Result<DW1000<SPI, CS, Ready>, (Self, Error<SPI, CS>)>
-    {
+    {/*
         if !self.state.finished {
             // Can't use `map_err` and `?` here, as the compiler will complain
             // about `self` moving into the closure.
@@ -611,6 +622,7 @@ impl<SPI, CS> DW1000<SPI, CS, Sending>
                 Err(error) => return Err((self, error)),
             }
         }
+*/  
 
         Ok(DW1000 {
             ll:    self.ll,
@@ -618,7 +630,7 @@ impl<SPI, CS> DW1000<SPI, CS, Sending>
             state: Ready,
         })
     }
-    */
+    
     /*
     fn reset_flags(&mut self) -> Result<(), Error<SPI, CS>> {
         self.ll
