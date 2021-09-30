@@ -28,7 +28,7 @@ use dw3000::RxConfig;
 fn main() -> ! {
 
     rtt_init_print!();
-    rprintln!("Coucou copain !");
+    rprintln!("Coucou copain !\n\n");
 
     /****************************************************************************************/
     /*****************              CONFIGURATION DE BASE               *********************/
@@ -71,6 +71,7 @@ fn main() -> ! {
     /************              CONFIGURATION DU RESET du DW3000             *****************/
     /****************************************************************************************/
 
+    // NEW
     let mut delay = Delay::new(cp.SYST, clocks);
 
     let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
@@ -84,50 +85,112 @@ fn main() -> ! {
     /****************************************************************************************/
 
     let mut dw3000 = hl::DW1000::new(spi, cs);
-    delay.delay_ms(1000u16);
 
-    // variable pour recuperer l'etat du module
+    // variables pour recuperer l'etat du module
     let mut state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("Etat après un new et une attente de 1sec = {:#x?}", state);
+    let mut rcinit = dw3000.ll().sys_status().read().unwrap().rcinit();
+    let mut spirdy = dw3000.ll().sys_status().read().unwrap().spirdy();
+    let mut cplock = dw3000.ll().sys_status().read().unwrap().cplock();
+    if rcinit == 0x01 {
+        rprintln!("Après la fonction new, on est dans l'état INIT_RC (rcinit = 1)");
+    }
+    if spirdy == 0x01 {
+        rprintln!("Après la fonction new, on est dans l'état IDLE_RC (spirdy = 1)");
+    }
+    if cplock == 0x01 {
+        rprintln!("Après la fonction new, on est dans l'état IDLE_PLL (cpclock = 1)");
+    }
+    rprintln!("Après la fonction new, on est dans l'état {:#x?}\n\n", state);
 
-    // activation de la calibration auto
-    dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1));
 
-    rprintln!("On est dans l'état IDLE_RC -> SPIRDY = {:#x?}", 
-            dw3000.ll().sys_status().read().unwrap().spirdy());
-
-
-
-
-    // On initialise le module pour passer à l'état IDLE
-    rprintln!("On fait maintenant un init !");
-    let mut dw3000 = dw3000.init().expect("Failed init.");
     delay.delay_ms(1000u16);
     state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("Après l'init, l'état est = {:#x?}", state);
-
-    // après ces états, on peux vérifier l'etat du systeme avec les reg:
-    // SPIRDY -> indique qu'on a finit les config d'allumage (IDLE_RC)
-    rprintln!("Est ce qu'on est dans l'état IDLE_RC ? = {:#x?}", 
-            dw3000.ll().sys_status().read().unwrap().spirdy());
-
-    // CPLOCK -> indique si l'horloge PLL est bloquée (IDLE_PLL)
-    rprintln!("Est ce qu'on est dans l'état IDLE_PLL ? = {:#x?}", 
-            dw3000.ll().sys_status().read().unwrap().cplock());
-
-    // PLL_HILO -> indique un probleme sur la conf de PLL
-    rprintln!("Probleme pour lock la PLL ? = {:#x?}", 
-            dw3000.ll().sys_status().read().unwrap().pll_hilo());
-
+    rcinit = dw3000.ll().sys_status().read().unwrap().rcinit();
+    spirdy = dw3000.ll().sys_status().read().unwrap().spirdy();
+    cplock = dw3000.ll().sys_status().read().unwrap().cplock();
+    if rcinit == 0x01 {
+        rprintln!("Après un delay, on est dans l'état INIT_RC (rcinit = 1)");
+    }
+    if spirdy == 0x01 {
+        rprintln!("Après un delay, on est dans l'état IDLE_RC (spirdy = 1)");
+    }
+    if cplock == 0x01 {
+        rprintln!("Après un delay, on est dans l'état IDLE_PLL (cpclock = 1)");
+    }
+    rprintln!("Après un delay, on est dans l'état {:#x?}\n\n", state);
 
 
+    // activation de la calibration auto
+    // dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1));
 
-    delay.delay_ms(5000u16);
+    // INIT
+    let mut dw3000 = dw3000.init().expect("Failed init.");
+    state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
+    rcinit = dw3000.ll().sys_status().read().unwrap().rcinit();
+    spirdy = dw3000.ll().sys_status().read().unwrap().spirdy();
+    cplock = dw3000.ll().sys_status().read().unwrap().cplock();
+    if rcinit == 0x01 {
+        rprintln!("Après un init, on est dans l'état INIT_RC (rcinit = 1)");
+    }
+    if spirdy == 0x01 {
+        rprintln!("Après un init, on est dans l'état IDLE_RC (spirdy = 1)");
+    }
+    if cplock == 0x01 {
+        rprintln!("Après un init, on est dans l'état IDLE_PLL (cpclock = 1)");
+    }
+    rprintln!("Après la fonction init, on est dans l'état {:#x?}\n\n", state);
+
+
+// CONF DE LA PLL pour passer en mode IDLE_PLL
+    
+    // set CAL_EN in PLL_CALL register
+    // dw3000.ll().pll_call().write(|w| w.cal_en(1));
+    //clear CP_LOCK
+
+    // In CLK_CTRL sub register, the 2 bits of SYS_CLK are set to AUTO
+
+    // set AINIT2IDLE 
+    //dw3000.ll().seq_ctrl().write(|w| w.ainit2idle(1));
+    // wait for CP_LOCK = 1
+
+
+/*
+    // set PLL_CFG (4 bytes) / PLL8CFG8CH
+    // dw3000.ll().pll_cfg().write(|w| w.value(0x1F3C));
+    // if channel 9, blabla
+    // setting rf_tx_ctrl_1
+    //dw3000.ll().rf_tx_ctrl_1().write(|w| w.value(0x0E));
+    // setting pll_cal
+    dw3000.ll().pll_cal().modify(|_,w| 
+        w
+            .pll_cfg_ld(0x81)
+    );
+    // clearing cp_lock
+    dw3000.ll().sys_status().write(|w| w.cplock(1));
+    delay.delay_ms(1000u16);
+    cplock = dw3000.ll().sys_status().read().unwrap().cplock();
+        rprintln!("la pll est elle lock ? = {:#x?}", cplock);
+
+    // PLL
+    // CLK_CTRL, SYS_CLK to auto
+    dw3000.ll().clk_ctrl().modify(|_,w| w.sys_clk(0));
+    // set ainit2idle
+    dw3000.ll().seq_ctrl().modify(|_,w| w.ainit2idle(1));
+    // check CPLOCK
+
+    delay.delay_ms(1000u16);
+    //dw3000.ll().fast_command(0);
+
+*/
+
+
+
 
 
     
 
-    let valid_instant   = Instant::new(TIME_MAX);
+
+/*
 
     // ON PASSE EN MODE RECEVEUR 
     let mut receiving = dw3000.receive(RxConfig {
@@ -138,28 +201,20 @@ fn main() -> ! {
     state = receiving.ll().sys_state().read().unwrap().pmsc_state();
     rprintln!("On passe en mode reception = {:#x?}", state);
 
-    // ETAPE 1 : recherche du preamble
-    // fait automatiquement, on desactive le time-out pre-toc (default)
 
-    // ETAPE 2 : Accumulation preamble and await SFD
 
-    // ETAPE 3 : 
 
     delay.delay_ms(1000u16);
     let mut rx_state = receiving.ll().sys_state().read().unwrap().rx_state();
     rprintln!("\nOn regarde ou en est le receveur\n" );
     rprintln!("Etat ? : {}", rx_state);
 
-
+*/
 
     loop {
-        delay.delay_ms(2000u16);
-        rx_state = receiving.ll().sys_state().read().unwrap().rx_state();
-        rprintln!("Etat ? : {}", rx_state);
-        //frame_ready = receiving.ll().sys_status().read().unwrap().rxfr();
+        
+        delay.delay_ms(10000u16);
 
-        rprintln!("tested value = {:#x?}", 
-            receiving.ll().ldo_rload().read().unwrap().value());
     }    
 
 }

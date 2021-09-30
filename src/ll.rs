@@ -1218,7 +1218,7 @@ impl_register! {
         value,  0,  7, u8; /// value  
     }
     0x07, 0x1C, 4, RW, RF_TX_CTRL_2(rf_tx_ctrl_2) { /// RF transmitter configuration
-        pg_delay,  0,  5, u8; /// Pulse Generator Delay value 
+        value,  0,  31, u32; /// Pulse Generator Delay value 
     }
     0x07, 0x28, 1, RW, TX_TEST(tx_test) { /// Transmitter test configuration
         tx_entest,  0,  3, u8; /// Transmitter test enable 

@@ -5,18 +5,23 @@
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 
-//use stm32f1::stm32f103;
-//use stm32f1::stm32f103::interrupt;
-
 use cortex_m_rt::entry;
 use stm32f1xx_hal::{
+    delay::Delay,
     pac,
     prelude::*,
     spi::{Spi, Mode, Phase, Polarity},
-    //delay::Delay,
 };
 
-use dw3000::{configs, hl};
+use embedded_hal::digital::v2::OutputPin;
+
+use dw3000::{hl, mac};
+
+use nb::block;
+
+use dw3000::time::{TIME_MAX,Instant,};
+
+
 
 #[entry]
 fn main() -> ! {
@@ -30,7 +35,7 @@ fn main() -> ! {
 
     // Get access to the device specific peripherals from the peripheral access crate
     let dp = pac::Peripherals::take().unwrap();
-    //let cp = cortex_m::Peripherals::take().unwrap();
+    let cp = cortex_m::Peripherals::take().unwrap();
 
     // Take ownership over the raw flash and rcc devices and convert them into the corresponding
     // HAL structs
@@ -43,8 +48,9 @@ fn main() -> ! {
     let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
     let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
 
-    // on doit désactiver les fonctions de jtag pour utiliser pb4 en SPI !!
-    //let (_pa15, _pb3, pb4) = afio.mapr.disable_jtag(gpioa.pa15, gpiob.pb3, gpiob.pb4);
+    /****************************************************************************************/
+    /*****************              CONFIGURATION DU SPI                *********************/
+    /****************************************************************************************/
 
     let pins = (
         gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl),
@@ -60,15 +66,63 @@ fn main() -> ! {
     };
     let spi = Spi::spi1(dp.SPI1, pins, &mut afio.mapr, spi_mode, 100.khz(), clocks, &mut rcc.apb2);
 
-    //let mut delay = Delay::new(cp.SYST, clocks);
+    /****************************************************************************************/
+    /************              CONFIGURATION DU RESET du DW3000             *****************/
+    /****************************************************************************************/
 
+    let mut delay = Delay::new(cp.SYST, clocks);
+
+    let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
+
+    // UWB module reset 
+    rst_n.set_low().unwrap();
+    rst_n.set_high().unwrap();
+
+    /****************************************************************************************/
+    /*****************              CONFIGURATION du DW3000               *******************/
+    /****************************************************************************************/
+
+
+    rprintln!("On initialise le module : new + init en meme temps");
     let mut dw3000 = hl::DW1000::new(spi, cs).init()
-        .expect("Failed to initialize DW3000");
-    rprintln!("dm1000 = {:?}", dw3000);
+                        .expect("Failed init.");
+    rprintln!("dm3000 = {:?}", dw3000);
+
+    delay.delay_ms(3000u16);
+    let mut state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
+    rprintln!("l'état devrait etre en IDLE = {:#x?}", state);
+
+    dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1));
+
+    delay.delay_ms(1000u16);
 
 
     loop {
-        
+        let mut receiving = dw3000.receive()
+                        .expect("Failed configure receiver.");
+
+        rprintln!("receiver = {:?}", receiving);
+
+
+        let cmd_status = receiving.ll().fcmd_stat().read().unwrap().value();
+        rprintln!("cmd_status = {:#x?}", cmd_status);
+        let state = receiving.ll().sys_state().read().unwrap().pmsc_state();
+        rprintln!("state = {:#x?}", state);
+
+        // on cré un buffer pour stoquer le resultat message du receveur
+        let mut buffer = [0; 1024];
+        delay.delay_ms(10u8);
+
+        // on recupère un message avec une fonction bloquante
+        rprintln!("on commence une fonction qui bloque !");
+        let result = block!(receiving.wait(&mut buffer));
+        rprintln!("on est sorti de la fonction qui bloque !");
+
+        // on affiche le resultat
+        rprintln!("result = {:?}", result);
+
+        dw3000 = receiving.finish_receiving()
+                .expect("Failed to finish receiving");
     }    
 
 }

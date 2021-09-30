@@ -102,17 +102,38 @@ impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
         }
  */   
 
-        // Set the automatic switch from idle RC to idle PLL
-        self.ll.seq_ctrl()
-                .write(|w| w.ainit2idle(1))?;
-        // Set the on wake up switch from idle RC to idle PLL
-        self.ll.aon_dig_cfg()
-                .write(|w| w.onw_go2idle(1))?;
-
         // Wait for the IDLE_RC state
         while self.ll.sys_status()
                 .read()?
                 .rcinit() == 0 
+        {   }
+
+        // CONFIGURATION GENERALE
+        // DRX_CONF have some values that should be modified 
+        // for best performance
+        // TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+        // RF_TX_CTRL_1 need to be changed for optimal performance (page 151)
+
+
+        // CONFIGURATION DE LA PLL POUR PASSER DANS L'ETAT IDLE PLL
+        // need to change default cal value for pll (page164)
+        self.ll.pll_cal().modify(|_,w| 
+            w
+                .pll_cfg_ld(0x81)
+        );
+        // clear cplock
+        self.ll.sys_status().write(|w| w.cplock(0));
+        // select PLL mode auto
+        self.ll.clk_ctrl().modify(|_,w| w.sys_clk(0));
+        // set ainit2idle
+        self.ll.seq_ctrl().modify(|_,w| w.ainit2idle(1));
+        // Set the on wake up switch from idle RC to idle PLL
+        self.ll.aon_dig_cfg().modify(|_,w| w.onw_go2idle(1));
+        // wait for CPLOCK to be set
+        while self.ll.sys_status()
+                .read()?
+                .cplock() == 0
         {   }
 
         Ok(DW1000 {
@@ -289,14 +310,14 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
     
 
     /// Attempt to receive an IEEE 802.15.4 MAC frame
-    pub fn receive(mut self) // config: RxConfig
+    pub fn receive(mut self, config: RxConfig)
         -> Result<DW1000<SPI, CS, Receiving>, Error<SPI, CS>>
     {
         // For unknown reasons, the DW1000 gets stuck in RX mode without ever
         // receiving anything, after receiving one good frame. Reset the
         // receiver to make sure its in a valid state before attempting to
-        // receive anything.
-        /*
+        // receive anything. 
+  /*
         self.ll
             .pmsc_ctrl0()
             .modify(|_, w|
@@ -307,7 +328,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
             .modify(|_, w|
                 w.softreset(0b1111) // clear reset
             )?;
-
+*/
+/*
         // We're already resetting the receiver in the previous step, and that's
         // good enough to make my example program that's both sending and
         // receiving work very reliably over many hours (that's not to say it
@@ -323,13 +345,19 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         // (based on my eyeball-only measurements) that the RX/TX example is
         // dropping fewer frames now.
         self.force_idle()?;
-
+*/
         if config.frame_filtering {
             self.ll
                 .sys_cfg()
                 .modify(|_, w|
                     w
                         .ffen(0b1) // enable frame filtering
+                        
+                )?;
+            self.ll
+                .ff_cfg()
+                .modify(|_, w|
+                    w
                         .ffab(0b1) // receive beacon frames
                         .ffad(0b1) // receive data frames
                         .ffaa(0b1) // receive acknowledgement frames
@@ -341,7 +369,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
                 .sys_cfg()
                 .modify(|_, w| w.ffen(0b0))?; // disable frame filtering
         }
-
+/*
         // Set PLLLDT bit in EC_CTRL. According to the documentation of the
         // CLKPLL_LL bit in SYS_STATUS, this bit needs to be set to ensure the
         // reliable operation of the CLKPLL_LL bit. Since I've seen that bit
@@ -351,7 +379,8 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
             .modify(|_, w|
                 w.pllldt(0b1)
             )?;
-
+*/
+/*
         // Now that PLLLDT is set, clear all bits in SYS_STATUS that depend on
         // it for reliable operation. After that is done, these bits should work
         // reliably.
@@ -362,19 +391,38 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
                     .cplock(0b1)
                     .clkpll_ll(0b1)
             )?;
+*/
+        // Apply the config 
 
-        // Apply the config
+        // Conf du channel page 110
         self.ll.chan_ctrl().modify(|_, w| {
             w
-                .tx_chan(config.channel as u8)
-                .rx_chan(config.channel as u8)
-                .dwsfd((config.sfd_sequence == SfdSequence::Decawave || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
-                .rxprf(config.pulse_repetition_frequency as u8)
-                .tnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
-                .rnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
+                .rf_chan(config.channel as u8)
+                .sfd_type(config.sfd_sequence as u8)
+
+                //.dwsfd((config.sfd_sequence == SfdSequence::Decawave || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
+                //.rxprf(config.pulse_repetition_frequency as u8)
+                //.tnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
+                //.rnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
+                
                 .tx_pcode(config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency))
                 .rx_pcode(config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency))
         })?;
+        self.ll.rf_tx_ctrl_1().modify(|_, w| {
+            w
+                .value(0x0E)
+        })?;
+        self.ll.rf_tx_ctrl_2().modify(|_, w| {
+            w
+                .value(config.channel.get_recommanded_rf_tx_ctrl_2())
+        })?;
+        self.ll.pll_cfg().modify(|_, w| {
+            w
+                .value(config.channel.get_recommanded_pll_conf())
+        })?;
+
+
+/*
 
         match config.sfd_sequence {
             SfdSequence::IEEE => {}, // IEEE has predefined sfd lengths and the register has no effect.
@@ -382,6 +430,28 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
             SfdSequence::DecawaveAlt => self.ll.sfd_length().write(|w| w.value(16))?, // Set to 16
             SfdSequence::User => {}, // Users are responsible for setting the lengths themselves
         }
+*/
+        // PREAMBLE LENGHT CONF
+        // registre DTUN0
+
+        self.ll.dtune0().modify(|_, w| {
+            w
+                .pac(config.expected_preamble_length.get_recommended_pac_size())
+                .dt0b4(1)
+        })?;
+        self.ll.dtune3().write(|w| w.value(0xaf5f35cc))?;
+
+        // REGISTRE LDO_RLOAD
+        self.ll.ldo_rload().write(|w| w.value(0x14))?;
+
+        /**************    CONF PLL      *****************************/
+        // REGISTRE PLL_CAL semble pas utile
+        self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x81))?;
+        // clear CPLOCK bit
+        // set bit SYS_CLK to auto
+        // check if CPLOCK is set to 1
+
+/*
 
         // Set general tuning
         self.ll.drx_tune0b().write(|w| w.value(config.bitrate.get_recommended_drx_tune0b(config.sfd_sequence)))?;
@@ -398,6 +468,7 @@ impl<SPI, CS> DW1000<SPI, CS, Ready>
         self.ll.fs_plltune().write(|w| w.value(config.channel.get_recommended_fs_plltune()))?;
 
         // Set the rx bitrate
+        // never set for dw3000
         self.ll.sys_cfg().modify(|_, w| w.rxm110k((config.bitrate == BitRate::Kbps110) as u8))?;
 
         self.ll
