@@ -1,0 +1,68 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
+image: 'rust:latest'
+
+stages:
+  - check
+  - lint
+ 
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/cargo_cache
+  DEBIAN_BINARY: "debian-x86_64-${CI_COMMIT_TAG}.tar.bz2"
+  PACKAGE_REGISTRY_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/gitlab-clippy/${CI_COMMIT_TAG}"
+
+.common:
+  interruptible: true
+  cache:
+    key:
+      files:
+        - Cargo.lock
+    paths:
+      # https://doc.rust-lang.org/cargo/guide/cargo-home.html#caching-the-cargo-home-in-ci
+      - cargo_cache/bin
+      - cargo_cache/registry/index
+      - cargo_cache/registry/cache
+      - cargo_cache/git/db
+    policy: pull
+
+.recreate_cache:
+  cache:
+    policy: pull-push
+
+check:
+  stage: check
+  needs: []
+  extends:
+    - .common
+    - .recreate_cache
+  script:
+    - cargo check --workspace
+
+
+
+clippy-be:
+  stage: lint
+  extends: .common
+  needs:
+    - job: check
+      artifacts: false
+  before_script:
+    - rustup component add clippy
+  script:
+    - cargo clippy
+  after_script:
+    - cargo clippy --message-format=json &> report.json || true
+   # - curl -X POST "https://gitlab-cq-rust.herokuapp.com/clippy" --data-binary @clippy.txt --output report.json
+  artifacts:
+    reports:
+      codequality: report.json
+    expire_in: 1 week
+  rules:
+    - if: '$CODE_QUALITY_DISABLED'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "push"'
