@@ -52,6 +52,31 @@ where
         Ok(Instant::new(sys_time.into()).unwrap())
     }
 
+    /// Returns the state of the DW3000
+    pub fn state(&mut self) -> Result<u8, Error<SPI, CS>> {
+        Ok(self.ll.sys_state().read()?.pmsc_state())
+    }
+
+    /// Returns the current fast command of the DW3000
+    pub fn cmd_status(&mut self) -> Result<u8, Error<SPI, CS>> {
+        Ok(self.ll.fcmd_stat().read()?.value())
+    }
+
+    /// Returns true if the DW3000 has been in init_rc
+    pub fn init_rc_passed(&mut self) -> Result<bool, Error<SPI, CS>> {
+        Ok(self.ll.sys_status().read()?.rcinit() == 0x1)
+    }
+
+    /// Returns true if the DW3000 has been in init_rc
+    pub fn idle_rc_passed(&mut self) -> Result<bool, Error<SPI, CS>> {
+        Ok(self.ll.sys_status().read()?.spirdy() == 0x1)
+    }
+
+    /// Returns true if the DW3000 has been in init_rc
+    pub fn idle_pll_passed(&mut self) -> Result<bool, Error<SPI, CS>> {
+        Ok(self.ll.sys_status().read()?.cplock() == 0x1)
+    }
+
     /// Provides direct access to the register-level API
     ///
     /// Be aware that by using the register-level API, you can invalidate
@@ -124,4 +149,5 @@ where
         Ok(value)
     }
 */
+    
 }

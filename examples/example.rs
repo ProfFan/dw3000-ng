@@ -85,15 +85,13 @@ fn main() -> ! {
     delay.delay_ms(1000u16);
 
     // variable pour recuperer l'etat du module
-    let mut state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("Etat après un new et une attente de 1sec = {:#x?}", state);
+    rprintln!("Etat après un new et une attente de 1sec = {:#x?}", dw3000.state());
 
     // activation de la calibration auto
     dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1))
             .expect("Write to onw_pgfcal failed.");
 
-    rprintln!("On est dans l'état IDLE_RC -> SPIRDY = {:#x?}", 
-            dw3000.ll().sys_status().read().unwrap().spirdy());
+    rprintln!("On est dans l'état IDLE_RC -> SPIRDY = {:#x?}", dw3000.idle_rc_passed());
 
 
 
@@ -102,17 +100,14 @@ fn main() -> ! {
     rprintln!("On fait maintenant un init !");
     let mut dw3000 = dw3000.init(&mut delay).expect("Failed init.");
     delay.delay_ms(1000u16);
-    state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("Après l'init, l'état est = {:#x?}", state);
+    rprintln!("Après l'init, l'état est = {:#x?}", dw3000.state());
 
     // après ces états, on peux vérifier l'etat du systeme avec les reg:
     // SPIRDY -> indique qu'on a finit les config d'allumage (IDLE_RC)
-    rprintln!("Est ce qu'on est dans l'état IDLE_RC ? = {:#x?}", 
-            dw3000.ll().sys_status().read().unwrap().spirdy());
+    rprintln!("Est ce qu'on est dans l'état IDLE_RC ? = {:#x?}", dw3000.idle_rc_passed());
 
     // CPLOCK -> indique si l'horloge PLL est bloquée (IDLE_PLL)
-    rprintln!("Est ce qu'on est dans l'état IDLE_PLL ? = {:#x?}", 
-            dw3000.ll().sys_status().read().unwrap().cplock());
+    rprintln!("Est ce qu'on est dans l'état IDLE_PLL ? = {:#x?}", dw3000.idle_pll_passed());
 
     // PLL_HILO -> indique un probleme sur la conf de PLL
     rprintln!("Probleme pour lock la PLL ? = {:#x?}", 
@@ -134,8 +129,7 @@ fn main() -> ! {
                 .. RxConfig::default()
             })
             .expect("Failed configure receiver.");
-    state = receiving.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("On passe en mode reception = {:#x?}", state);
+    rprintln!("On passe en mode reception = {:#x?}", receiving.state());
 
     // ETAPE 1 : recherche du preamble
     // fait automatiquement, on desactive le time-out pre-toc (default)
@@ -145,16 +139,14 @@ fn main() -> ! {
     // ETAPE 3 : 
 
     delay.delay_ms(1000u16);
-    let mut rx_state = receiving.ll().sys_state().read().unwrap().rx_state();
     rprintln!("\nOn regarde ou en est le receveur\n" );
-    rprintln!("Etat ? : {}", rx_state);
+    rprintln!("Etat ? : {:#x?}", receiving.rx_state());
 
 
 
     loop {
         delay.delay_ms(2000u16);
-        rx_state = receiving.ll().sys_state().read().unwrap().rx_state();
-        rprintln!("Etat ? : {}", rx_state);
+        rprintln!("Etat ? : {:#x?}", receiving.rx_state());
         //frame_ready = receiving.ll().sys_status().read().unwrap().rxfr();
 
         rprintln!("tested value = {:#x?}", 

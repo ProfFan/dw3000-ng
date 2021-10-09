@@ -9,6 +9,11 @@ where
     SPI: spi::Transfer<u8> + spi::Write<u8>,
     CS: OutputPin,
 {
+    /// Returns the TX state of the DW3000
+    pub fn tx_state(&mut self) -> Result<u8, Error<SPI, CS>> {
+        Ok(self.ll.sys_state().read()?.tx_state())
+    }
+
     /// Wait for the transmission to finish
     ///
     /// This method returns an `nb::Result` to indicate whether the transmission

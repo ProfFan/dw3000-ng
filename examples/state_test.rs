@@ -13,11 +13,28 @@ use stm32f1xx_hal::{
     spi::{Spi, Mode, Phase, Polarity},
 };
 
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
-use dw3000::hl;
-use dw3000::RxConfig;
+use dw3000::{hl, RxConfig};
 
+fn check_states<SPI, CS, State>(dw3000: &mut hl::DW1000<SPI, CS, State>) -> Result<(), hl::Error<SPI, CS>>
+    where
+        SPI: spi::Transfer<u8> + spi::Write<u8>,
+        CS: OutputPin,
+        State: hl::Awake,
+{
+    if dw3000.init_rc_passed()? {
+        rprintln!("Après la fonction new, on est dans l'état INIT_RC (rcinit = 1)");
+    }
+    if dw3000.idle_rc_passed()? {
+        rprintln!("Après la fonction new, on est dans l'état IDLE_RC (spirdy = 1)");
+    }
+    if dw3000.idle_pll_passed()? {
+        rprintln!("Après la fonction new, on est dans l'état IDLE_PLL (cpclock = 1)");
+    }
+    rprintln!("Après la fonction new, on est dans l'état {:#x?}\n\n", dw3000.state()?);
+    Ok(())
+}
 
 
 #[entry]
@@ -82,60 +99,18 @@ fn main() -> ! {
 
     let mut dw3000 = hl::DW1000::new(spi, cs);
 
-    // variables pour recuperer l'etat du module
-    let mut state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    let mut rcinit = dw3000.ll().sys_status().read().unwrap().rcinit();
-    let mut spirdy = dw3000.ll().sys_status().read().unwrap().spirdy();
-    let mut cplock = dw3000.ll().sys_status().read().unwrap().cplock();
-    if rcinit == 0x01 {
-        rprintln!("Après la fonction new, on est dans l'état INIT_RC (rcinit = 1)");
-    }
-    if spirdy == 0x01 {
-        rprintln!("Après la fonction new, on est dans l'état IDLE_RC (spirdy = 1)");
-    }
-    if cplock == 0x01 {
-        rprintln!("Après la fonction new, on est dans l'état IDLE_PLL (cpclock = 1)");
-    }
-    rprintln!("Après la fonction new, on est dans l'état {:#x?}\n\n", state);
-
-
+    check_states(&mut dw3000).unwrap();
     delay.delay_ms(1000u16);
-    state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    rcinit = dw3000.ll().sys_status().read().unwrap().rcinit();
-    spirdy = dw3000.ll().sys_status().read().unwrap().spirdy();
-    cplock = dw3000.ll().sys_status().read().unwrap().cplock();
-    if rcinit == 0x01 {
-        rprintln!("Après un delay, on est dans l'état INIT_RC (rcinit = 1)");
-    }
-    if spirdy == 0x01 {
-        rprintln!("Après un delay, on est dans l'état IDLE_RC (spirdy = 1)");
-    }
-    if cplock == 0x01 {
-        rprintln!("Après un delay, on est dans l'état IDLE_PLL (cpclock = 1)");
-    }
-    rprintln!("Après un delay, on est dans l'état {:#x?}\n\n", state);
-
+    
+    check_states(&mut dw3000).unwrap();
 
     // activation de la calibration auto
     // dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1));
 
     // INIT
     let mut dw3000 = dw3000.init(&mut delay).expect("Failed init.");
-    state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    rcinit = dw3000.ll().sys_status().read().unwrap().rcinit();
-    spirdy = dw3000.ll().sys_status().read().unwrap().spirdy();
-    cplock = dw3000.ll().sys_status().read().unwrap().cplock();
-    if rcinit == 0x01 {
-        rprintln!("Après un init, on est dans l'état INIT_RC (rcinit = 1)");
-    }
-    if spirdy == 0x01 {
-        rprintln!("Après un init, on est dans l'état IDLE_RC (spirdy = 1)");
-    }
-    if cplock == 0x01 {
-        rprintln!("Après un init, on est dans l'état IDLE_PLL (cpclock = 1)");
-    }
-    rprintln!("Après la fonction init, on est dans l'état {:#x?}\n\n", state);
-
+    
+    check_states(&mut dw3000).unwrap();
 
 // CONF DE LA PLL pour passer en mode IDLE_PLL
     
@@ -170,8 +145,8 @@ fn main() -> ! {
     dw3000.ll().sys_status().write(|w| w.cplock(1))
             .expect("Write to cp_lock failed");
     delay.delay_ms(1000u16);
-    cplock = dw3000.ll().sys_status().read().unwrap().cplock();
-        rprintln!("la pll est elle lock ? = {:#x?}", cplock);
+    
+    rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
     // PLL
     // CLK_CTRL, SYS_CLK to auto
@@ -181,6 +156,7 @@ fn main() -> ! {
     dw3000.ll().seq_ctrl().modify(|_,w| w.ainit2idle(1))
             .expect("Write to ainit2idle failed");
     // check CPLOCK
+    rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
     delay.delay_ms(1000u16);
     //dw3000.ll().fast_command(0);
@@ -194,16 +170,15 @@ fn main() -> ! {
                 .. RxConfig::default()
             })
             .expect("Failed configure receiver.");
-    state = receiving.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("On passe en mode reception = {:#x?}", state);
+    rprintln!("On passe en mode reception = {:#x?}", receiving.state());
 
 
 
 
     delay.delay_ms(1000u16);
-    let rx_state = receiving.ll().sys_state().read().unwrap().rx_state();
+
     rprintln!("\nOn regarde ou en est le receveur\n" );
-    rprintln!("Etat ? : {}", rx_state);
+    rprintln!("Etat ? : {:#x?}", receiving.rx_state());
 
 
 

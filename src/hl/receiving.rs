@@ -60,6 +60,11 @@ where
     CS: OutputPin,
     RECEIVING: Receiving,
 {
+    /// Returns the RX state of the DW3000
+    pub fn rx_state(&mut self) -> Result<u8, Error<SPI, CS>> {
+        Ok(self.ll.sys_state().read()?.rx_state())
+    }
+
     pub(super) fn start_receiving(&mut self, config: RxConfig) -> Result<(), Error<SPI, CS>> {
         // Really weird thing about double buffering I can't find anything about.
         // When a message is received in double buffer mode that should be filtered out,
@@ -561,7 +566,7 @@ where
         Ok((cycles_since_sync, nanos_until_tick, raw_timestamp))
     }
 */
-#[allow(clippy::type_complexity)]
+    #[allow(clippy::type_complexity)]
     /// Finishes receiving and returns to the `Ready` state
     ///
     /// If the receive operation has finished, as indicated by `wait`, this is a

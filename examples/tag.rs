@@ -89,8 +89,7 @@ fn main() -> ! {
     rprintln!("dm3000 = {:?}", dw3000);
 
     delay.delay_ms(3000u16);
-    let state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("l'état devrait etre en IDLE = {:#x?}", state);
+    rprintln!("l'état devrait etre en IDLE = {:#x?}", dw3000.state());
 
     dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1))
             .expect("Write to onw_pgfcal failed.");
@@ -106,12 +105,9 @@ fn main() -> ! {
                         .expect("Failed configure receiver.");
 
         rprintln!("receiver = {:?}", receiving);
-
-
-        let cmd_status = receiving.ll().fcmd_stat().read().unwrap().value();
-        rprintln!("cmd_status = {:#x?}", cmd_status);
-        let state = receiving.ll().sys_state().read().unwrap().pmsc_state();
-        rprintln!("state = {:#x?}", state);
+        rprintln!("cmd_status = {:#x?}", receiving.cmd_status());
+        rprintln!("state = {:#x?}", receiving.state());
+        rprintln!("RX state = {:#x?}", receiving.rx_state());
 
         // on cré un buffer pour stoquer le resultat message du receveur
         let mut buffer = [0; 1024];
@@ -143,12 +139,9 @@ fn main() -> ! {
         ).expect("Failed configure transmitter");
 
         rprintln!("transmitter = {:?}", sending);
-
-
-        let cmd_status = sending.ll().fcmd_stat().read().unwrap().value();
-        rprintln!("cmd_status = {:#x?}", cmd_status);
-        let state = sending.ll().sys_state().read().unwrap().pmsc_state();
-        rprintln!("state = {:#x?}", state);
+        rprintln!("cmd_status = {:#x?}", sending.cmd_status());
+        rprintln!("state = {:#x?}", sending.state());
+        rprintln!("TX state = {:#x?}", sending.tx_state());
 
         delay.delay_ms(10u8);
 
