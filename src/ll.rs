@@ -59,15 +59,15 @@ impl<SPI, CS> DW1000<SPI, CS>
         {
         let mut buffer = [0];
         buffer[0] =
-        ((0x1            << 7) & 0x80) |
+         (0x1            << 7) |
         ((fast   << 1) & 0x3e) | 0x1;
 
         self.chip_select.set_low()
-            .map_err(|err| Error::ChipSelect(err))?;
+            .map_err(Error::ChipSelect)?;
         <SPI as spi::Write<u8>>::write(&mut self.spi, &buffer)
-            .map_err(|err| Error::Write(err))?;
+            .map_err(Error::Write)?;
         self.chip_select.set_high()
-            .map_err(|err| Error::ChipSelect(err))?;
+            .map_err(Error::ChipSelect)?;
 
         Ok(())
     }
@@ -96,11 +96,11 @@ impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
 
         init_header::<R>(false, &mut buffer);
         self.0.chip_select.set_low()
-            .map_err(|err| Error::ChipSelect(err))?;
+            .map_err(Error::ChipSelect)?;
         self.0.spi.transfer(buffer)
-            .map_err(|err| Error::Transfer(err))?;
+            .map_err(Error::Transfer)?;
         self.0.chip_select.set_high()
-            .map_err(|err| Error::ChipSelect(err))?;
+            .map_err(Error::ChipSelect)?;
 
         Ok(r)
     }
@@ -119,11 +119,11 @@ impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
         init_header::<R>(true, buffer);
 
         self.0.chip_select.set_low()
-            .map_err(|err| Error::ChipSelect(err))?;
+            .map_err(Error::ChipSelect)?;
         <SPI as spi::Write<u8>>::write(&mut self.0.spi, buffer)
-            .map_err(|err| Error::Write(err))?;
+            .map_err(Error::Write)?;
         self.0.chip_select.set_high()
-            .map_err(|err| Error::ChipSelect(err))?;
+            .map_err(Error::ChipSelect)?;
 
         Ok(())
     }
@@ -149,11 +149,11 @@ impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
         init_header::<R>(true, buffer);
 
         self.0.chip_select.set_low()
-            .map_err(|err| Error::ChipSelect(err))?;
+            .map_err(Error::ChipSelect)?;
         <SPI as spi::Write<u8>>::write(&mut self.0.spi, buffer)
-            .map_err(|err| Error::Write(err))?;
+            .map_err(Error::Write)?;
         self.0.chip_select.set_high()
-            .map_err(|err| Error::ChipSelect(err))?;
+            .map_err(Error::ChipSelect)?;
 
         Ok(())
     }
@@ -208,10 +208,10 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
     // sub_id est un bool qui definit si on est en full ou short command
     // on commmence par du full address !
     buffer[0] =
-        (((write as u8)  << 7) & 0x80) |
-        (((sub_id as u8) << 6) & 0x40) |
-        ((R::ID          << 1) & 0x3e) |
-        (((R::SUB_ID as u8)) >> 6);
+        (((write    as u8) << 7) & 0x80) |
+        (((sub_id   as u8) << 6) & 0x40) |
+        ((R::ID            << 1) & 0x3e) |
+        ((R::SUB_ID as u8) >> 6);
 
 // fast command buffer
 /*
@@ -316,14 +316,14 @@ macro_rules! impl_register {
                 // You know what would be neat? Using `if` in constant
                 // expressions! But that's not possible, so we're left with the
                 // following hack.
-                const SUB_INDEX_IS_NONZERO: usize =
-                    (Self::SUB_ID > 0) as usize;
-                const SUB_INDEX_NEEDS_SECOND_BYTE: usize =
-                    (Self::SUB_ID > 127) as usize;
-                const HEADER_LEN: usize =
-                    1
-                    + Self::SUB_INDEX_IS_NONZERO
-                    + Self::SUB_INDEX_NEEDS_SECOND_BYTE;
+                // const SUB_INDEX_IS_NONZERO: usize =
+                    // (Self::SUB_ID > 0) as usize;
+                // const SUB_INDEX_NEEDS_SECOND_BYTE: usize =
+                    // (Self::SUB_ID > 127) as usize;
+                const HEADER_LEN: usize = 2;
+                    // 1
+                    // + Self::SUB_INDEX_IS_NONZERO
+                    // + Self::SUB_INDEX_NEEDS_SECOND_BYTE;
             }
 
             #[$doc]
@@ -353,7 +353,7 @@ macro_rules! impl_register {
                             // field.
                             const END: usize = $last_bit  / 8 + 1;
 
-                            // The numer of bytes in the register data that
+                            // The number of bytes in the register data that
                             // contain part of this field.
                             const LEN: usize = END - START;
 
@@ -714,7 +714,7 @@ impl_register! {
         value, 0, 31, u32; /// Delayed send or receive reference time
     }
     0x00, 0x4, 3, RW, RX_FWTO(rx_fwto) { /// commentaires
-        value, 0, 31, u32; /// Receive frame wait timeout period
+        value, 0, 23, u32; /// Receive frame wait timeout period
     }
     0x00, 0x38, 1, RW, SYS_CTRL(sys_ctrl) { /// System Control Register
         value, 0, 7, u8; /// System control
@@ -1275,7 +1275,7 @@ impl_register! {
     0x09, 0x00, 2, RW, PLL_CFG(pll_cfg) { /// PLL configuration
         value, 0, 15, u16; /// PLL configuration
     }
-    0x09, 0x04, 1, RW, PLL_CC(pll_cc) { /// PLL coarse code – starting code for calibration procedure
+    0x09, 0x04, 3, RW, PLL_CC(pll_cc) { /// PLL coarse code – starting code for calibration procedure
         ch9_code, 0,  7, u8; /// PLL calibration coarse code for channel 5. 
         ch5_code, 8, 21, u8; /// PLL calibration coarse code for channel 9.
     }

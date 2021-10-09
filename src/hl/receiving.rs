@@ -561,6 +561,7 @@ where
         Ok((cycles_since_sync, nanos_until_tick, raw_timestamp))
     }
 */
+#[allow(clippy::type_complexity)]
     /// Finishes receiving and returns to the `Ready` state
     ///
     /// If the receive operation has finished, as indicated by `wait`, this is a
