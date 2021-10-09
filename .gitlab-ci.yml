@@ -55,8 +55,9 @@ clippy-be:
       artifacts: false
   before_script:
     - rustup component add clippy
+    - rustup target add thumbv7m-none-eabi
   script:
-    - cargo clippy
+    - cargo clippy --examples
   after_script:
     - cargo clippy --message-format=json &> report.json || true
    # - curl -X POST "https://gitlab-cq-rust.herokuapp.com/clippy" --data-binary @clippy.txt --output report.json
