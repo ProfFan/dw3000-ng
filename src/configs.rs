@@ -92,7 +92,7 @@ impl Default for BitRate {
         BitRate::Kbps6800
     }
 }
-
+/*
 impl BitRate {
     /// Gets the recommended drx_tune0b value for the bitrate and sfd.
     pub fn get_recommended_drx_tune0b(&self, sfd_sequence: SfdSequence) -> u16 {
@@ -107,7 +107,7 @@ impl BitRate {
         }
     }
 }
-
+*/
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// The PRF value
 pub enum PulseRepetitionFrequency {
@@ -122,7 +122,7 @@ impl Default for PulseRepetitionFrequency {
         PulseRepetitionFrequency::Mhz64
     }
 }
-
+/*
 impl PulseRepetitionFrequency {
     /// Gets the recommended value for the drx_tune1a register based on the PRF
     pub fn get_recommended_drx_tune1a(&self) -> u16 {
@@ -154,6 +154,7 @@ impl PulseRepetitionFrequency {
         }
     }
 }
+*/
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// An enum that specifies the length of the preamble.
@@ -204,15 +205,14 @@ impl PreambleLength {
     /// Gets the recommended PAC size based on the preamble length.
     pub fn get_recommended_pac_size(&self) -> u8 {
         // Values are taken from Table 6 of the DW1000 User manual
-        match self {
-            PreambleLength::Symbols64 => 8,
-            PreambleLength::Symbols128 => 8,
-            PreambleLength::Symbols256 => 16,
-            PreambleLength::Symbols512 => 16,
-            PreambleLength::Symbols1024 => 32,
-            PreambleLength::Symbols1536 => 64,
-            PreambleLength::Symbols2048 => 64,
-            PreambleLength::Symbols4096 => 64,
+        match self {            PreambleLength::Symbols64 => 0, // PAC size = 8
+            PreambleLength::Symbols128 => 0, 
+            PreambleLength::Symbols256 => 1, // PAC size = 16
+            PreambleLength::Symbols512 => 1,
+            PreambleLength::Symbols1024 => 2,
+            PreambleLength::Symbols1536 => 2,
+            PreambleLength::Symbols2048 => 2,
+            PreambleLength::Symbols4096 => 2,
         }
     }
 
@@ -262,23 +262,23 @@ impl PreambleLength {
 pub enum SfdSequence {
     /// The standard sequence defined by the IEEE standard.
     /// Most likely the best choice for 6.8 Mbps connections.
-    IEEEshort,
+    IeeeShort  = 0b00,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
     /// Most likely the best choice for 110 Kbps connections.
-    Decawave8,
+    Decawave8  = 0b01,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
     /// Most likely the best choice for 850 Kbps connections.
-    Decawave16,
+    Decawave16 = 0b10,
     /// Uses the sequence that is programmed in by the user.
     /// This is an unofficial addition.
-    IEEE,
+    Ieee       = 0b11,
 }
 
 impl Default for SfdSequence {
     fn default() -> Self {
-        SfdSequence::IEEE
+        SfdSequence::IeeeShort
     }
 }
 
@@ -287,30 +287,18 @@ impl Default for SfdSequence {
 ///
 /// Note that while a channel may have more bandwidth than ~900 Mhz, the DW1000 can only send up to ~900 Mhz
 pub enum UwbChannel {
-    /// Channel 1
-    /// - Center frequency: 3494.4 Mhz
-    /// - Bandwidth: 499.2 Mhz
-    Channel1 = 1,
-    /// Channel 2
-    /// - Center frequency: 3993.6 Mhz
-    /// - Bandwidth: 499.2 Mhz
-    Channel2 = 2,
-    /// Channel 3
-    /// - Center frequency: 4492.8 Mhz
-    /// - Bandwidth: 499.2 Mhz
-    Channel3 = 3,
-    /// Channel 4
-    /// - Center frequency: 3993.6 Mhz
-    /// - Bandwidth: 1331.2 Mhz
-    Channel4 = 4,
     /// Channel 5
     /// - Center frequency: 6489.6 Mhz
     /// - Bandwidth: 499.2 Mhz
-    Channel5 = 5,
-    /// Channel 7
-    /// - Center frequency: 6489.6 Mhz
-    /// - Bandwidth: 1081.6 Mhz
-    Channel7 = 7,
+    /// - Preamble Codes (16 MHz PRF) : 3, 4
+    /// - Preamble Codes (64 MHz PRF) : 9, 10, 11, 12
+    Channel5 = 0,
+    /// Channel 9
+    /// - Center frequency: 7987.2 Mhz
+    /// - Bandwidth: 499.2 Mhz
+    /// - Preamble Codes (16 MHz PRF) : 3, 4
+    /// - Preamble Codes (64 MHz PRF) : 9, 10, 11, 12
+    Channel9 = 1,
 }
 
 impl Default for UwbChannel {
@@ -324,78 +312,26 @@ impl UwbChannel {
     pub fn get_recommended_preamble_code(&self, prf_value: PulseRepetitionFrequency) -> u8 {
         // Many have overlapping possibilities, so the numbers have been chosen so that there's no overlap here
         match (self, prf_value) {
-            (UwbChannel::Channel1, PulseRepetitionFrequency::Mhz16) => 1,
-            (UwbChannel::Channel2, PulseRepetitionFrequency::Mhz16) => 3,
-            (UwbChannel::Channel3, PulseRepetitionFrequency::Mhz16) => 5,
-            (UwbChannel::Channel4, PulseRepetitionFrequency::Mhz16) => 7,
             (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz16) => 4,
-            (UwbChannel::Channel7, PulseRepetitionFrequency::Mhz16) => 8,
-            (UwbChannel::Channel1, PulseRepetitionFrequency::Mhz64) => 9,
-            (UwbChannel::Channel2, PulseRepetitionFrequency::Mhz64) => 10,
-            (UwbChannel::Channel3, PulseRepetitionFrequency::Mhz64) => 11,
-            (UwbChannel::Channel4, PulseRepetitionFrequency::Mhz64) => 17,
+            (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz16) => 4,
             (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz64) => 9, // Previoulsy 12,
-            (UwbChannel::Channel7, PulseRepetitionFrequency::Mhz64) => 18,
+            (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz64) => 9,
         }
     }
 
-    /// Gets the recommended value for the rf_txctrl register
-    pub fn get_recommended_rf_txctrl(&self) -> u32 {
-        // Values based on Table 38 of the DW1000 User Manual
+    /// Gets the recommended value for rf_tx_ctrl_2
+    pub fn get_recommanded_rf_tx_ctrl_2(&self) -> u32 {
         match self {
-            UwbChannel::Channel1 => 0x00005C40,
-            UwbChannel::Channel2 => 0x00045CA0,
-            UwbChannel::Channel3 => 0x00086CC0,
-            UwbChannel::Channel4 => 0x00045C80,
-            UwbChannel::Channel5 => 0x001E3FE0,
-            UwbChannel::Channel7 => 0x001E7DE0,
+            UwbChannel::Channel5 => 0x1C071134,
+            UwbChannel::Channel9 => 0x1C010034,
         }
     }
 
-    /// Gets the recommended value for the tc_pgdelay register
-    pub fn get_recommended_tc_pgdelay(&self) -> u8 {
-        // Values based on Table 40 of the DW1000 User Manual
+    /// Gets the recommended value for pll conf
+    pub fn get_recommanded_pll_conf(&self) -> u16 {
         match self {
-            UwbChannel::Channel1 => 0xC9,
-            UwbChannel::Channel2 => 0xC2,
-            UwbChannel::Channel3 => 0xC5,
-            UwbChannel::Channel4 => 0x95,
-            UwbChannel::Channel5 => 0xC0,
-            UwbChannel::Channel7 => 0x93,
-        }
-    }
-
-    /// Gets the recommended value for the fs_pllcfg register
-    pub fn get_recommended_fs_pllcfg(&self) -> u32 {
-        // Values based on Table 43 of the DW1000 User Manual
-        match self {
-            UwbChannel::Channel1 => 0x09000407,
-            UwbChannel::Channel2 | UwbChannel::Channel4 => 0x08400508,
-            UwbChannel::Channel3 => 0x08401009,
-            UwbChannel::Channel5 | UwbChannel::Channel7 => 0x0800041D,
-        }
-    }
-
-    /// Gets the recommended value for the fs_plltune register
-    pub fn get_recommended_fs_plltune(&self) -> u8 {
-        // Values based on Table 44 of the DW1000 User Manual
-        match self {
-            UwbChannel::Channel1 => 0x1E,
-            UwbChannel::Channel2 | UwbChannel::Channel4 => 0x26,
-            UwbChannel::Channel3 => 0x56,
-            UwbChannel::Channel5 | UwbChannel::Channel7 => 0xBE,
-        }
-    }
-
-    /// Gets the recommended value for the rf_rxctrlh register
-    pub fn get_recommended_rf_rxctrlh(&self) -> u8 {
-        // Values based on Table 37 of the DW1000 User Manual
-        match self {
-            UwbChannel::Channel1
-            | UwbChannel::Channel2
-            | UwbChannel::Channel3
-            | UwbChannel::Channel5 => 0xD8,
-            UwbChannel::Channel4 | UwbChannel::Channel7 => 0xBC,
+            UwbChannel::Channel5 => 0x1F3C,
+            UwbChannel::Channel9 => 0x0F3C,
         }
     }
 }

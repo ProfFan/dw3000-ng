@@ -65,8 +65,8 @@ where
     /// Force the DW1000 into IDLE mode
     ///
     /// Any ongoing RX/TX operations will be aborted.
-    pub(super) fn force_idle(&mut self, double_buffered: bool) -> Result<(), Error<SPI, CS>> {
-
+    pub(super) fn force_idle(&mut self, _double_buffered: bool) -> Result<(), Error<SPI, CS>> {
+/*
         let mut saved_sys_mask = [0; 8];
 
         if double_buffered {
@@ -105,7 +105,8 @@ where
                 w
             })?;
         }
-
+*/
+        self.ll.fast_command(0)?;
         Ok(())
         
     }

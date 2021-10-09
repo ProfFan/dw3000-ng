@@ -95,23 +95,32 @@ where
         // confirm this does indeed fix the receive-only example, it seems
         // (based on my eyeball-only measurements) that the RX/TX example is
         // dropping fewer frames now.
-    /*    self.force_idle(false)?;
+//        self.force_idle(false)?;
 
-        self.ll.sys_cfg().modify(|_, w| {
-            w.ffen(config.frame_filtering as u8) // enable or disable frame filtering
-        });
-        self.ll.ff_cfg().modify(|_,w| {
-            w   .ffab(0b1) // receive beacon frames
-                .ffad(0b1) // receive data frames
-                .ffaa(0b1) // receive acknowledgement frames
-                .ffam(0b1) // receive MAC command frames
-                // Set the double buffering and auto re-enable
-                // .dis_drxb(!RECEIVING::DOUBLE_BUFFERED as u8)
-                //.rxautr(RECEIVING::AUTO_RX_REENABLE as u8)
-                // Set whether the receiver should look for 110kbps or 850/6800kbps messages
-                //.rxm110k((config.bitrate == BitRate::Kbps110) as u8)
-        })?;
-
+        if config.frame_filtering {
+            self.ll
+                .sys_cfg()
+                .modify(|_, w|
+                    w
+                        .ffen(0b1) // enable frame filtering
+                        
+                )?;
+            self.ll
+                .ff_cfg()
+                .modify(|_, w|
+                    w
+                        .ffab(0b1) // receive beacon frames
+                        .ffad(0b1) // receive data frames
+                        .ffaa(0b1) // receive acknowledgement frames
+                        .ffam(0b1) // receive MAC command frames
+                )?;
+        }
+        else {
+            self.ll
+                .sys_cfg()
+                .modify(|_, w| w.ffen(0b0))?; // disable frame filtering
+        }
+/*
         // Set PLLLDT bit in EC_CTRL. According to the documentation of the
         // CLKPLL_LL bit in SYS_STATUS, this bit needs to be set to ensure the
         // reliable operation of the CLKPLL_LL bit. Since I've seen that bit
@@ -124,110 +133,90 @@ where
         self.ll
             .sys_status()
             .write(|w| w.cplock(0b1).clkpll_ll(0b1))?;
-
+*/
         // Apply the config
+        
+        // Conf du channel page 110
         self.ll.chan_ctrl().modify(|_, w| {
-            w.tx_chan(config.channel as u8)
-                .rx_chan(config.channel as u8)
-                .dwsfd(
-                    (config.sfd_sequence == SfdSequence::Decawave
-                        || config.sfd_sequence == SfdSequence::DecawaveAlt)
-                        as u8,
-                )
-                .rxprf(config.pulse_repetition_frequency as u8)
-                .tnssfd(
-                    (config.sfd_sequence == SfdSequence::User
-                        || config.sfd_sequence == SfdSequence::DecawaveAlt)
-                        as u8,
-                )
-                .rnssfd(
-                    (config.sfd_sequence == SfdSequence::User
-                        || config.sfd_sequence == SfdSequence::DecawaveAlt)
-                        as u8,
-                )
-                .tx_pcode(
-                    config
-                        .channel
-                        .get_recommended_preamble_code(config.pulse_repetition_frequency),
-                )
-                .rx_pcode(
-                    config
-                        .channel
-                        .get_recommended_preamble_code(config.pulse_repetition_frequency),
-                )
-        })?;
+            w
+                .rf_chan(config.channel as u8)
+                .sfd_type(config.sfd_sequence as u8)
 
+                //.dwsfd((config.sfd_sequence == SfdSequence::Decawave || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
+                //.rxprf(config.pulse_repetition_frequency as u8)
+                //.tnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
+                //.rnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
+                
+                .tx_pcode(config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency))
+                .rx_pcode(config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency))
+        })?;
+        self.ll.rf_tx_ctrl_1().modify(|_, w| {
+            w
+                .value(0x0E)
+        })?;
+        self.ll.rf_tx_ctrl_2().modify(|_, w| {
+            w
+                .value(config.channel.get_recommanded_rf_tx_ctrl_2())
+        })?;
+        self.ll.pll_cfg().modify(|_, w| {
+            w
+                .value(config.channel.get_recommanded_pll_conf())
+        })?;
+/*
         match config.sfd_sequence {
             SfdSequence::IEEE => {} // IEEE has predefined sfd lengths and the register has no effect.
             SfdSequence::Decawave => self.ll.sfd_length().write(|w| w.value(8))?, // This isn't entirely necessary as the Decawave8 settings in chan_ctrl already force it to 8
             SfdSequence::DecawaveAlt => self.ll.sfd_length().write(|w| w.value(16))?, // Set to 16
             SfdSequence::User => {} // Users are responsible for setting the lengths themselves
         }
+*/
+        // PREAMBLE LENGHT CONF
+        // registre DTUN0
+
+        self.ll.dtune0().modify(|_, w| {
+            w
+                .pac(config.expected_preamble_length.get_recommended_pac_size())
+                .dt0b4(1)
+        })?;
+        self.ll.dtune3().write(|w| w.value(0xaf5f35cc))?;
+
+        // REGISTRE LDO_RLOAD
+        self.ll.ldo_rload().write(|w| w.value(0x14))?;
+
+        /**************    CONF PLL      *****************************/
+        // REGISTRE PLL_CAL semble pas utile
+        self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x81))?;
+        // clear CPLOCK bit
+        // set bit SYS_CLK to auto
+        // check if CPLOCK is set to 1
+
+/*
 
         // Set general tuning
-        self.ll.drx_tune0b().write(|w| {
-            w.value(
-                config
-                    .bitrate
-                    .get_recommended_drx_tune0b(config.sfd_sequence),
-            )
-        })?;
-        self.ll.drx_tune1a().write(|w| {
-            w.value(
-                config
-                    .pulse_repetition_frequency
-                    .get_recommended_drx_tune1a(),
-            )
-        })?;
-        let drx_tune1b = config
-            .expected_preamble_length
-            .get_recommended_drx_tune1b(config.bitrate)?;
+        self.ll.drx_tune0b().write(|w| w.value(config.bitrate.get_recommended_drx_tune0b(config.sfd_sequence)))?;
+        self.ll.drx_tune1a().write(|w| w.value(config.pulse_repetition_frequency.get_recommended_drx_tune1a()))?;
+        let drx_tune1b = config.expected_preamble_length.get_recommended_drx_tune1b(config.bitrate)?;
         self.ll.drx_tune1b().write(|w| w.value(drx_tune1b))?;
-        let drx_tune2 = config
-            .pulse_repetition_frequency
-            .get_recommended_drx_tune2(
-                config.expected_preamble_length.get_recommended_pac_size(),
-            )?;
+        let drx_tune2 = config.pulse_repetition_frequency.get_recommended_drx_tune2(config.expected_preamble_length.get_recommended_pac_size())?;
         self.ll.drx_tune2().write(|w| w.value(drx_tune2))?;
-        self.ll
-            .drx_tune4h()
-            .write(|w| w.value(config.expected_preamble_length.get_recommended_dxr_tune4h()))?;
+        self.ll.drx_tune4h().write(|w| w.value(config.expected_preamble_length.get_recommended_dxr_tune4h()))?;
 
         // Set channel tuning
-        self.ll
-            .rf_rxctrlh()
-            .write(|w| w.value(config.channel.get_recommended_rf_rxctrlh()))?;
-        self.ll
-            .fs_pllcfg()
-            .write(|w| w.value(config.channel.get_recommended_fs_pllcfg()))?;
-        self.ll
-            .fs_plltune()
-            .write(|w| w.value(config.channel.get_recommended_fs_plltune()))?;
+        self.ll.rf_rxctrlh().write(|w| w.value(config.channel.get_recommended_rf_rxctrlh()))?;
+        self.ll.fs_pllcfg().write(|w| w.value(config.channel.get_recommended_fs_pllcfg()))?;
+        self.ll.fs_plltune().write(|w| w.value(config.channel.get_recommended_fs_plltune()))?;
 
-        // Set the LDE registers
-        self.ll
-            .lde_cfg2()
-            .write(|w| w.value(config.pulse_repetition_frequency.get_recommended_lde_cfg2()))?;
-        self.ll.lde_repc().write(|w| {
-            w.value(
-                config.channel.get_recommended_lde_repc_value(
-                    config.pulse_repetition_frequency,
-                    config.bitrate,
-                ),
-            )
-        })?;
+        // Set the rx bitrate
+        // never set for dw3000
+        self.ll.sys_cfg().modify(|_, w| w.rxm110k((config.bitrate == BitRate::Kbps110) as u8))?;
 
-        // Check if the rx buffer pointer is correct
-        let status = self.ll.sys_status().read()?;
-        if status.hsrbp() != status.icrbp() {
-            // The RX Buffer Pointer of the host and the ic side don't point to the same one.
-            // We need to switch over
-            self.ll.sys_ctrl().modify(|_, w| w.hrbpt(1))?;
-        }
+        self.ll
+            .sys_ctrl()
+            .modify(|_, w|
+                w.rxenab(0b1)
+            )?;
 */
-        // Start receiving
-        //self.ll.sys_ctrl().modify(|_, w| w.rxenab(0b1))?;
-        // delay.delay_ms(2)
+
         self.ll.fast_command(2)?;
 
         Ok(())
@@ -246,27 +235,19 @@ where
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
     pub fn wait<'b>(&mut self, buffer: &'b mut [u8]) -> nb::Result<Message<'b>, Error<SPI, CS>> {
+        
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
-        let sys_status = self
-            .ll()
+        let sys_status = self.ll()
             .sys_status()
             .read()
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
-        
-        // let mut a = [0;32];
-        // write!(a, "{:#x?}",sys_status); 
 
-        /*if sys_status != sys_status_precedent {
-            sys_status_precedent = sys_status;
-            rprintln!("sys_status : {:#x?}", sys_status_precedent)
-        }*/
         // Is a frame ready?
         if sys_status.rxfr() == 0b0 {
             // No frame ready. Check for errors.
             if sys_status.rxfce() == 0b1 {
-                // rprintln!("Fcs");
                 return Err(nb::Error::Other(Error::Fcs));
             }
             /*
@@ -274,23 +255,18 @@ where
                 return Err(nb::Error::Other(Error::Phy));
             }$*/
             if sys_status.rxfsl() == 0b1 {
-                // rprintln!("ReedSolomon");
                 return Err(nb::Error::Other(Error::ReedSolomon));
             }
             if sys_status.rxfto() == 0b1 {
-                // rprintln!("FrameWaitTimeout");
                 return Err(nb::Error::Other(Error::FrameWaitTimeout));
             }
             if sys_status.rxovrr() == 0b1 {
-                // rprintln!("Overrun");
                 return Err(nb::Error::Other(Error::Overrun));
             }
             if sys_status.rxpto() == 0b1 {
-                // rprintln!("PreambleDetectionTimeout");
                 return Err(nb::Error::Other(Error::PreambleDetectionTimeout));
             }
             if sys_status.rxsto() == 0b1 {
-                // rprintln!("SfdTimeout");
                 return Err(nb::Error::Other(Error::SfdTimeout));
             }
             /*
@@ -306,11 +282,8 @@ where
 
             // No errors detected. That must mean the frame is just not ready
             // yet.
-            // rprintln!("sys_status : {:#x?}", sys_status);
             return Err(nb::Error::WouldBlock);
         }
-
-        rprintln!("Frame ready");
 
         // Frame is ready. Continue.
 
@@ -319,9 +292,6 @@ where
         if sys_status.ciadone() == 0b0 {
             return Err(nb::Error::WouldBlock);
         }
-
-        rprintln!("LDE processing done");
-
         let rx_time = self.ll()
             .rx_time()
             .read()
@@ -380,8 +350,6 @@ where
 
         let frame = buffer[..len].read_with(&mut 0, FooterMode::None)
             .map_err(|error| nb::Error::Other(Error::Frame(error)))?;
-   
-        self.state.mark_finished();
 
         Ok(Message {
             rx_time,
@@ -613,8 +581,8 @@ where
         // }
 
         Ok(DW1000 {
-            ll: self.ll,
-            seq: self.seq,
+            ll:    self.ll,
+            seq:   self.seq,
             state: Ready,
         })
     }

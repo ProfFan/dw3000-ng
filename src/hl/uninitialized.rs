@@ -33,103 +33,75 @@ where
     /// Please note that this method assumes that you kept the default
     /// configuration. It is generally recommended not to change configuration
     /// before calling this method.
-    pub fn init<D: DelayMs<u8>>(
+    pub fn init <D: DelayMs<u8>> (
         mut self,
-        delay: &mut D,
+        _delay: &mut D,
     ) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
+        
+        // no need for basic initialisation anymore !!!
+
+        // Much of the systeme conf is conf in SYS_CFG register
+        // page 26 section 2.5.2
 /*
-        // Set AGC_TUNE1. See user manual, section 2.5.5.1.
-        self.ll.agc_tune1().write(|w| w.value(0x8870))?;
-
-        // Set AGC_TUNE2. See user manual, section 2.5.5.2.
-        self.ll.agc_tune2().write(|w| w.value(0x2502A907))?;
-
-        // Set DRX_TUNE2. See user manual, section 2.5.5.3.
-        self.ll.drx_tune2().write(|w| w.value(0x311A002D))?;
-
-        // Set NTM. See user manual, section 2.5.5.4. This improves performance
-        // in line-of-sight conditions, but might not be the best choice if non-
-        // line-of-sight performance is important.
-        self.ll.lde_cfg1().modify(|_, w| w.ntm(0xD))?;
-
-        // Set LDE_CFG2. See user manual, section 2.5.5.5.
-        self.ll.lde_cfg2().write(|w| w.value(0x1607))?;
-
-        // Set TX_POWER. See user manual, section 2.5.5.6.
-        self.ll.tx_power().write(|w| w.value(0x0E082848))?;
-
-        // Set RF_TXCTRL. See user manual, section 2.5.5.7.
-        self.ll
-            .rf_txctrl()
-            .modify(|_, w| w.txmtune(0b1111).txmq(0b111))?;
-
-        // Set TC_PGDELAY. See user manual, section 2.5.5.8.
-        self.ll.tc_pgdelay().write(|w| w.value(0xC0))?;
-
-        // Set FS_PLLTUNE. See user manual, section 2.5.5.9.
-        self.ll.fs_plltune().write(|w| w.value(0xBE))?;
-
         // Set LDOTUNE. See user manual, section 2.5.5.11.
-        let ldotune_low = self.read_otp(0x004)?;
+        self.ll.otp_addr().write(|w| w.value(0x004))?;
+        self.ll.otp_ctrl().modify(|_, w|
+            w
+                .otprden(0b1)
+                .otpread(0b1)
+        )?;
+        while self.ll.otp_ctrl().read()?.otpread() == 0b1 {}
+        let ldotune_low = self.ll.otp_rdat().read()?.value();
         if ldotune_low != 0 {
-            let ldotune_high = self.read_otp(0x005)?;
+            self.ll.otp_addr().write(|w| w.value(0x005))?;
+            self.ll.otp_ctrl().modify(|_, w|
+                w
+                    .otprden(0b1)
+                    .otpread(0b1)
+            )?;
+            while self.ll.otp_ctrl().read()?.otpread() == 0b1 {}
+            let ldotune_high = self.ll.otp_rdat().read()?.value();
+
             let ldotune = ldotune_low as u64 | (ldotune_high as u64) << 32;
             self.ll.ldotune().write(|w| w.value(ldotune))?;
         }
+ */   
 
-        // Set LDELOAD. See user manual, section 2.5.5.10.
-        self.ll
-            .pmsc_ctrl0()
-            .modify(|r, w| w.raw_value(r.raw_value() | 0x0301))?;
-        self.ll.otp_ctrl().write(|w| w.ldeload(0b1))?;
-*/        
-/*
-        self.ll
-            .pmsc_ctrl0()
-            .modify(|r, w| w.raw_value(r.raw_value() & !0x0101))?;
-*/
-
-        // Set the automatic switch from idle RC to idle PLL
-        //let mut state = self.ll.sys_state().read()?.pmsc_state();
-/*        delay.delay_ms(2);
-        self.ll.seq_ctrl()
-                .write(|w| w.ainit2idle(1))?;
-        assert_eq!(self.ll.seq_ctrl().read()?.ainit2idle(), 1,
-                "AINIT2IDLE write action didn't work");
-
-
-        // Set the on wake up switch from idle RC to idle PLL
-        self.ll.aon_dig_cfg()
-                .write(|w| w.onw_go2idle(1))?;
-        assert_eq!(self.ll.aon_dig_cfg().read()?.onw_go2idle(), 1,
-                "ONW_GO2IDLE write action didn't work");
-
-*/
         // Wait for the IDLE_RC state
         while self.ll.sys_status()
                 .read()?
                 .rcinit() == 0 
         {   }
 
+        // CONFIGURATION GENERALE
+        // DRX_CONF have some values that should be modified 
+        // for best performance
+        // TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-        /*let mut state = self.ll.sys_state().read()?.pmsc_state();
-        while state != 0x3 { // Wait for IDLE_PLL
-            rprintln!("state = {:#x?}", state);
-            delay.delay_ms(1);
-            state = self.ll.sys_state().read()?.pmsc_state();
-        }*/
-        /*
-        delay.delay_ms(5);
+        // RF_TX_CTRL_1 need to be changed for optimal performance (page 151)
 
-        state = self.ll.sys_state().read()?.pmsc_state();
-        rprintln!("state = {:#x?}", state);
-        self.ll.fast_command(0)?; // goit to IDLE RC
-        state = self.ll.sys_state().read()?.pmsc_state();
-        rprintln!("state = {:#x?}", state);
-        delay.delay_ms(5);
-        state = self.ll.sys_state().read()?.pmsc_state();
-        rprintln!("state = {:#x?}", state);
-*/
+
+        // CONFIGURATION DE LA PLL POUR PASSER DANS L'ETAT IDLE PLL
+        // need to change default cal value for pll (page164)
+        self.ll.pll_cal().modify(|_,w| 
+            w
+                .pll_cfg_ld(0x81)
+        )?;
+        // clear cplock
+        self.ll.sys_status().write(|w| w.cplock(0))?;
+        // select PLL mode auto
+        self.ll.clk_ctrl().modify(|_,w| w.sys_clk(0))?;
+        // set ainit2idle
+        self.ll.seq_ctrl().modify(|_,w| w.ainit2idle(1))?;
+        // Set the on wake up switch from idle RC to idle PLL
+        self.ll.aon_dig_cfg().modify(|_,w| w.onw_go2idle(1))?;
+        // wait for CPLOCK to be set
+        while self.ll.sys_status()
+                .read()?
+                .cplock() == 0
+        {   }
+
+
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,
