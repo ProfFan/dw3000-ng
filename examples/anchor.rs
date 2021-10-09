@@ -78,17 +78,14 @@ fn main() -> ! {
     /****************************************************************************************/
     /*****************              CONFIGURATION du DW3000               *******************/
     /****************************************************************************************/
-    delay.delay_ms(10u8);
+
     let mut dw3000 = hl::DW1000::new(spi, cs).init(&mut delay)
                         .expect("Failed init.");
     rprintln!("dm3000 = {:?}", dw3000);
 
-    dw3000.enable_rx_interrupts().unwrap();
-    delay.delay_ms(10u8);
-
     loop {
         let mut receiving = dw3000.receive(RxConfig::default())
-                        .expect("Failed configure receiver.");
+                                      .expect("Failed configure receiver.");
 
         rprintln!("receiver = {:?}", receiving);
 
@@ -97,12 +94,12 @@ fn main() -> ! {
         rprintln!("cmd_status = {:#x?}", cmd_status);
         let state = receiving.ll().sys_state().read().unwrap().pmsc_state();
         rprintln!("state = {:#x?}", state);
+        let state = receiving.ll().sys_state().read().unwrap().rx_state();
+        rprintln!("state = {:#x?}", state);
 
         // on cré un buffer pour stoquer le resultat message du receveur
         let mut buffer = [0; 127];
         delay.delay_ms(10u8);
-        let state = receiving.ll().sys_state().read().unwrap().pmsc_state();
-        rprintln!("state = {:#x?}", state);
 
         // on recupère un message avec une fonction bloquante
         rprintln!("on commence une fonction qui bloque !");

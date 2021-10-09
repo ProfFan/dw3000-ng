@@ -80,7 +80,7 @@ where
         self.ll.pmsc_ctrl0().modify(
             |_, w| w.softreset(0b1111), // clear reset
         )?;
-
+*/
         // We're already resetting the receiver in the previous step, and that's
         // good enough to make my example program that's both sending and
         // receiving work very reliably over many hours (that's not to say it
@@ -95,19 +95,21 @@ where
         // confirm this does indeed fix the receive-only example, it seems
         // (based on my eyeball-only measurements) that the RX/TX example is
         // dropping fewer frames now.
-        self.force_idle(false)?;
+    /*    self.force_idle(false)?;
 
         self.ll.sys_cfg().modify(|_, w| {
             w.ffen(config.frame_filtering as u8) // enable or disable frame filtering
-                .ffab(0b1) // receive beacon frames
+        });
+        self.ll.ff_cfg().modify(|_,w| {
+            w   .ffab(0b1) // receive beacon frames
                 .ffad(0b1) // receive data frames
                 .ffaa(0b1) // receive acknowledgement frames
                 .ffam(0b1) // receive MAC command frames
                 // Set the double buffering and auto re-enable
-                .dis_drxb(!RECEIVING::DOUBLE_BUFFERED as u8)
-                .rxautr(RECEIVING::AUTO_RX_REENABLE as u8)
+                // .dis_drxb(!RECEIVING::DOUBLE_BUFFERED as u8)
+                //.rxautr(RECEIVING::AUTO_RX_REENABLE as u8)
                 // Set whether the receiver should look for 110kbps or 850/6800kbps messages
-                .rxm110k((config.bitrate == BitRate::Kbps110) as u8)
+                //.rxm110k((config.bitrate == BitRate::Kbps110) as u8)
         })?;
 
         // Set PLLLDT bit in EC_CTRL. According to the documentation of the
@@ -225,6 +227,7 @@ where
 */
         // Start receiving
         //self.ll.sys_ctrl().modify(|_, w| w.rxenab(0b1))?;
+        // delay.delay_ms(2)
         self.ll.fast_command(2)?;
 
         Ok(())
@@ -263,7 +266,7 @@ where
         if sys_status.rxfr() == 0b0 {
             // No frame ready. Check for errors.
             if sys_status.rxfce() == 0b1 {
-                rprintln!("Fcs");
+                // rprintln!("Fcs");
                 return Err(nb::Error::Other(Error::Fcs));
             }
             /*
@@ -271,23 +274,23 @@ where
                 return Err(nb::Error::Other(Error::Phy));
             }$*/
             if sys_status.rxfsl() == 0b1 {
-                rprintln!("ReedSolomon");
+                // rprintln!("ReedSolomon");
                 return Err(nb::Error::Other(Error::ReedSolomon));
             }
             if sys_status.rxfto() == 0b1 {
-                rprintln!("FrameWaitTimeout");
+                // rprintln!("FrameWaitTimeout");
                 return Err(nb::Error::Other(Error::FrameWaitTimeout));
             }
             if sys_status.rxovrr() == 0b1 {
-                rprintln!("Overrun");
+                // rprintln!("Overrun");
                 return Err(nb::Error::Other(Error::Overrun));
             }
             if sys_status.rxpto() == 0b1 {
-                rprintln!("PreambleDetectionTimeout");
+                // rprintln!("PreambleDetectionTimeout");
                 return Err(nb::Error::Other(Error::PreambleDetectionTimeout));
             }
             if sys_status.rxsto() == 0b1 {
-                rprintln!("SfdTimeout");
+                // rprintln!("SfdTimeout");
                 return Err(nb::Error::Other(Error::SfdTimeout));
             }
             /*
@@ -603,6 +606,11 @@ where
                 Err(error) => return Err((self, error)),
             }
         }
+
+        // let state = self.ll.sys_state().read()?.pmsc_state();
+        // if state > 0x3 { //(not in idle)
+        //     self.force_idle(RECEIVING::);
+        // }
 
         Ok(DW1000 {
             ll: self.ll,

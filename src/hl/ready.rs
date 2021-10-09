@@ -183,7 +183,7 @@ where
                 pan_id_compress: false,
                 destination,
                 source:          Some(self.get_address()?),
-                seq:             seq, // Added, before it was empty
+                seq,
             },
             content: mac::FrameContent::Data,
             payload: data,
@@ -343,8 +343,8 @@ where
         config: RxConfig,
     ) -> Result<DW1000<SPI, CS, SingleBufferReceiving>, Error<SPI, CS>> {
         let mut rx_radio = DW1000 {
-            ll: self.ll,
-            seq: self.seq,
+            ll:    self.ll,
+            seq:   self.seq,
             state: SingleBufferReceiving {
                 finished: false,
                 config,
@@ -352,8 +352,8 @@ where
         };
 
         // Start rx'ing
-        rx_radio.start_receiving(config)?;
-
+        rx_radio.start_receiving(config)?; 
+        
         // Return the double buffer state
         Ok(rx_radio)
     }

@@ -4,7 +4,7 @@ use embedded_hal::{
     blocking::{delay::DelayMs, spi},
     digital::v2::OutputPin,
 };
-use rtt_target::{rprintln};
+//use rtt_target::{rprintln};
 
 impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
 where
@@ -90,29 +90,27 @@ where
 */
 
         // Set the automatic switch from idle RC to idle PLL
-        let mut state = self.ll.sys_state().read()?.pmsc_state();
+        //let mut state = self.ll.sys_state().read()?.pmsc_state();
+/*        delay.delay_ms(2);
         self.ll.seq_ctrl()
                 .write(|w| w.ainit2idle(1))?;
-        assert_eq!(self.ll.seq_ctrl().read()?.ainit2idle(), 1_u8,
+        assert_eq!(self.ll.seq_ctrl().read()?.ainit2idle(), 1,
                 "AINIT2IDLE write action didn't work");
-        state = self.ll.sys_state().read()?.pmsc_state();
-        rprintln!("state = {:#x?}", state);
+
 
         // Set the on wake up switch from idle RC to idle PLL
         self.ll.aon_dig_cfg()
                 .write(|w| w.onw_go2idle(1))?;
-        assert_eq!(self.ll.aon_dig_cfg().read()?.onw_go2idle(), 1_u8,
+        assert_eq!(self.ll.aon_dig_cfg().read()?.onw_go2idle(), 1,
                 "ONW_GO2IDLE write action didn't work");
-        state = self.ll.sys_state().read()?.pmsc_state();
-        rprintln!("state = {:#x?}", state);
 
+*/
         // Wait for the IDLE_RC state
         while self.ll.sys_status()
                 .read()?
                 .rcinit() == 0 
         {   }
-        state = self.ll.sys_state().read()?.pmsc_state();
-        rprintln!("state = {:#x?}", state);
+
 
         /*let mut state = self.ll.sys_state().read()?.pmsc_state();
         while state != 0x3 { // Wait for IDLE_PLL
@@ -120,7 +118,7 @@ where
             delay.delay_ms(1);
             state = self.ll.sys_state().read()?.pmsc_state();
         }*/
-        
+        /*
         delay.delay_ms(5);
 
         state = self.ll.sys_state().read()?.pmsc_state();
@@ -131,7 +129,7 @@ where
         delay.delay_ms(5);
         state = self.ll.sys_state().read()?.pmsc_state();
         rprintln!("state = {:#x?}", state);
-
+*/
         Ok(DW1000 {
             ll:    self.ll,
             seq:   self.seq,

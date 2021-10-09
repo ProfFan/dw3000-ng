@@ -14,9 +14,11 @@ use stm32f1xx_hal::{
 };
 
 use embedded_hal::digital::v2::OutputPin;
-use core::ops::Add;
 
-use dw3000::{hl, mac, time, TxConfig};
+use dw3000::hl;
+
+// use dw3000::time::{TIME_MAX,Instant,};
+use dw3000::RxConfig;
 
 
 
@@ -70,6 +72,8 @@ fn main() -> ! {
     let mut delay = Delay::new(cp.SYST, clocks);
 
     let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
+
+    // UWB module reset 
     rst_n.set_low().unwrap();
     rst_n.set_high().unwrap();
 
@@ -77,87 +81,84 @@ fn main() -> ! {
     /*****************              CONFIGURATION du DW3000               *******************/
     /****************************************************************************************/
 
-    let mut dw3000 = hl::DW1000::new(spi, cs).init( )
-                        .expect("Failed init.");
-    rprintln!("dm3000 = {:?}", dw3000);
+    let mut dw3000 = hl::DW1000::new(spi, cs);
+    delay.delay_ms(1000u16);
+
+    // variable pour recuperer l'etat du module
     let mut state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    // while state != 0x3 {
-        // rprintln!("state = {:#x?}", state);
-        // delay.delay_ms(1_u8);
-        // state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
-    // }
-/*
-    rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
-    dw3000.ll().rx_cal().write(|w| w.cal_mode(1)).unwrap();
-    rprintln!("cal_mode = {:#x?}",dw3000.ll().rx_cal().read().unwrap().cal_mode());
+    rprintln!("Etat après un new et une attente de 1sec = {:#x?}", state);
 
-    dw3000.ll().fast_command(2).unwrap();
-*/
-delay.delay_ms(10_u8);
-    let x = dw3000.sys_time().unwrap();
-                    //.add(time::Duration::from_nanos(20));
-    let mut dw3001 = dw3000.send(
-        b"ping",
-        mac::Address::broadcast(&mac::AddressMode::Short),
-        Some(x),
-        TxConfig::default(),
-    ).expect("alo");
+    // activation de la calibration auto
+    dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1))
+            .expect("Write to onw_pgfcal failed.");
 
-    let state = dw3001.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("state3 = {:#x?}", state);
-    rprintln!("dx = {:#x?}", x);
-    rprintln!("now = {:#x?}", dw3001.sys_time().unwrap());
-    let mut dw3002 = dw3001.finish_sending();
+    rprintln!("On est dans l'état IDLE_RC -> SPIRDY = {:#x?}", 
+            dw3000.ll().sys_status().read().unwrap().spirdy());
+
+
+
+
+    // On initialise le module pour passer à l'état IDLE
+    rprintln!("On fait maintenant un init !");
+    let mut dw3000 = dw3000.init(&mut delay).expect("Failed init.");
+    delay.delay_ms(1000u16);
+    state = dw3000.ll().sys_state().read().unwrap().pmsc_state();
+    rprintln!("Après l'init, l'état est = {:#x?}", state);
+
+    // après ces états, on peux vérifier l'etat du systeme avec les reg:
+    // SPIRDY -> indique qu'on a finit les config d'allumage (IDLE_RC)
+    rprintln!("Est ce qu'on est dans l'état IDLE_RC ? = {:#x?}", 
+            dw3000.ll().sys_status().read().unwrap().spirdy());
+
+    // CPLOCK -> indique si l'horloge PLL est bloquée (IDLE_PLL)
+    rprintln!("Est ce qu'on est dans l'état IDLE_PLL ? = {:#x?}", 
+            dw3000.ll().sys_status().read().unwrap().cplock());
+
+    // PLL_HILO -> indique un probleme sur la conf de PLL
+    rprintln!("Probleme pour lock la PLL ? = {:#x?}", 
+            dw3000.ll().sys_status().read().unwrap().pll_hilo());
+
+
+
+
+    delay.delay_ms(5000u16);
+
+
     
-    //dw3002.state.finished = true;
-    let mut dw3003 = dw3002.send(
-        b"ping",
-        mac::Address::broadcast(&mac::AddressMode::Short),
-        Some(x),
-        TxConfig::default(),
-    ).expect("alo");let state = dw3001.ll().sys_state().read().unwrap().pmsc_state();
-    rprintln!("state3 = {:#x?}", state);
 
-/*
-    dw3000.set_address( mac::PanId(0x0d57),
-                        mac::ShortAddress(50))
-            .expect("Failed to set address.");
-*/
+    // let valid_instant   = Instant::new(TI*ME_MAX);
 
+    // ON PASSE EN MODE RECEVEUR 
+    let mut receiving = dw3000.receive(RxConfig {
+                frame_filtering: false,
+                .. RxConfig::default()
+            })
+            .expect("Failed configure receiver.");
+    state = receiving.ll().sys_state().read().unwrap().pmsc_state();
+    rprintln!("On passe en mode reception = {:#x?}", state);
 
-/*
-    // ONW_PGFCAL : activate RX calibration on wake-up
-    let onw_pgfcal = dw3000.ll().aon_dig_cfg().read().unwrap().onw_pgfcal();
-    rprintln!("onw_pgfcal = {:?}", onw_pgfcal);
+    // ETAPE 1 : recherche du preamble
+    // fait automatiquement, on desactive le time-out pre-toc (default)
 
-    dw3000.ll().aon_dig_cfg().write(|w|
-                w.onw_pgfcal(1)); // activate RX config in wakeup
+    // ETAPE 2 : Accumulation preamble and await SFD
 
-    rst_n.set_low().unwrap();
-    rst_n.set_high().unwrap();
+    // ETAPE 3 : 
 
-    delay.delay_ms(10u8);
+    delay.delay_ms(1000u16);
+    let mut rx_state = receiving.ll().sys_state().read().unwrap().rx_state();
+    rprintln!("\nOn regarde ou en est le receveur\n" );
+    rprintln!("Etat ? : {}", rx_state);
 
-    let onw_pgfcal = dw3000.ll().aon_dig_cfg().read().unwrap().onw_pgfcal();
-    rprintln!("onw_pgfcal = {:?}", onw_pgfcal);
-
-
-    // CAL_MODE : 0 for normal mode
-    let cal_mode = dw3000.ll().rx_cal().read().unwrap().cal_mode();
-    rprintln!("cal_mode = {:?}", cal_mode);
-    // CAL_EN : calibration enable, RX_CAL_STS set when finish
-    let cal_en = dw3000.ll().rx_cal().read().unwrap().cal_en();
-    rprintln!("cal_en = {:?}", cal_en);
-    let rx_cal_sts = dw3000.ll().rx_cal_sts().read().unwrap().value();
-    rprintln!("rx_cal_sts = {:?}", rx_cal_sts);
-    // COMP_DLY : doit etre mis à 0x2 pour optimisation
-    let comp_dly = dw3000.ll().rx_cal().read().unwrap().comp_dly();
-    rprintln!("comp_dly = {:?}", comp_dly);
-*/
 
 
     loop {
-        
+        delay.delay_ms(2000u16);
+        rx_state = receiving.ll().sys_state().read().unwrap().rx_state();
+        rprintln!("Etat ? : {}", rx_state);
+        //frame_ready = receiving.ll().sys_status().read().unwrap().rxfr();
+
+        rprintln!("tested value = {:#x?}", 
+            receiving.ll().ldo_rload().read().unwrap().value());
     }    
 
 }
