@@ -40,6 +40,8 @@ check:
   extends:
     - .common
     - .recreate_cache
+  before_script:
+    - rustup target add thumbv7m-none-eabi
   script:
     - cargo check --workspace
 
