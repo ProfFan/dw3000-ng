@@ -13,9 +13,11 @@ use stm32f1xx_hal::{
     spi::{Spi, Mode, Phase, Polarity},
 };
 
+use ieee802154::mac;
+
 use embedded_hal::digital::v2::OutputPin;
 
-use dw3000::{hl, RxConfig};
+use dw3000::{hl, RxConfig, TxConfig};
 
 use nb::block;
 
@@ -97,6 +99,9 @@ fn main() -> ! {
 
 
     loop {
+        /*****************************/
+        /********* RECEIVER **********/
+        /*****************************/
         let mut receiving = dw3000.receive(RxConfig::default())
                         .expect("Failed configure receiver.");
 
@@ -122,6 +127,41 @@ fn main() -> ! {
 
         dw3000 = receiving.finish_receiving()
                 .expect("Failed to finish receiving");
+
+        
+        /*****************************/
+        /******** TRANSMITTER ********/
+        /*****************************/
+        let delayed_tx_time = dw3000.sys_time()
+                .expect("Failed to get time");
+                
+        let mut sending = dw3000.send(
+                b"ping",
+                mac::Address::broadcast(&mac::AddressMode::Short),
+                hl::SendTime::Delayed(delayed_tx_time),
+                TxConfig::default(),
+        ).expect("Failed configure transmitter");
+
+        rprintln!("transmitter = {:?}", sending);
+
+
+        let cmd_status = sending.ll().fcmd_stat().read().unwrap().value();
+        rprintln!("cmd_status = {:#x?}", cmd_status);
+        let state = sending.ll().sys_state().read().unwrap().pmsc_state();
+        rprintln!("state = {:#x?}", state);
+
+        delay.delay_ms(10u8);
+
+        // on recupère un message avec une fonction bloquante
+        rprintln!("on commence une fonction qui bloque !");
+        let result = block!(sending.wait());
+        rprintln!("on est sorti de la fonction qui bloque !");
+
+        // on affiche le resultat
+        rprintln!("result = {:?}", result);
+
+        dw3000 = sending.finish_sending()
+                .expect("Failed to finish sending");
     }    
 
 }

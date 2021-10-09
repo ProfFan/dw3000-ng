@@ -205,7 +205,8 @@ impl PreambleLength {
     /// Gets the recommended PAC size based on the preamble length.
     pub fn get_recommended_pac_size(&self) -> u8 {
         // Values are taken from Table 6 of the DW1000 User manual
-        match self {            PreambleLength::Symbols64 => 0, // PAC size = 8
+        match self {            
+            PreambleLength::Symbols64 => 0, // PAC size = 8
             PreambleLength::Symbols128 => 0, 
             PreambleLength::Symbols256 => 1, // PAC size = 16
             PreambleLength::Symbols512 => 1,
