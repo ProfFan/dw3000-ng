@@ -66,7 +66,7 @@ where
 
         // Frame sent
         self.reset_flags()
-            .map_err(|error| nb::Error::Other(error))?;
+            .map_err(nb::Error::Other)?;
         self.state.finished = true;
 
         let tx_timestamp = self
@@ -77,15 +77,15 @@ where
             .tx_stamp();
         // This is safe because the value read from the device will never be higher than the allowed value.
         let tx_timestamp = Instant::new(tx_timestamp);
-        if let Some(ts) = tx_timestamp {
-            return Ok(ts)
-        } else {
-            return Err(nb::Error::Other(Error::Fcs));
-        }
-
         
+        if let Some(ts) = tx_timestamp {
+            Ok(ts)
+        } else {
+            Err(nb::Error::Other(Error::Fcs))
+        }        
     }
 
+    #[allow(clippy::type_complexity)]
     /// Finishes sending and returns to the `Ready` state
     ///
     /// If the send operation has finished, as indicated by `wait`, this is a
