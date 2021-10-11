@@ -4,126 +4,152 @@
 // crates de gestion des messages de debug
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
-
-use nb::block;
-
-//use stm32f1::stm32f103;
-//use stm32f1::stm32f103::interrupt;
-
 use cortex_m_rt::entry;
 use stm32f1xx_hal::{
-    pac,
-    prelude::*,
-    spi::{Spi, Mode, Phase, Polarity},
-    timer::Timer,
-    //delay::Delay,
+	delay::Delay,
+	pac,
+	prelude::*,
+	spi::{Mode, Phase, Polarity, Spi},
 };
-
-use dw3000::{configs, hl};
+use ieee802154::mac;
+use embedded_hal::digital::v2::OutputPin;
+use dw3000::{hl, RxConfig, TxConfig};
+use nb::block;
 
 #[entry]
 fn main() -> ! {
+	rtt_init_print!();
+	rprintln!("Coucou copain !");
 
-    rtt_init_print!();
-    rprintln!("Coucou copain !");
+	/******************************************************* */
+	/************       CONFIGURATION DE BASE     ********** */
+	/******************************************************* */
 
-    /****************************************************************************************/
-    /*****************              CONFIGURATION DE BASE               *********************/
-    /****************************************************************************************/
+	// Get access to the device specific peripherals from the peripheral access
+	// crate
+	let dp = pac::Peripherals::take().unwrap();
+	let cp = cortex_m::Peripherals::take().unwrap();
 
-    // Get access to the device specific peripherals from the peripheral access crate
-    let dp = pac::Peripherals::take().unwrap();
-    //let cp = cortex_m::Peripherals::take().unwrap();
+	// Take ownership over the raw flash and rcc devices and convert them into the
+	// corresponding HAL structs
+	let mut flash = dp.FLASH.constrain();
+	let mut rcc = dp.RCC.constrain();
+	let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
 
-    // Take ownership over the raw flash and rcc devices and convert them into the corresponding
-    // HAL structs
-    let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
-    let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
+	let clocks = rcc
+		.cfgr
+		.use_hse(8.mhz())
+		.sysclk(36.mhz())
+		.freeze(&mut flash.acr);
 
-    let clocks = rcc.cfgr.use_hse(8.mhz()).sysclk(36.mhz()).freeze(&mut flash.acr);
+	let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
+	let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
 
-    let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
-    let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
+	/***************************************************** */
+	/************       CONFIGURATION DU SPI       ******* */
+	/***************************************************** */
 
-    /****************************************************************************************/
-    /*****************              CONFIGURATION DU SPI                *********************/
-    /****************************************************************************************/
+	let pins = (
+		gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl),
+		gpioa.pa6.into_floating_input(&mut gpioa.crl),
+		gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl),
+	);
 
-    let pins = (
-        gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl),
-        gpioa.pa6.into_floating_input(&mut gpioa.crl),
-        gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl),
-    );
+	let cs = gpiob.pb6.into_push_pull_output(&mut gpiob.crl);
 
-    let cs = gpiob.pb6.into_push_pull_output(&mut gpiob.crl);
+	let spi_mode = Mode {
+		polarity: Polarity::IdleLow,
+		phase:    Phase::CaptureOnFirstTransition,
+	};
+	let spi = Spi::spi1(
+		dp.SPI1,
+		pins,
+		&mut afio.mapr,
+		spi_mode,
+		100.khz(),
+		clocks,
+		&mut rcc.apb2,
+	);
 
-    let spi_mode = Mode {
-        polarity: Polarity::IdleLow,
-        phase: Phase::CaptureOnFirstTransition,
-    };
-    let spi = Spi::spi1(dp.SPI1, pins, &mut afio.mapr, spi_mode, 100.khz(), clocks, &mut rcc.apb2);
+	/****************************************************** */
+	/*****       CONFIGURATION DU RESET du DW3000   ******* */
+	/****************************************************** */
 
-    //let mut delay = Delay::new(cp.SYST, clocks);
+	let mut delay = Delay::new(cp.SYST, clocks);
 
-    /****************************************************************************************/
-    /*****************              CONFIGURATION du DW3000               *******************/
-    /****************************************************************************************/
+	let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
 
+	// UWB module reset
+	rst_n.set_low().unwrap();
+	rst_n.set_high().unwrap();
 
-    let mut dw1000 = hl::DW1000::new(spi, cs).init()
-        .expect("Failed to initialize DW1000");
-    rprintln!("dm1000 = {:?}", dw1000);
+	/****************************************************** */
+	/*********       CONFIGURATION du DW3000       ******** */
+	/****************************************************** */
 
-    // permet de visualiser les messages envoyés et recus
-    dw1000.configure_leds(true, true, true, true, 15)
-        .expect("Failed to initialize LEDS");
-    /*
-    dw1000.enable_tx_interrupts()
-        .expect("Failed to enable TX interrupts");
-    dw1000.enable_rx_interrupts()
-        .expect("Failed to enable RX interrupts");
-    */
-    // [1] https://github.com/Decawave/dwm1001-examples
-    dw1000.set_antenna_delay(16456, 16300)
-        .expect("Failed to set antenna delay");
+	let mut dw3000 = hl::DW1000::new(spi, cs)
+		.init(&mut delay)
+		.expect("Failed init.");
+	rprintln!("dm3000 = {:?}", dw3000);
 
-    // Set network address
-    /*
-    dw1000
-        .set_address(
-            mac::PanId(0x0d57),    // hardcoded network id
-            mac::ShortAddress(50), // pas random device address
-        )
-        .expect("Failed to set address"); 
-    */
+	loop {
+		/**************************** */
+		/******** TRANSMITTER ******* */
+		/**************************** */
+		let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
 
+		let mut sending = dw3000
+			.send(
+				b"ping",
+				mac::Address::broadcast(&mac::AddressMode::Short),
+				hl::SendTime::Delayed(delayed_tx_time),
+				TxConfig::default(),
+			)
+			.expect("Failed configure transmitter");
 
+		rprintln!("transmitter = {:?}", sending);
+		rprintln!("cmd_status = {:#x?}", sending.cmd_status());
+		rprintln!("state = {:#x?}", sending.state());
+		rprintln!("TX state = {:#x?}", sending.tx_state());
 
-    //let mut task_timer = Timer::tim2(dp.TIM2, &clocks, &mut rcc.apb1);
-    //let mut timeout_timer = Timer::tim3(dp.TIM3, &clocks, &mut rcc.apb1);
-    //task_timer.start_count_down(1.hz());
+		delay.delay_ms(10u8);
 
-    
+		// on recupère un message avec une fonction bloquante
+		rprintln!("on commence une fonction qui bloque !");
+		let result = block!(sending.wait());
+		rprintln!("on est sorti de la fonction qui bloque !");
 
+		// on affiche le resultat
+		rprintln!("result = {:?}", result);
 
-    loop {
-        let mut sending = dw1000
-            .send(
-                b"ping",
-                mac::Address::broadcast(&mac::AddressMode::Short),
-                None,
-                TxConfig::default(),
-            )
-            .expect("Failed to start receiver");
-        
-        block!(sending.wait())
-            .expect("Failed to send data");
+		dw3000 = sending.finish_sending().expect("Failed to finish sending");
 
-        dw1000 = sending.finish_sending()
-            .expect("Failed to finish sending");
+		/**************************** */
+		/********* RECEIVER ********* */
+		/**************************** */
+		let mut receiving = dw3000
+			.receive(RxConfig::default())
+			.expect("Failed configure receiver.");
 
-        rprintln!(".");
-    }    
+		rprintln!("receiver = {:?}", receiving);
+		rprintln!("cmd_status = {:#x?}", receiving.cmd_status());
+		rprintln!("state = {:#x?}", receiving.state());
+		rprintln!("RX state = {:#x?}", receiving.rx_state());
 
+		// on cré un buffer pour stoquer le resultat message du receveur
+		let mut buffer = [0; 1024];
+		delay.delay_ms(10u8);
+
+		// on recupère un message avec une fonction bloquante
+		rprintln!("on commence une fonction qui bloque !");
+		let result = block!(receiving.wait(&mut buffer));
+		rprintln!("on est sorti de la fonction qui bloque !");
+
+		// on affiche le resultat
+		rprintln!("result = {:?}", result);
+
+		dw3000 = receiving
+			.finish_receiving()
+			.expect("Failed to finish receiving");
+	}
 }
