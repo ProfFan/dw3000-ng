@@ -88,9 +88,7 @@ pub enum BitRate {
 }
 
 impl Default for BitRate {
-    fn default() -> Self {
-        BitRate::Kbps6800
-    }
+    fn default() -> Self { BitRate::Kbps6800 }
 }
 /*
 impl BitRate {
@@ -118,9 +116,7 @@ pub enum PulseRepetitionFrequency {
 }
 
 impl Default for PulseRepetitionFrequency {
-    fn default() -> Self {
-        PulseRepetitionFrequency::Mhz64
-    }
+    fn default() -> Self { PulseRepetitionFrequency::Mhz64 }
 }
 /*
 impl PulseRepetitionFrequency {
@@ -196,9 +192,7 @@ pub enum PreambleLength {
 }
 
 impl Default for PreambleLength {
-    fn default() -> Self {
-        PreambleLength::Symbols64
-    }
+    fn default() -> Self { PreambleLength::Symbols64 }
 }
 
 impl PreambleLength {
@@ -278,9 +272,7 @@ pub enum SfdSequence {
 }
 
 impl Default for SfdSequence {
-    fn default() -> Self {
-        SfdSequence::IeeeShort
-    }
+    fn default() -> Self { SfdSequence::IeeeShort }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -303,9 +295,7 @@ pub enum UwbChannel {
 }
 
 impl Default for UwbChannel {
-    fn default() -> Self {
-        UwbChannel::Channel5
-    }
+    fn default() -> Self { UwbChannel::Channel5 }
 }
 
 impl UwbChannel {

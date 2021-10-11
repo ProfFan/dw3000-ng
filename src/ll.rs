@@ -34,9 +34,7 @@ impl<SPI, CS> DW1000<SPI, CS> {
     ///
     /// Requires the SPI peripheral and the chip select pin that are connected
     /// to the DW1000.
-    pub fn new(spi: SPI, chip_select: CS) -> Self {
-        DW1000 { spi, chip_select }
-    }
+    pub fn new(spi: SPI, chip_select: CS) -> Self { DW1000 { spi, chip_select } }
 
     /// commentaire
     pub fn fast_command(&mut self, fast: u8) -> Result<(), Error<SPI, CS>>
@@ -595,9 +593,9 @@ macro_rules! impl_rw {
 // }
 //
 
-/*************************************************************************/
-/**********               DWM3000 MODIFICATIONS               ************/
-/*************************************************************************/
+/************************************************************************ */
+/**********               DWM3000 MODIFICATIONS               *********** */
+/************************************************************************ */
 // registers for DWM3000
 // Each field follows the following syntax:
 // <Id>, <Offset>, <Length>, <Access>, <NAME(name)>
@@ -1679,13 +1677,9 @@ impl Register for TX_BUFFER {
 impl Writable for TX_BUFFER {
     type Write = tx_buffer::W;
 
-    fn write() -> Self::Write {
-        tx_buffer::W([0; 127 + 1])
-    }
+    fn write() -> Self::Write { tx_buffer::W([0; 127 + 1]) }
 
-    fn buffer(w: &mut Self::Write) -> &mut [u8] {
-        &mut w.0
-    }
+    fn buffer(w: &mut Self::Write) -> &mut [u8] { &mut w.0 }
 }
 
 impl<SPI, CS> DW1000<SPI, CS> {
@@ -1702,9 +1696,7 @@ pub mod tx_buffer {
 
     impl W {
         /// Provides write access to the buffer contents
-        pub fn data(&mut self) -> &mut [u8] {
-            &mut self.0[1..]
-        }
+        pub fn data(&mut self) -> &mut [u8] { &mut self.0[1..] }
     }
 }
 
@@ -1724,13 +1716,9 @@ impl Register for RX_BUFFER_0 {
 impl Readable for RX_BUFFER_0 {
     type Read = rx_buffer_0::R;
 
-    fn read() -> Self::Read {
-        rx_buffer_0::R([0; 127 + 1])
-    }
+    fn read() -> Self::Read { rx_buffer_0::R([0; 127 + 1]) }
 
-    fn buffer(w: &mut Self::Read) -> &mut [u8] {
-        &mut w.0
-    }
+    fn buffer(w: &mut Self::Read) -> &mut [u8] { &mut w.0 }
 }
 
 impl<SPI, CS> DW1000<SPI, CS> {
@@ -1752,9 +1740,7 @@ pub mod rx_buffer_0 {
 
     impl R {
         /// Provides read access to the buffer contents
-        pub fn data(&self) -> &[u8] {
-            &self.0[HEADER_LEN..HEADER_LEN + LEN]
-        }
+        pub fn data(&self) -> &[u8] { &self.0[HEADER_LEN..HEADER_LEN + LEN] }
     }
 
     impl fmt::Debug for R {
@@ -1785,13 +1771,9 @@ impl Register for RX_BUFFER_1 {
 impl Readable for RX_BUFFER_1 {
     type Read = rx_buffer_1::R;
 
-    fn read() -> Self::Read {
-        rx_buffer_1::R([0; 127 + 1])
-    }
+    fn read() -> Self::Read { rx_buffer_1::R([0; 127 + 1]) }
 
-    fn buffer(w: &mut Self::Read) -> &mut [u8] {
-        &mut w.0
-    }
+    fn buffer(w: &mut Self::Read) -> &mut [u8] { &mut w.0 }
 }
 
 impl<SPI, CS> DW1000<SPI, CS> {
@@ -1813,9 +1795,7 @@ pub mod rx_buffer_1 {
 
     impl R {
         /// Provides read access to the buffer contents
-        pub fn data(&self) -> &[u8] {
-            &self.0[HEADER_LEN..HEADER_LEN + LEN]
-        }
+        pub fn data(&self) -> &[u8] { &self.0[HEADER_LEN..HEADER_LEN + LEN] }
     }
 
     impl fmt::Debug for R {

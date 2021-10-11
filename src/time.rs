@@ -53,9 +53,7 @@ impl Instant {
     ///
     /// The returned value is guaranteed to be in the following range:
     /// 0 <= `value` <= 2^40 - 1
-    pub fn value(&self) -> u64 {
-        self.0
-    }
+    pub fn value(&self) -> u64 { self.0 }
 
     /// Returns the amount of time passed between the two `Instant`s
     ///
@@ -163,7 +161,5 @@ impl Duration {
     ///
     /// The returned value is guaranteed to be in the following range:
     /// 0 <= `value` <= 2^40 - 1
-    pub fn value(&self) -> u64 {
-        self.0
-    }
+    pub fn value(&self) -> u64 { self.0 }
 }

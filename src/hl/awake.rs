@@ -83,9 +83,7 @@ where
     /// various assumptions that the high-level API makes about the operation of
     /// the DW1000. Don't use the register-level and high-level APIs in tandem,
     /// unless you know what you're doing.
-    pub fn ll(&mut self) -> &mut ll::DW1000<SPI, CS> {
-        &mut self.ll
-    }
+    pub fn ll(&mut self) -> &mut ll::DW1000<SPI, CS> { &mut self.ll }
 
     /// Force the DW1000 into IDLE mode
     ///

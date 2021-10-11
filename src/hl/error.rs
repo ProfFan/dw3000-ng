@@ -88,9 +88,7 @@ where
     SPI: spi::Transfer<u8> + spi::Write<u8>,
     CS: OutputPin,
 {
-    fn from(error: ll::Error<SPI, CS>) -> Self {
-        Error::Spi(error)
-    }
+    fn from(error: ll::Error<SPI, CS>) -> Self { Error::Spi(error) }
 }
 
 impl<SPI, CS> From<ssmarshal::Error> for Error<SPI, CS>
@@ -98,9 +96,7 @@ where
     SPI: spi::Transfer<u8> + spi::Write<u8>,
     CS: OutputPin,
 {
-    fn from(error: ssmarshal::Error) -> Self {
-        Error::Ssmarshal(error)
-    }
+    fn from(error: ssmarshal::Error) -> Self { Error::Ssmarshal(error) }
 }
 
 // We can't derive this implementation, as `Debug` is only implemented

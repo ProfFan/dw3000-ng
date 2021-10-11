@@ -65,31 +65,19 @@ impl Receiving for SingleBufferReceiving {
     const AUTO_RX_REENABLE: bool = false;
     const DOUBLE_BUFFERED: bool = false;
 
-    fn mark_finished(&mut self) {
-        self.finished = true;
-    }
+    fn mark_finished(&mut self) { self.finished = true; }
 
-    fn is_finished(&self) -> bool {
-        self.finished
-    }
+    fn is_finished(&self) -> bool { self.finished }
 
-    fn get_rx_config(&self) -> &RxConfig {
-        &self.config
-    }
+    fn get_rx_config(&self) -> &RxConfig { &self.config }
 }
 impl Receiving for AutoDoubleBufferReceiving {
     const AUTO_RX_REENABLE: bool = true;
     const DOUBLE_BUFFERED: bool = true;
 
-    fn mark_finished(&mut self) {
-        self.finished = true;
-    }
+    fn mark_finished(&mut self) { self.finished = true; }
 
-    fn is_finished(&self) -> bool {
-        self.finished
-    }
+    fn is_finished(&self) -> bool { self.finished }
 
-    fn get_rx_config(&self) -> &RxConfig {
-        &self.config
-    }
+    fn get_rx_config(&self) -> &RxConfig { &self.config }
 }

@@ -179,7 +179,7 @@ where
         // REGISTRE LDO_RLOAD
         self.ll.ldo_rload().write(|w| w.value(0x14))?;
 
-        /**************    CONF PLL      *****************************/
+        /**************    CONF PLL      **************************** */
         // REGISTRE PLL_CAL semble pas utile
         self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x81))?;
         // clear CPLOCK bit
