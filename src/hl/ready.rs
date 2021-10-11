@@ -79,6 +79,7 @@ where
 
 		Ok(())
 	}
+
 	/*
 		/// Sets up the sync pin functionality
 		///
@@ -386,6 +387,7 @@ where
 		// Return the double buffer state
 		Ok(rx_radio)
 	}
+
 	/*
 		/// Attempt to receive many IEEE 802.15.4 MAC frames. This is done in double buffered mode and auto re-enable.
 		/// This means that once a message has been received, the radio will switch receive buffer and continue receiving.

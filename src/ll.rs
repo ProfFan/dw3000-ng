@@ -1670,8 +1670,8 @@ pub struct TX_BUFFER;
 
 impl Register for TX_BUFFER {
 	const ID: u8 = 0x14;
-	const SUB_ID: u16 = 0x00;
 	const LEN: usize = 127;
+	const SUB_ID: u16 = 0x00;
 }
 
 impl Writable for TX_BUFFER {
@@ -1709,8 +1709,8 @@ pub struct RX_BUFFER_0;
 
 impl Register for RX_BUFFER_0 {
 	const ID: u8 = 0x12;
-	const SUB_ID: u16 = 0x00;
 	const LEN: usize = 127;
+	const SUB_ID: u16 = 0x00;
 }
 
 impl Readable for RX_BUFFER_0 {
@@ -1764,8 +1764,8 @@ pub struct RX_BUFFER_1;
 
 impl Register for RX_BUFFER_1 {
 	const ID: u8 = 0x13;
-	const SUB_ID: u16 = 0x00;
 	const LEN: usize = 127;
+	const SUB_ID: u16 = 0x00;
 }
 
 impl Readable for RX_BUFFER_1 {

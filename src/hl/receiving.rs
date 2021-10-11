@@ -357,6 +357,7 @@ where
 
 		Ok(Message { rx_time, frame })
 	}
+
 	/*
 		fn clear_status(&mut self) -> Result<(), Error<SPI, CS>> {
 			let do_clear = |ll: &mut crate::ll::DW1000<SPI, CS>| {
