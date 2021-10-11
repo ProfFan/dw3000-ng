@@ -182,7 +182,7 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
 	*/
 
 	if !sub_id {
-		return 1;
+		return 1
 	}
 
 	buffer[1] = (R::SUB_ID as u8) << 2;

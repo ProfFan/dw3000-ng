@@ -38,7 +38,7 @@ where
 			.map_err(|error| nb::Error::Other(Error::Spi(error)))?
 			.value();
 		if evc_hpw != 0 {
-			return Err(nb::Error::Other(Error::DelayedSendTooLate));
+			return Err(nb::Error::Other(Error::DelayedSendTooLate))
 		}
 		/*
 				// Check Transmitter Power-Up Warning Counter. If this is a delayed
@@ -67,7 +67,7 @@ where
 		// Has the frame been sent?
 		if sys_status.txfrs() == 0b0 {
 			// Frame has not been sent
-			return Err(nb::Error::WouldBlock);
+			return Err(nb::Error::WouldBlock)
 		}
 
 		// Frame sent

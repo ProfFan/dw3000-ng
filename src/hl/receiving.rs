@@ -247,26 +247,26 @@ where
 		if sys_status.rxfr() == 0b0 {
 			// No frame ready. Check for errors.
 			if sys_status.rxfce() == 0b1 {
-				return Err(nb::Error::Other(Error::Fcs));
+				return Err(nb::Error::Other(Error::Fcs))
 			}
 			/*
 			if sys_status.rxphe() == 0b1 {
 				return Err(nb::Error::Other(Error::Phy));
 			}$*/
 			if sys_status.rxfsl() == 0b1 {
-				return Err(nb::Error::Other(Error::ReedSolomon));
+				return Err(nb::Error::Other(Error::ReedSolomon))
 			}
 			if sys_status.rxfto() == 0b1 {
-				return Err(nb::Error::Other(Error::FrameWaitTimeout));
+				return Err(nb::Error::Other(Error::FrameWaitTimeout))
 			}
 			if sys_status.rxovrr() == 0b1 {
-				return Err(nb::Error::Other(Error::Overrun));
+				return Err(nb::Error::Other(Error::Overrun))
 			}
 			if sys_status.rxpto() == 0b1 {
-				return Err(nb::Error::Other(Error::PreambleDetectionTimeout));
+				return Err(nb::Error::Other(Error::PreambleDetectionTimeout))
 			}
 			if sys_status.rxsto() == 0b1 {
-				return Err(nb::Error::Other(Error::SfdTimeout));
+				return Err(nb::Error::Other(Error::SfdTimeout))
 			}
 			/*
 			if sys_status.affrej() == 0b1 {
@@ -281,7 +281,7 @@ where
 
 			// No errors detected. That must mean the frame is just not ready
 			// yet.
-			return Err(nb::Error::WouldBlock);
+			return Err(nb::Error::WouldBlock)
 		}
 
 		// Frame is ready. Continue.
@@ -289,7 +289,7 @@ where
 		// Wait until LDE processing is done. Before this is finished, the RX
 		// time stamp is not available.
 		if sys_status.ciadone() == 0b0 {
-			return Err(nb::Error::WouldBlock);
+			return Err(nb::Error::WouldBlock)
 		}
 		let rx_time = self
 			.ll()
@@ -346,7 +346,7 @@ where
 		if buffer.len() < len {
 			return Err(nb::Error::Other(Error::BufferTooSmall {
 				required_len: len,
-			}));
+			}))
 		}
 
 		buffer[..len].copy_from_slice(&rx_buffer.data()[..len]);
