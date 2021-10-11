@@ -179,7 +179,7 @@ where
 		self.seq += Wrapping(1);
 
 		let frame = mac::Frame {
-			header: mac::Header {
+			header:  mac::Header {
 				frame_type: mac::FrameType::Data,
 				version: mac::FrameVersion::Ieee802154_2006,
 				security: mac::Security::None,
@@ -192,7 +192,7 @@ where
 			},
 			content: mac::FrameContent::Data,
 			payload: data,
-			footer: [0; 2],
+			footer:  [0; 2],
 		};
 
 		match send_time {
@@ -352,8 +352,8 @@ where
 		self.ll.fast_command(0x1)?; // Start TX
 
 		Ok(DW1000 {
-			ll: self.ll,
-			seq: self.seq,
+			ll:    self.ll,
+			seq:   self.seq,
 			state: Sending { finished: false },
 		})
 	}
@@ -373,8 +373,8 @@ where
 		config: RxConfig,
 	) -> Result<DW1000<SPI, CS, SingleBufferReceiving>, Error<SPI, CS>> {
 		let mut rx_radio = DW1000 {
-			ll: self.ll,
-			seq: self.seq,
+			ll:    self.ll,
+			seq:   self.seq,
 			state: SingleBufferReceiving {
 				finished: false,
 				config,

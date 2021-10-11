@@ -53,7 +53,7 @@ pub struct RxQuality {
 	///
 	/// The value is an estimation that is quite accurate up to -85 dBm.
 	/// Above -85 dBm, the estimation underestimates the actual value.
-	pub rssi: f32,
+	pub rssi:                 f32,
 }
 
 impl<SPI, CS, RECEIVING> DW1000<SPI, CS, RECEIVING>
@@ -584,8 +584,8 @@ where
 		// }
 
 		Ok(DW1000 {
-			ll: self.ll,
-			seq: self.seq,
+			ll:    self.ll,
+			seq:   self.seq,
 			state: Ready,
 		})
 	}

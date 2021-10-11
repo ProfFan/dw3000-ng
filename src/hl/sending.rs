@@ -116,8 +116,8 @@ where
 		}*/
 
 		Ok(DW1000 {
-			ll: self.ll,
-			seq: self.seq,
+			ll:    self.ll,
+			seq:   self.seq,
 			state: Ready,
 		})
 	}

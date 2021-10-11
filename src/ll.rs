@@ -25,7 +25,7 @@ use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 ///
 /// [hl::DW1000]: ../hl/struct.DW1000.html
 pub struct DW1000<SPI, CS> {
-	spi: SPI,
+	spi:         SPI,
 	chip_select: CS,
 }
 

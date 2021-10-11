@@ -17,8 +17,8 @@ where
 	/// to the DW1000.
 	pub fn new(spi: SPI, chip_select: CS) -> Self {
 		DW1000 {
-			ll: ll::DW1000::new(spi, chip_select),
-			seq: Wrapping(0),
+			ll:    ll::DW1000::new(spi, chip_select),
+			seq:   Wrapping(0),
 			state: Uninitialized,
 		}
 	}
@@ -91,8 +91,8 @@ where
 		while self.ll.sys_status().read()?.cplock() == 0 {}
 
 		Ok(DW1000 {
-			ll: self.ll,
-			seq: self.seq,
+			ll:    self.ll,
+			seq:   self.seq,
 			state: Ready,
 		})
 	}

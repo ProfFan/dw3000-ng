@@ -9,29 +9,29 @@ use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 /// Transmit configuration
 pub struct TxConfig {
 	/// Sets the bitrate of the transmission.
-	pub bitrate: BitRate,
+	pub bitrate:                    BitRate,
 	/// Sets the ranging bit in the transmitted frame.
 	/// This has no effect on the capabilities of the DW1000.
-	pub ranging_enable: bool,
+	pub ranging_enable:             bool,
 	/// Sets the PRF value of the transmission.
 	pub pulse_repetition_frequency: PulseRepetitionFrequency,
 	/// The length of the preamble.
-	pub preamble_length: PreambleLength,
+	pub preamble_length:            PreambleLength,
 	/// The channel that the DW1000 will transmit at.
-	pub channel: UwbChannel,
+	pub channel:                    UwbChannel,
 	/// The SFD sequence that is used to transmit a frame.
-	pub sfd_sequence: SfdSequence,
+	pub sfd_sequence:               SfdSequence,
 }
 
 impl Default for TxConfig {
 	fn default() -> Self {
 		TxConfig {
-			bitrate: Default::default(),
-			ranging_enable: false,
+			bitrate:                    Default::default(),
+			ranging_enable:             false,
 			pulse_repetition_frequency: Default::default(),
-			preamble_length: Default::default(),
-			channel: Default::default(),
-			sfd_sequence: Default::default(),
+			preamble_length:            Default::default(),
+			channel:                    Default::default(),
+			sfd_sequence:               Default::default(),
 		}
 	}
 }
@@ -40,14 +40,14 @@ impl Default for TxConfig {
 /// Receive configuration
 pub struct RxConfig {
 	/// The bitrate that will be used for reception.
-	pub bitrate: BitRate,
+	pub bitrate:                    BitRate,
 	/// Enable frame filtering
 	///
 	/// If true, only frames directly addressed to this node and broadcasts will
 	/// be received.
 	///
 	/// Defaults to `true`.
-	pub frame_filtering: bool,
+	pub frame_filtering:            bool,
 	/// Sets the PRF value of the reception
 	pub pulse_repetition_frequency: PulseRepetitionFrequency,
 	/// The expected preamble length.
@@ -55,22 +55,22 @@ pub struct RxConfig {
 	/// This affects the chosen PAC size.
 	/// This should be the same as the preamble length that is used to send the messages.
 	/// It is not a filter, though, so other preamble lengths may still be received.
-	pub expected_preamble_length: PreambleLength,
+	pub expected_preamble_length:   PreambleLength,
 	/// The channel that the DW1000 will listen at.
-	pub channel: UwbChannel,
+	pub channel:                    UwbChannel,
 	/// The type of SFD sequence that will be scanned for.
-	pub sfd_sequence: SfdSequence,
+	pub sfd_sequence:               SfdSequence,
 }
 
 impl Default for RxConfig {
 	fn default() -> Self {
 		Self {
-			bitrate: Default::default(),
-			frame_filtering: true,
+			bitrate:                    Default::default(),
+			frame_filtering:            true,
 			pulse_repetition_frequency: Default::default(),
-			expected_preamble_length: Default::default(),
-			channel: Default::default(),
-			sfd_sequence: Default::default(),
+			expected_preamble_length:   Default::default(),
+			channel:                    Default::default(),
+			sfd_sequence:               Default::default(),
 		}
 	}
 }

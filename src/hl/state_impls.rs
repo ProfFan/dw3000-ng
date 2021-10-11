@@ -18,14 +18,14 @@ pub struct Sending {
 #[derive(Debug)]
 pub struct SingleBufferReceiving {
 	pub(super) finished: bool,
-	pub(super) config: RxConfig,
+	pub(super) config:   RxConfig,
 }
 
 /// Indicates that the `DW1000` instance is currently receiving in double buffer mode
 #[derive(Debug)]
 pub struct AutoDoubleBufferReceiving {
 	pub(super) finished: bool,
-	pub(super) config: RxConfig,
+	pub(super) config:   RxConfig,
 }
 
 /// Indicates that the `DW1000` instance is currently sleeping
