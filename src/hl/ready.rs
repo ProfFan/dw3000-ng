@@ -2,8 +2,16 @@
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
-	configs::SfdSequence, time::Instant, Error, Ready, RxConfig, Sending, SingleBufferReceiving,
-	Sleeping, TxConfig, DW1000,
+	configs::SfdSequence,
+	time::Instant,
+	Error,
+	Ready,
+	RxConfig,
+	Sending,
+	SingleBufferReceiving,
+	Sleeping,
+	TxConfig,
+	DW1000,
 };
 use byte::BytesExt as _;
 use core::num::Wrapping;

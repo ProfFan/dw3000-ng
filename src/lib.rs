@@ -35,8 +35,15 @@ pub mod time;
 pub use ieee802154::mac;
 
 pub use crate::hl::{
-	AutoDoubleBufferReceiving, Error, Message, Ready, Sending, SingleBufferReceiving, Sleeping,
-	Uninitialized, DW1000,
+	AutoDoubleBufferReceiving,
+	Error,
+	Message,
+	Ready,
+	Sending,
+	SingleBufferReceiving,
+	Sleeping,
+	Uninitialized,
+	DW1000,
 };
 
 pub use crate::configs::{RxConfig, TxConfig};

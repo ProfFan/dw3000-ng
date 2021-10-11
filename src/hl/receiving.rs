@@ -6,7 +6,10 @@ use crate::{
 	configs::{BitRate, SfdSequence},
 	mac,
 	time::Instant,
-	Error, Ready, RxConfig, DW1000,
+	Error,
+	Ready,
+	RxConfig,
+	DW1000,
 };
 use byte::BytesExt as _;
 use core::convert::TryInto;

@@ -1,7 +1,9 @@
 use crate::{
-	ll, mac,
+	ll,
+	mac,
 	time::{Duration, Instant},
-	Error, DW1000,
+	Error,
+	DW1000,
 };
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
