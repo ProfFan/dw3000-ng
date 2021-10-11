@@ -80,7 +80,8 @@ where
 			.read()
 			.map_err(|error| nb::Error::Other(Error::Spi(error)))?
 			.tx_stamp();
-		// This is safe because the value read from the device will never be higher than the allowed value.
+		// This is safe because the value read from the device will never be higher than
+		// the allowed value.
 		let tx_timestamp = Instant::new(tx_timestamp);
 
 		if let Some(ts) = tx_timestamp {
@@ -124,14 +125,12 @@ where
 	}
 
 	fn reset_flags(&mut self) -> Result<(), Error<SPI, CS>> {
-		self.ll.sys_status().write(
-			|w| {
-				w.txfrb(0b1) // Transmit Frame Begins
+		self.ll.sys_status().write(|w| {
+			w.txfrb(0b1)    // Transmit Frame Begins
 					.txprs(0b1) // Transmit Preamble Sent
 					.txphs(0b1) // Transmit PHY Header Sent
-					.txfrs(0b1)
-			}, // Transmit Frame Sent
-		)?;
+					.txfrs(0b1) // Transmit Frame Sent
+		})?;
 
 		Ok(())
 	}

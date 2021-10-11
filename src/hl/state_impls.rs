@@ -14,14 +14,16 @@ pub struct Sending {
 	pub(super) finished: bool,
 }
 
-/// Indicates that the `DW1000` instance is currently receiving in single buffer mode (default)
+/// Indicates that the `DW1000` instance is currently receiving in single buffer
+/// mode (default)
 #[derive(Debug)]
 pub struct SingleBufferReceiving {
 	pub(super) finished: bool,
 	pub(super) config:   RxConfig,
 }
 
-/// Indicates that the `DW1000` instance is currently receiving in double buffer mode
+/// Indicates that the `DW1000` instance is currently receiving in double buffer
+/// mode
 #[derive(Debug)]
 pub struct AutoDoubleBufferReceiving {
 	pub(super) finished: bool,
@@ -35,20 +37,23 @@ pub struct Sleeping {
 	pub(super) tx_antenna_delay: Duration,
 }
 
-/// Any state struct that implements this trait signals that the radio is **not** sleeping.
+/// Any state struct that implements this trait signals that the radio is
+/// **not** sleeping.
 pub trait Awake {}
 impl Awake for Uninitialized {}
 impl Awake for Ready {}
 impl Awake for Sending {}
 impl Awake for SingleBufferReceiving {}
 impl Awake for AutoDoubleBufferReceiving {}
-/// Any state struct that implements this trait signals that the radio is sleeping.
+/// Any state struct that implements this trait signals that the radio is
+/// sleeping.
 pub trait Asleep {}
 impl Asleep for Sleeping {}
 
 /// Any state struct that implements this trait shares a number of rx operations
 pub trait Receiving: Awake {
-	/// When true, the radio will re-enable the receive operation after it has received a message
+	/// When true, the radio will re-enable the receive operation after it has
+	/// received a message
 	const AUTO_RX_REENABLE: bool;
 	/// When true, the radio will use both receive buffers.
 	/// This can help decrease the downtime between receiving messages.

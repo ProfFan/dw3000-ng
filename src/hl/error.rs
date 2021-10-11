@@ -68,7 +68,8 @@ where
 	/// An error occured while serializing or deserializing data
 	Ssmarshal(ssmarshal::Error),
 
-	/// The configuration was not valid. Some combinations of settings are not allowed.
+	/// The configuration was not valid. Some combinations of settings are not
+	/// allowed.
 	InvalidConfiguration,
 
 	/// The receive operation hasn't finished yet

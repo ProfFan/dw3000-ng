@@ -41,13 +41,15 @@ pub struct Message<'l> {
 /// A struct representing the quality of the received message.
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct RxQuality {
-	/// The confidence that there was Line Of Sight between the sender and the receiver.
+	/// The confidence that there was Line Of Sight between the sender and the
+	/// receiver.
 	///
 	/// - 0 means it's very unlikely there was LOS.
 	/// - 1 means it's very likely there was LOS.
 	///
 	/// The number doesn't give a guarantee, but an indication.
-	/// It is based on the APS006_Part-3-DW1000-Diagnostics-for-NLOS-Channels-v1.1 document.
+	/// It is based on the
+	/// APS006_Part-3-DW1000-Diagnostics-for-NLOS-Channels-v1.1 document.
 	pub los_confidence_level: f32,
 	/// The radio signal strength indicator in dBm.
 	///
@@ -71,7 +73,8 @@ where
 		// Really weird thing about double buffering I can't find anything about.
 		// When a message is received in double buffer mode that should be filtered out,
 		// the radio gives a really short fake interrupt.
-		// This messes up all the logic, so unless a solution can be found we simply don't support it.
+		// This messes up all the logic, so unless a solution can be found we simply
+		// don't support it.
 		/*
 				if RECEIVING::DOUBLE_BUFFERED && config.frame_filtering {
 					return Err(Error::RxConfigFrameFilteringUnsupported);

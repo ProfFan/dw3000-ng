@@ -1,7 +1,8 @@
 //! Configuration structs for sending and receiving
 //!
-//! This module houses the datastructures that control how frames are transmitted and received.
-//! The configs are passed to the send and receive functions.
+//! This module houses the datastructures that control how frames are
+//! transmitted and received. The configs are passed to the send and receive
+//! functions.
 
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
@@ -54,8 +55,9 @@ pub struct RxConfig {
 	/// The expected preamble length.
 	///
 	/// This affects the chosen PAC size.
-	/// This should be the same as the preamble length that is used to send the messages.
-	/// It is not a filter, though, so other preamble lengths may still be received.
+	/// This should be the same as the preamble length that is used to send the
+	/// messages. It is not a filter, though, so other preamble lengths may
+	/// still be received.
 	pub expected_preamble_length:   PreambleLength,
 	/// The channel that the DW1000 will listen at.
 	pub channel:                    UwbChannel,
@@ -157,9 +159,11 @@ impl PulseRepetitionFrequency {
 /// An enum that specifies the length of the preamble.
 ///
 /// Longer preambles improve the reception quality and thus range.
-/// This comes at the cost of longer transmission times and thus power consumption and bandwidth use.
+/// This comes at the cost of longer transmission times and thus power
+/// consumption and bandwidth use.
 ///
-/// For the bit pattern, see table 16 in the user manual. Two bits TXPSR,then two bits PE.
+/// For the bit pattern, see table 16 in the user manual. Two bits TXPSR,then
+/// two bits PE.
 pub enum PreambleLength {
 	/// 64 symbols of preamble.
 	/// Only supported at Bitrate::Kbps6800.
@@ -212,7 +216,8 @@ impl PreambleLength {
 		}
 	}
 
-	/// Gets the recommended drx_tune1b register value based on the preamble length and the bitrate.
+	/// Gets the recommended drx_tune1b register value based on the preamble
+	/// length and the bitrate.
 	pub fn get_recommended_drx_tune1b<SPI, CS>(
 		&self,
 		bitrate: BitRate,
@@ -239,7 +244,8 @@ impl PreambleLength {
 		}
 	}
 
-	/// Gets the recommended dxr_tune4h register value based on the preamble length.
+	/// Gets the recommended dxr_tune4h register value based on the preamble
+	/// length.
 	pub fn get_recommended_dxr_tune4h(&self) -> u16 {
 		// Values are taken from Table 34 of the DW1000 User manual
 		match self {
@@ -279,7 +285,8 @@ impl Default for SfdSequence {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// All the available UWB channels.
 ///
-/// Note that while a channel may have more bandwidth than ~900 Mhz, the DW1000 can only send up to ~900 Mhz
+/// Note that while a channel may have more bandwidth than ~900 Mhz, the DW1000
+/// can only send up to ~900 Mhz
 pub enum UwbChannel {
 	/// Channel 5
 	/// - Center frequency: 6489.6 Mhz
@@ -302,7 +309,8 @@ impl Default for UwbChannel {
 impl UwbChannel {
 	/// Gets the recommended preamble code
 	pub fn get_recommended_preamble_code(&self, prf_value: PulseRepetitionFrequency) -> u8 {
-		// Many have overlapping possibilities, so the numbers have been chosen so that there's no overlap here
+		// Many have overlapping possibilities, so the numbers have been chosen so that
+		// there's no overlap here
 		match (self, prf_value) {
 			| (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz16) => 4,
 			| (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz16) => 4,

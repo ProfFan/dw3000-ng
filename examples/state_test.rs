@@ -47,12 +47,13 @@ fn main() -> ! {
 	/************       CONFIGURATION DE BASE     ********** */
 	/******************************************************* */
 
-	// Get access to the device specific peripherals from the peripheral access crate
+	// Get access to the device specific peripherals from the peripheral access
+	// crate
 	let dp = pac::Peripherals::take().unwrap();
 	let cp = cortex_m::Peripherals::take().unwrap();
 
-	// Take ownership over the raw flash and rcc devices and convert them into the corresponding
-	// HAL structs
+	// Take ownership over the raw flash and rcc devices and convert them into the
+	// corresponding HAL structs
 	let mut flash = dp.FLASH.constrain();
 	let mut rcc = dp.RCC.constrain();
 	let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
@@ -91,7 +92,7 @@ fn main() -> ! {
 		clocks,
 		&mut rcc.apb2,
 	);
-	
+
 	/****************************************************** */
 	/*****       CONFIGURATION DU RESET du DW3000   ******* */
 	/****************************************************** */

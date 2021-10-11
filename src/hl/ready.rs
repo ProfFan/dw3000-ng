@@ -24,13 +24,15 @@ use crate::{
 pub enum SyncBehaviour {
 	/// The sync pin does nothing
 	None,
-	/// The radio time will reset to 0 when the sync pin is high and the clock gives a rising edge
+	/// The radio time will reset to 0 when the sync pin is high and the clock
+	/// gives a rising edge
 	TimeBaseReset,
-	/// When receiving, instead of reading the internal timestamp, the time since the last sync
-	/// is given back.
+	/// When receiving, instead of reading the internal timestamp, the time
+	/// since the last sync is given back.
 	ExternalSync,
-	/// When receiving, instead of reading the internal timestamp, the time since the last sync
-	/// is given back. Also resets the internal timebase back to 0.
+	/// When receiving, instead of reading the internal timestamp, the time
+	/// since the last sync is given back. Also resets the internal timebase
+	/// back to 0.
 	ExternalSyncWithReset,
 }
 
@@ -40,7 +42,8 @@ pub enum SendTime {
 	Now,
 	/// After some time
 	Delayed(Instant),
-	/// After the sync pin is engaged. (Only works when sync setup is in ExternalSync mode)
+	/// After the sync pin is engaged. (Only works when sync setup is in
+	/// ExternalSync mode)
 	OnSync,
 }
 
@@ -293,11 +296,13 @@ where
 		//     .write(|w| w.value(config.channel.get_recommended_fs_plltune()))?;
 
 		// match config.sfd_sequence {
-		//     SfdSequence::IEEE => {} // IEEE has predefined sfd lengths and the register has no effect.
-		//     SfdSequence::Decawave => self.ll.sfd_length().write(|w| w.value(8))?, // This isn't entirely necessary as the Decawave8 settings in chan_ctrl already force it to 8
-		//     SfdSequence::DecawaveAlt => self.ll.sfd_length().write(|w| w.value(16))?, // Set to 16
-		//     SfdSequence::User => {} // Users are responsible for setting the lengths themselves
-		// }
+		//     SfdSequence::IEEE => {} // IEEE has predefined sfd lengths and the
+		// register has no effect.     SfdSequence::Decawave =>
+		// self.ll.sfd_length().write(|w| w.value(8))?, // This isn't entirely necessary
+		// as the Decawave8 settings in chan_ctrl already force it to 8     SfdSequence:
+		// :DecawaveAlt => self.ll.sfd_length().write(|w| w.value(16))?, // Set to 16
+		//     SfdSequence::User => {} // Users are responsible for setting the lengths
+		// themselves }
 
 		// PREAMBLE LENGHT CONF
 		// registre DTUN0
@@ -321,7 +326,8 @@ where
 		// // Set the LDE registers
 		// self.ll
 		//     .lde_cfg2()
-		//     .modify(|_, w| w.value(config.pulse_repetition_frequency.get_recommended_lde_cfg2()))?;
+		//     .modify(|_, w|
+		// w.value(config.pulse_repetition_frequency.get_recommended_lde_cfg2()))?;
 		// self.ll.lde_repc().write(|w| {
 		//     w.value(
 		//         config.channel.get_recommended_lde_repc_value(
@@ -363,8 +369,8 @@ where
 	/// Attempt to receive a single IEEE 802.15.4 MAC frame
 	///
 	/// Initializes the receiver. The method consumes this instance of `DW1000`
-	/// and returns another instance which is in the [SingleBufferReceiving] state, and can
-	/// be used to wait for a message.
+	/// and returns another instance which is in the [SingleBufferReceiving]
+	/// state, and can be used to wait for a message.
 	///
 	/// The config parameter allows for the configuration of bitrate, channel
 	/// and more. Make sure that the values used are the same as of the frames
