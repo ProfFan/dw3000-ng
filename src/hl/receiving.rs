@@ -572,8 +572,8 @@ where
 			// Can't use `map_err` and `?` here, as the compiler will complain
 			// about `self` moving into the closure.
 			match self.force_idle(RECEIVING::DOUBLE_BUFFERED) {
-				Ok(()) => (),
-				Err(error) => return Err((self, error)),
+				| Ok(()) => (),
+				| Err(error) => return Err((self, error)),
 			}
 		}
 

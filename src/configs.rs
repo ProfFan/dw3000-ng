@@ -200,14 +200,14 @@ impl PreambleLength {
 	pub fn get_recommended_pac_size(&self) -> u8 {
 		// Values are taken from Table 6 of the DW1000 User manual
 		match self {
-			PreambleLength::Symbols64 => 0, // PAC size = 8
-			PreambleLength::Symbols128 => 0,
-			PreambleLength::Symbols256 => 1, // PAC size = 16
-			PreambleLength::Symbols512 => 1,
-			PreambleLength::Symbols1024 => 2,
-			PreambleLength::Symbols1536 => 2,
-			PreambleLength::Symbols2048 => 2,
-			PreambleLength::Symbols4096 => 2,
+			| PreambleLength::Symbols64 => 0, // PAC size = 8
+			| PreambleLength::Symbols128 => 0,
+			| PreambleLength::Symbols256 => 1, // PAC size = 16
+			| PreambleLength::Symbols512 => 1,
+			| PreambleLength::Symbols1024 => 2,
+			| PreambleLength::Symbols1536 => 2,
+			| PreambleLength::Symbols2048 => 2,
+			| PreambleLength::Symbols4096 => 2,
 		}
 	}
 
@@ -222,19 +222,19 @@ impl PreambleLength {
 	{
 		// Values are taken from Table 32 of the DW1000 User manual
 		match (self, bitrate) {
-			(PreambleLength::Symbols64, BitRate::Kbps6800) => Ok(0x0010),
-			(PreambleLength::Symbols128, BitRate::Kbps6800) => Ok(0x0020),
-			(PreambleLength::Symbols256, BitRate::Kbps6800) => Ok(0x0020),
-			(PreambleLength::Symbols512, BitRate::Kbps6800) => Ok(0x0020),
-			(PreambleLength::Symbols1024, BitRate::Kbps6800) => Ok(0x0020),
-			(PreambleLength::Symbols128, BitRate::Kbps850) => Ok(0x0020),
-			(PreambleLength::Symbols256, BitRate::Kbps850) => Ok(0x0020),
-			(PreambleLength::Symbols512, BitRate::Kbps850) => Ok(0x0020),
-			(PreambleLength::Symbols1024, BitRate::Kbps850) => Ok(0x0020),
-			(PreambleLength::Symbols1536, BitRate::Kbps110) => Ok(0x0064),
-			(PreambleLength::Symbols2048, BitRate::Kbps110) => Ok(0x0064),
-			(PreambleLength::Symbols4096, BitRate::Kbps110) => Ok(0x0064),
-			_ => Err(Error::InvalidConfiguration),
+			| (PreambleLength::Symbols64, BitRate::Kbps6800) => Ok(0x0010),
+			| (PreambleLength::Symbols128, BitRate::Kbps6800) => Ok(0x0020),
+			| (PreambleLength::Symbols256, BitRate::Kbps6800) => Ok(0x0020),
+			| (PreambleLength::Symbols512, BitRate::Kbps6800) => Ok(0x0020),
+			| (PreambleLength::Symbols1024, BitRate::Kbps6800) => Ok(0x0020),
+			| (PreambleLength::Symbols128, BitRate::Kbps850) => Ok(0x0020),
+			| (PreambleLength::Symbols256, BitRate::Kbps850) => Ok(0x0020),
+			| (PreambleLength::Symbols512, BitRate::Kbps850) => Ok(0x0020),
+			| (PreambleLength::Symbols1024, BitRate::Kbps850) => Ok(0x0020),
+			| (PreambleLength::Symbols1536, BitRate::Kbps110) => Ok(0x0064),
+			| (PreambleLength::Symbols2048, BitRate::Kbps110) => Ok(0x0064),
+			| (PreambleLength::Symbols4096, BitRate::Kbps110) => Ok(0x0064),
+			| _ => Err(Error::InvalidConfiguration),
 		}
 	}
 
@@ -242,8 +242,8 @@ impl PreambleLength {
 	pub fn get_recommended_dxr_tune4h(&self) -> u16 {
 		// Values are taken from Table 34 of the DW1000 User manual
 		match self {
-			PreambleLength::Symbols64 => 0x0010,
-			_ => 0x0028,
+			| PreambleLength::Symbols64 => 0x0010,
+			| _ => 0x0028,
 		}
 	}
 }
@@ -303,26 +303,26 @@ impl UwbChannel {
 	pub fn get_recommended_preamble_code(&self, prf_value: PulseRepetitionFrequency) -> u8 {
 		// Many have overlapping possibilities, so the numbers have been chosen so that there's no overlap here
 		match (self, prf_value) {
-			(UwbChannel::Channel5, PulseRepetitionFrequency::Mhz16) => 4,
-			(UwbChannel::Channel9, PulseRepetitionFrequency::Mhz16) => 4,
-			(UwbChannel::Channel5, PulseRepetitionFrequency::Mhz64) => 9, // Previoulsy 12,
-			(UwbChannel::Channel9, PulseRepetitionFrequency::Mhz64) => 9,
+			| (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz16) => 4,
+			| (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz16) => 4,
+			| (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz64) => 9, // Previoulsy 12,
+			| (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz64) => 9,
 		}
 	}
 
 	/// Gets the recommended value for rf_tx_ctrl_2
 	pub fn get_recommanded_rf_tx_ctrl_2(&self) -> u32 {
 		match self {
-			UwbChannel::Channel5 => 0x1C071134,
-			UwbChannel::Channel9 => 0x1C010034,
+			| UwbChannel::Channel5 => 0x1C071134,
+			| UwbChannel::Channel9 => 0x1C010034,
 		}
 	}
 
 	/// Gets the recommended value for pll conf
 	pub fn get_recommanded_pll_conf(&self) -> u16 {
 		match self {
-			UwbChannel::Channel5 => 0x1F3C,
-			UwbChannel::Channel9 => 0x0F3C,
+			| UwbChannel::Channel5 => 0x1F3C,
+			| UwbChannel::Channel9 => 0x0F3C,
 		}
 	}
 }

@@ -151,9 +151,9 @@ where
 {
 	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
 		match self {
-			Error::Transfer(error) => write!(f, "Transfer({:?})", error),
-			Error::Write(error) => write!(f, "Write({:?})", error),
-			Error::ChipSelect(error) => write!(f, "ChipSelect({:?})", error),
+			| Error::Transfer(error) => write!(f, "Transfer({:?})", error),
+			| Error::Write(error) => write!(f, "Write({:?})", error),
+			| Error::ChipSelect(error) => write!(f, "ChipSelect({:?})", error),
 		}
 	}
 }

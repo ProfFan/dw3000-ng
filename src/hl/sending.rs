@@ -100,12 +100,12 @@ where
 			// Can't use `map_err` and `?` here, as the compiler will complain
 			// about `self` moving into the closure.
 			match self.force_idle(false) {
-				Ok(()) => (),
-				Err(error) => return Err((self, error)),
+				| Ok(()) => (),
+				| Err(error) => return Err((self, error)),
 			}
 			match self.reset_flags() {
-				Ok(()) => (),
-				Err(error) => return Err((self, error)),
+				| Ok(()) => (),
+				| Err(error) => return Err((self, error)),
 			}
 		}
 		/*

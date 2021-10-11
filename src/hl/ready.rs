@@ -195,7 +195,7 @@ where
 		};
 
 		match send_time {
-			SendTime::Delayed(time) => {
+			| SendTime::Delayed(time) => {
 				// Put the time into the delay register
 				// By setting this register, the chip knows to delay before transmitting
 				self.ll
@@ -203,11 +203,11 @@ where
 					.write(|w| // 32-bits value of the most significant bits
                     w.value( (time.value() >> 8) as u32 ))?;
 			}
-			SendTime::OnSync => {
+			| SendTime::OnSync => {
 				self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
 				self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
 			}
-			_ => {}
+			| _ => {}
 		}
 
 		// Prepare transmitter
