@@ -202,12 +202,12 @@ where
 					.dx_time()
 					.write(|w| // 32-bits value of the most significant bits
                     w.value( (time.value() >> 8) as u32 ))?;
-			}
+			},
 			| SendTime::OnSync => {
 				self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
 				self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
-			}
-			| _ => {}
+			},
+			| _ => {},
 		}
 
 		// Prepare transmitter

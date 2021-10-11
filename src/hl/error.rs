@@ -116,7 +116,7 @@ where
 			| Error::Phy => write!(f, "Phy"),
 			| Error::BufferTooSmall { required_len } => {
 				write!(f, "BufferTooSmall {{ required_len: {:?} }}", required_len,)
-			}
+			},
 			| Error::ReedSolomon => write!(f, "ReedSolomon"),
 			| Error::FrameWaitTimeout => write!(f, "FrameWaitTimeout"),
 			| Error::Overrun => write!(f, "Overrun"),
@@ -133,7 +133,7 @@ where
 			| Error::BadRssiCalculation => write!(f, "BadRssiCalculation"),
 			| Error::RxConfigFrameFilteringUnsupported => {
 				write!(f, "RxConfigFrameFilteringUnsupported")
-			}
+			},
 		}
 	}
 }
