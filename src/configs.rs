@@ -80,9 +80,9 @@ impl Default for RxConfig {
 pub enum BitRate {
     /// 110 kilobits per second.
     /// This is an unofficial extension from decawave.
-    Kbps110 = 0b00,
+    Kbps110  = 0b00,
     /// 850 kilobits per second.
-    Kbps850 = 0b01,
+    Kbps850  = 0b01,
     /// 6.8 megabits per second.
     Kbps6800 = 0b10,
 }
@@ -166,19 +166,19 @@ impl PulseRepetitionFrequency {
 pub enum PreambleLength {
     /// 64 symbols of preamble.
     /// Only supported at Bitrate::Kbps6800.
-    Symbols64 = 0b0100,
+    Symbols64   = 0b0100,
     /// 128 symbols of preamble.
     /// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
     /// Unofficial extension from decawave.
-    Symbols128 = 0b0101,
+    Symbols128  = 0b0101,
     /// 256 symbols of preamble.
     /// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
     /// Unofficial extension from decawave.
-    Symbols256 = 0b0110,
+    Symbols256  = 0b0110,
     /// 512 symbols of preamble.
     /// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
     /// Unofficial extension from decawave.
-    Symbols512 = 0b0111,
+    Symbols512  = 0b0111,
     /// 1024 symbols of preamble.
     /// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
     Symbols1024 = 0b1000,
@@ -263,18 +263,18 @@ impl PreambleLength {
 pub enum SfdSequence {
     /// The standard sequence defined by the IEEE standard.
     /// Most likely the best choice for 6.8 Mbps connections.
-    IeeeShort = 0b00,
+    IeeeShort  = 0b00,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
     /// Most likely the best choice for 110 Kbps connections.
-    Decawave8 = 0b01,
+    Decawave8  = 0b01,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
     /// Most likely the best choice for 850 Kbps connections.
     Decawave16 = 0b10,
     /// Uses the sequence that is programmed in by the user.
     /// This is an unofficial addition.
-    Ieee = 0b11,
+    Ieee       = 0b11,
 }
 
 impl Default for SfdSequence {

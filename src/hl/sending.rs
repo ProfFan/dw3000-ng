@@ -84,7 +84,8 @@ where
 
         if let Some(ts) = tx_timestamp {
             Ok(ts)
-        } else {
+        }
+        else {
             Err(nb::Error::Other(Error::Fcs))
         }
     }

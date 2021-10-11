@@ -113,7 +113,8 @@ where
                         .ffam(0b1)
                 }, // receive MAC command frames
             )?;
-        } else {
+        }
+        else {
             self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
         }
         /*

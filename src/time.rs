@@ -43,7 +43,8 @@ impl Instant {
     pub fn new(value: u64) -> Option<Self> {
         if value <= TIME_MAX {
             Some(Instant(value))
-        } else {
+        }
+        else {
             None
         }
     }
@@ -90,7 +91,8 @@ impl Instant {
     pub fn duration_since(&self, earlier: Instant) -> Duration {
         if self.value() >= earlier.value() {
             Duration(self.value() - earlier.value())
-        } else {
+        }
+        else {
             Duration(TIME_MAX - earlier.value() + self.value() + 1)
         }
     }
@@ -143,7 +145,8 @@ impl Duration {
     pub fn new(value: u64) -> Option<Self> {
         if value <= TIME_MAX {
             Some(Duration(value))
-        } else {
+        }
+        else {
             None
         }
     }

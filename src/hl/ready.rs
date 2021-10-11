@@ -39,7 +39,7 @@ pub enum IrqPolarity {
     /// The signal will be high when the interrupt is active
     ActiveHigh = 1,
     /// The signal will be low when the interrupt is active
-    ActiveLow = 0,
+    ActiveLow  = 0,
 }
 
 impl<SPI, CS> DW1000<SPI, CS, Ready>
