@@ -3,8 +3,9 @@
 //! This module houses the datastructures that control how frames are transmitted and received.
 //! The configs are passed to the send and receive functions.
 
-use crate::Error;
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+
+use crate::Error;
 
 /// Transmit configuration
 pub struct TxConfig {

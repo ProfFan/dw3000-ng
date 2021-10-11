@@ -1,7 +1,9 @@
-use crate::ll;
 use core::fmt;
+
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 use ssmarshal;
+
+use crate::ll;
 
 /// An error that can occur when sending or receiving data
 pub enum Error<SPI, CS>

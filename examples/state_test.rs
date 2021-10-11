@@ -4,7 +4,6 @@
 // crates de gestion des messages de debug
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
-
 use cortex_m_rt::entry;
 use stm32f1xx_hal::{
 	delay::Delay,
@@ -12,9 +11,7 @@ use stm32f1xx_hal::{
 	prelude::*,
 	spi::{Mode, Phase, Polarity, Spi},
 };
-
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-
 use dw3000::{hl, RxConfig};
 
 fn check_states<SPI, CS, State>(

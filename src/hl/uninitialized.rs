@@ -1,9 +1,11 @@
-use crate::{ll, Error, Ready, Uninitialized, DW1000};
 use core::num::Wrapping;
+
 use embedded_hal::{
 	blocking::{delay::DelayMs, spi},
 	digital::v2::OutputPin,
 };
+
+use crate::{ll, Error, Ready, Uninitialized, DW1000};
 //use rtt_target::{rprintln};
 
 impl<SPI, CS> DW1000<SPI, CS, Uninitialized>

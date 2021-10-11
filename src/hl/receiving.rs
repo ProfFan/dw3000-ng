@@ -1,6 +1,12 @@
 #![allow(unused_imports)]
 
+use core::convert::TryInto;
+
 use rtt_target::rprintln;
+use byte::BytesExt as _;
+use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+use fixed::traits::LossyInto;
+use ieee802154::mac::FooterMode;
 
 use crate::{
 	configs::{BitRate, SfdSequence},
@@ -11,12 +17,6 @@ use crate::{
 	RxConfig,
 	DW1000,
 };
-use byte::BytesExt as _;
-use core::convert::TryInto;
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use fixed::traits::LossyInto;
-use ieee802154::mac::FooterMode;
-
 use super::{AutoDoubleBufferReceiving, Receiving};
 
 // use ll::sys_status;

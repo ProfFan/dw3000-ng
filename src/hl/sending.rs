@@ -1,8 +1,9 @@
 #![allow(unused_imports)]
 
-use crate::{time::Instant, Error, Ready, Sending, DW1000};
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 use nb;
+
+use crate::{time::Instant, Error, Ready, Sending, DW1000};
 
 impl<SPI, CS> DW1000<SPI, CS, Sending>
 where

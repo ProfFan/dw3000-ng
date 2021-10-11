@@ -1,6 +1,7 @@
 //! Time-related types based on the DW1000's system time
 
 use core::ops::Add;
+
 use serde::{Deserialize, Serialize};
 
 /// The maximum value of 40-bit system time stamps.

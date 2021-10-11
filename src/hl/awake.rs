@@ -1,3 +1,5 @@
+use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+
 use crate::{
 	ll,
 	mac,
@@ -5,8 +7,6 @@ use crate::{
 	Error,
 	DW1000,
 };
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-
 use super::Awake;
 
 impl<SPI, CS, State> DW1000<SPI, CS, State>

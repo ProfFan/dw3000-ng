@@ -1,7 +1,8 @@
 #![allow(unused_imports)]
 
-use crate::{Error, Ready, Sleeping, DW1000};
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+
+use crate::{Error, Ready, Sleeping, DW1000};
 
 impl<SPI, CS> DW1000<SPI, CS, Sleeping>
 where

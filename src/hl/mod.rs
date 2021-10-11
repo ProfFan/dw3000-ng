@@ -9,7 +9,6 @@
 //!
 //! [register-level interface]: ../ll/index.html
 
-use crate::ll;
 use core::{fmt, num::Wrapping};
 
 pub use awake::*;
@@ -20,6 +19,8 @@ pub use sending::*;
 pub use sleeping::*;
 pub use state_impls::*;
 pub use uninitialized::*;
+
+use crate::ll;
 
 mod awake;
 mod error;

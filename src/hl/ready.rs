@@ -1,5 +1,11 @@
 #![allow(unused_imports)]
 
+use core::num::Wrapping;
+
+use byte::BytesExt as _;
+use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+use ieee802154::mac::{self, FooterMode};
+
 use super::AutoDoubleBufferReceiving;
 use crate::{
 	configs::SfdSequence,
@@ -13,10 +19,6 @@ use crate::{
 	TxConfig,
 	DW1000,
 };
-use byte::BytesExt as _;
-use core::num::Wrapping;
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use ieee802154::mac::{self, FooterMode};
 
 /// The behaviour of the sync pin
 pub enum SyncBehaviour {
