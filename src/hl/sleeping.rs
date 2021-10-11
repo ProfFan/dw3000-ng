@@ -7,7 +7,8 @@ impl<SPI, CS> DW1000<SPI, CS, Sleeping>
 where
     SPI: spi::Transfer<u8> + spi::Write<u8>,
     CS: OutputPin,
-{/*
+{
+    /*
     /// Wakes the radio up.
     pub fn wake_up<DELAY: embedded_hal::blocking::delay::DelayUs<u16>>(
         mut self,

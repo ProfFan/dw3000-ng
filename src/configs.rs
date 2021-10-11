@@ -205,9 +205,9 @@ impl PreambleLength {
     /// Gets the recommended PAC size based on the preamble length.
     pub fn get_recommended_pac_size(&self) -> u8 {
         // Values are taken from Table 6 of the DW1000 User manual
-        match self {            
+        match self {
             PreambleLength::Symbols64 => 0, // PAC size = 8
-            PreambleLength::Symbols128 => 0, 
+            PreambleLength::Symbols128 => 0,
             PreambleLength::Symbols256 => 1, // PAC size = 16
             PreambleLength::Symbols512 => 1,
             PreambleLength::Symbols1024 => 2,
@@ -263,18 +263,18 @@ impl PreambleLength {
 pub enum SfdSequence {
     /// The standard sequence defined by the IEEE standard.
     /// Most likely the best choice for 6.8 Mbps connections.
-    IeeeShort  = 0b00,
+    IeeeShort = 0b00,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
     /// Most likely the best choice for 110 Kbps connections.
-    Decawave8  = 0b01,
+    Decawave8 = 0b01,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
     /// Most likely the best choice for 850 Kbps connections.
     Decawave16 = 0b10,
     /// Uses the sequence that is programmed in by the user.
     /// This is an unofficial addition.
-    Ieee       = 0b11,
+    Ieee = 0b11,
 }
 
 impl Default for SfdSequence {

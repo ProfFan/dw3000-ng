@@ -10,7 +10,7 @@ use stm32f1xx_hal::{
     delay::Delay,
     pac,
     prelude::*,
-    spi::{Spi, Mode, Phase, Polarity},
+    spi::{Mode, Phase, Polarity, Spi},
 };
 
 use ieee802154::mac;
@@ -21,10 +21,8 @@ use dw3000::{hl, RxConfig, TxConfig};
 
 use nb::block;
 
-
 #[entry]
 fn main() -> ! {
-
     rtt_init_print!();
     rprintln!("Coucou copain !");
 
@@ -42,7 +40,11 @@ fn main() -> ! {
     let mut rcc = dp.RCC.constrain();
     let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
 
-    let clocks = rcc.cfgr.use_hse(8.mhz()).sysclk(36.mhz()).freeze(&mut flash.acr);
+    let clocks = rcc
+        .cfgr
+        .use_hse(8.mhz())
+        .sysclk(36.mhz())
+        .freeze(&mut flash.acr);
 
     let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
     let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
@@ -63,7 +65,15 @@ fn main() -> ! {
         polarity: Polarity::IdleLow,
         phase: Phase::CaptureOnFirstTransition,
     };
-    let spi = Spi::spi1(dp.SPI1, pins, &mut afio.mapr, spi_mode, 100.khz(), clocks, &mut rcc.apb2);
+    let spi = Spi::spi1(
+        dp.SPI1,
+        pins,
+        &mut afio.mapr,
+        spi_mode,
+        100.khz(),
+        clocks,
+        &mut rcc.apb2,
+    );
 
     /****************************************************************************************/
     /************              CONFIGURATION DU RESET du DW3000             *****************/
@@ -73,7 +83,7 @@ fn main() -> ! {
 
     let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
 
-    // UWB module reset 
+    // UWB module reset
     rst_n.set_low().unwrap();
     rst_n.set_high().unwrap();
 
@@ -81,23 +91,25 @@ fn main() -> ! {
     /*****************              CONFIGURATION du DW3000               *******************/
     /****************************************************************************************/
 
-    let mut dw3000 = hl::DW1000::new(spi, cs).init(&mut delay)
-                        .expect("Failed init.");
+    let mut dw3000 = hl::DW1000::new(spi, cs)
+        .init(&mut delay)
+        .expect("Failed init.");
     rprintln!("dm3000 = {:?}", dw3000);
 
     loop {
         /*****************************/
         /******** TRANSMITTER ********/
         /*****************************/
-        let delayed_tx_time = dw3000.sys_time()
-                .expect("Failed to get time");
-                
-        let mut sending = dw3000.send(
+        let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
+
+        let mut sending = dw3000
+            .send(
                 b"ping",
                 mac::Address::broadcast(&mac::AddressMode::Short),
                 hl::SendTime::Delayed(delayed_tx_time),
                 TxConfig::default(),
-        ).expect("Failed configure transmitter");
+            )
+            .expect("Failed configure transmitter");
 
         rprintln!("transmitter = {:?}", sending);
         rprintln!("cmd_status = {:#x?}", sending.cmd_status());
@@ -114,15 +126,14 @@ fn main() -> ! {
         // on affiche le resultat
         rprintln!("result = {:?}", result);
 
-        dw3000 = sending.finish_sending()
-                .expect("Failed to finish sending");
-
+        dw3000 = sending.finish_sending().expect("Failed to finish sending");
 
         /*****************************/
         /********* RECEIVER **********/
         /*****************************/
-        let mut receiving = dw3000.receive(RxConfig::default())
-                        .expect("Failed configure receiver.");
+        let mut receiving = dw3000
+            .receive(RxConfig::default())
+            .expect("Failed configure receiver.");
 
         rprintln!("receiver = {:?}", receiving);
         rprintln!("cmd_status = {:#x?}", receiving.cmd_status());
@@ -141,8 +152,8 @@ fn main() -> ! {
         // on affiche le resultat
         rprintln!("result = {:?}", result);
 
-        dw3000 = receiving.finish_receiving()
-                .expect("Failed to finish receiving");
-    }    
-
+        dw3000 = receiving
+            .finish_receiving()
+            .expect("Failed to finish receiving");
+    }
 }

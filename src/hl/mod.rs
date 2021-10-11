@@ -32,8 +32,8 @@ mod uninitialized;
 
 /// Entry point to the DW1000 driver API
 pub struct DW1000<SPI, CS, State> {
-    ll:    ll::DW1000<SPI, CS>,
-    seq:   Wrapping<u8>,
+    ll: ll::DW1000<SPI, CS>,
+    seq: Wrapping<u8>,
     state: State,
 }
 

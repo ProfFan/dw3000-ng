@@ -91,63 +91,61 @@ where
     ///
     /// Any ongoing RX/TX operations will be aborted.
     pub(super) fn force_idle(&mut self, _double_buffered: bool) -> Result<(), Error<SPI, CS>> {
-/*
-        let mut saved_sys_mask = [0; 8];
+        /*
+                let mut saved_sys_mask = [0; 8];
 
-        if double_buffered {
-            // Mask the double buffered status bits
-            self.ll.sys_enable().modify(|r, w| {
-                saved_sys_mask = r.0.clone();
-                w.rxfce_en(0).rxfcg_en(0).rxfr_en(0)
-            })?;
-        }
+                if double_buffered {
+                    // Mask the double buffered status bits
+                    self.ll.sys_enable().modify(|r, w| {
+                        saved_sys_mask = r.0.clone();
+                        w.rxfce_en(0).rxfcg_en(0).rxfr_en(0)
+                    })?;
+                }
 
-        self.ll.fast_command(0)?;
+                self.ll.fast_command(0)?;
 
-        if double_buffered {
-            // Clear the bits
-            self.ll().sys_status().write(
-                |w| {
-                    w   .rxprd(0b1) // Receiver Preamble Detected
-                        .rxsfdd(0b1) // Receiver SFD Detected
-                        .rxphd(0b1) // Receiver PHY Header Detected
-                        .rxphe(0b1) // Receiver PHY Header Error
-                        .rxfr(0b1) // Receiver Data Frame Ready
-                        .rxfcg(0b1) // Receiver FCS Good
-                        .rxfce(0b1) // Receiver FCS Error
-                        .rxfsl(0b1) // Receiver Reed Solomon Frame Sync Loss
-                        .rxfto(0b1) // Receiver Frame Wait Timeout
-                        .rxovrr(0b1) // Receiver Overrun
-                        .rxpto(0b1) // Preamble Detection Timeout
-                        .rxsto(0b1) // Receiver SFD Timeout
-                        .rxprej(0b1)
-                }, // Receiver Preamble Rejection
-            )?;
+                if double_buffered {
+                    // Clear the bits
+                    self.ll().sys_status().write(
+                        |w| {
+                            w   .rxprd(0b1) // Receiver Preamble Detected
+                                .rxsfdd(0b1) // Receiver SFD Detected
+                                .rxphd(0b1) // Receiver PHY Header Detected
+                                .rxphe(0b1) // Receiver PHY Header Error
+                                .rxfr(0b1) // Receiver Data Frame Ready
+                                .rxfcg(0b1) // Receiver FCS Good
+                                .rxfce(0b1) // Receiver FCS Error
+                                .rxfsl(0b1) // Receiver Reed Solomon Frame Sync Loss
+                                .rxfto(0b1) // Receiver Frame Wait Timeout
+                                .rxovrr(0b1) // Receiver Overrun
+                                .rxpto(0b1) // Preamble Detection Timeout
+                                .rxsto(0b1) // Receiver SFD Timeout
+                                .rxprej(0b1)
+                        }, // Receiver Preamble Rejection
+                    )?;
 
-            // Restore the mask
-            self.ll.sys_enable().write(|w| {
-                w.0.copy_from_slice(&saved_sys_mask);
-                w
-            })?;
-        }
-*/
+                    // Restore the mask
+                    self.ll.sys_enable().write(|w| {
+                        w.0.copy_from_slice(&saved_sys_mask);
+                        w
+                    })?;
+                }
+        */
         self.ll.fast_command(0)?;
         Ok(())
-        
     }
-/*
-    pub(crate) fn read_otp(&mut self, address: u16) -> Result<u32, Error<SPI, CS>> {
-        // Set address
-        self.ll.otp_addr().write(|w| w.value(address))?;
-        // Switch into read mode
-        self.ll.otp_ctrl().write(|w| w.otprden(0b1).otpread(0b1))?;
-        self.ll.otp_ctrl().write(|w| w.otprden(0b1))?;
-        // Read back value
-        let value = self.ll.otp_rdat().read()?.value();
-        // End read mode
-        self.ll.otp_ctrl().write(|w| w)?;
-        Ok(value)
-    }
-*/
-    
+    /*
+        pub(crate) fn read_otp(&mut self, address: u16) -> Result<u32, Error<SPI, CS>> {
+            // Set address
+            self.ll.otp_addr().write(|w| w.value(address))?;
+            // Switch into read mode
+            self.ll.otp_ctrl().write(|w| w.otprden(0b1).otpread(0b1))?;
+            self.ll.otp_ctrl().write(|w| w.otprden(0b1))?;
+            // Read back value
+            let value = self.ll.otp_rdat().read()?.value();
+            // End read mode
+            self.ll.otp_ctrl().write(|w| w)?;
+            Ok(value)
+        }
+    */
 }

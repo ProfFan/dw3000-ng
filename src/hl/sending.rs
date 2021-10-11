@@ -39,21 +39,21 @@ where
         if evc_hpw != 0 {
             return Err(nb::Error::Other(Error::DelayedSendTooLate));
         }
-/*
-        // Check Transmitter Power-Up Warning Counter. If this is a delayed
-        // transmission, this indicates that the transmitter was still powering
-        // up while sending, and the frame preamble might not have transmit
-        // correctly.
-        let evc_tpw = self
-            .ll
-            .evc_tpw()
-            .read()
-            .map_err(|error| nb::Error::Other(Error::Spi(error)))?
-            .value();
-        if evc_tpw != 0 {
-            return Err(nb::Error::Other(Error::DelayedSendPowerUpWarning));
-        }
-*/
+        /*
+                // Check Transmitter Power-Up Warning Counter. If this is a delayed
+                // transmission, this indicates that the transmitter was still powering
+                // up while sending, and the frame preamble might not have transmit
+                // correctly.
+                let evc_tpw = self
+                    .ll
+                    .evc_tpw()
+                    .read()
+                    .map_err(|error| nb::Error::Other(Error::Spi(error)))?
+                    .value();
+                if evc_tpw != 0 {
+                    return Err(nb::Error::Other(Error::DelayedSendPowerUpWarning));
+                }
+        */
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
@@ -70,8 +70,7 @@ where
         }
 
         // Frame sent
-        self.reset_flags()
-            .map_err(nb::Error::Other)?;
+        self.reset_flags().map_err(nb::Error::Other)?;
         self.state.finished = true;
 
         let tx_timestamp = self
@@ -82,12 +81,12 @@ where
             .tx_stamp();
         // This is safe because the value read from the device will never be higher than the allowed value.
         let tx_timestamp = Instant::new(tx_timestamp);
-        
+
         if let Some(ts) = tx_timestamp {
             Ok(ts)
         } else {
             Err(nb::Error::Other(Error::Fcs))
-        }        
+        }
     }
 
     #[allow(clippy::type_complexity)]
@@ -108,7 +107,7 @@ where
                 Err(error) => return Err((self, error)),
             }
         }
-/*
+        /*
         // Turn off the external transmit synchronization
         match self.ll.ec_ctrl().modify(|_, w| w.ostsm(0)) {
             Ok(_) => {}
@@ -125,7 +124,7 @@ where
     fn reset_flags(&mut self) -> Result<(), Error<SPI, CS>> {
         self.ll.sys_status().write(
             |w| {
-                w   .txfrb(0b1) // Transmit Frame Begins
+                w.txfrb(0b1) // Transmit Frame Begins
                     .txprs(0b1) // Transmit Preamble Sent
                     .txphs(0b1) // Transmit PHY Header Sent
                     .txfrs(0b1)

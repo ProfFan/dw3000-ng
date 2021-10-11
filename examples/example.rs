@@ -10,7 +10,7 @@ use stm32f1xx_hal::{
     delay::Delay,
     pac,
     prelude::*,
-    spi::{Spi, Mode, Phase, Polarity},
+    spi::{Mode, Phase, Polarity, Spi},
 };
 
 use embedded_hal::digital::v2::OutputPin;
@@ -20,11 +20,8 @@ use dw3000::hl;
 // use dw3000::time::{TIME_MAX,Instant,};
 use dw3000::RxConfig;
 
-
-
 #[entry]
 fn main() -> ! {
-
     rtt_init_print!();
     rprintln!("Coucou copain !");
 
@@ -42,7 +39,11 @@ fn main() -> ! {
     let mut rcc = dp.RCC.constrain();
     let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
 
-    let clocks = rcc.cfgr.use_hse(8.mhz()).sysclk(36.mhz()).freeze(&mut flash.acr);
+    let clocks = rcc
+        .cfgr
+        .use_hse(8.mhz())
+        .sysclk(36.mhz())
+        .freeze(&mut flash.acr);
 
     let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
     let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
@@ -63,7 +64,15 @@ fn main() -> ! {
         polarity: Polarity::IdleLow,
         phase: Phase::CaptureOnFirstTransition,
     };
-    let spi = Spi::spi1(dp.SPI1, pins, &mut afio.mapr, spi_mode, 100.khz(), clocks, &mut rcc.apb2);
+    let spi = Spi::spi1(
+        dp.SPI1,
+        pins,
+        &mut afio.mapr,
+        spi_mode,
+        100.khz(),
+        clocks,
+        &mut rcc.apb2,
+    );
 
     /****************************************************************************************/
     /************              CONFIGURATION DU RESET du DW3000             *****************/
@@ -73,7 +82,7 @@ fn main() -> ! {
 
     let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
 
-    // UWB module reset 
+    // UWB module reset
     rst_n.set_low().unwrap();
     rst_n.set_high().unwrap();
 
@@ -85,16 +94,22 @@ fn main() -> ! {
     delay.delay_ms(1000u16);
 
     // variable pour recuperer l'etat du module
-    rprintln!("Etat après un new et une attente de 1sec = {:#x?}", dw3000.state());
+    rprintln!(
+        "Etat après un new et une attente de 1sec = {:#x?}",
+        dw3000.state()
+    );
 
     // activation de la calibration auto
-    dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1))
-            .expect("Write to onw_pgfcal failed.");
+    dw3000
+        .ll()
+        .aon_dig_cfg()
+        .write(|w| w.onw_pgfcal(1))
+        .expect("Write to onw_pgfcal failed.");
 
-    rprintln!("On est dans l'état IDLE_RC -> SPIRDY = {:#x?}", dw3000.idle_rc_passed());
-
-
-
+    rprintln!(
+        "On est dans l'état IDLE_RC -> SPIRDY = {:#x?}",
+        dw3000.idle_rc_passed()
+    );
 
     // On initialise le module pour passer à l'état IDLE
     rprintln!("On fait maintenant un init !");
@@ -104,31 +119,34 @@ fn main() -> ! {
 
     // après ces états, on peux vérifier l'etat du systeme avec les reg:
     // SPIRDY -> indique qu'on a finit les config d'allumage (IDLE_RC)
-    rprintln!("Est ce qu'on est dans l'état IDLE_RC ? = {:#x?}", dw3000.idle_rc_passed());
+    rprintln!(
+        "Est ce qu'on est dans l'état IDLE_RC ? = {:#x?}",
+        dw3000.idle_rc_passed()
+    );
 
     // CPLOCK -> indique si l'horloge PLL est bloquée (IDLE_PLL)
-    rprintln!("Est ce qu'on est dans l'état IDLE_PLL ? = {:#x?}", dw3000.idle_pll_passed());
+    rprintln!(
+        "Est ce qu'on est dans l'état IDLE_PLL ? = {:#x?}",
+        dw3000.idle_pll_passed()
+    );
 
     // PLL_HILO -> indique un probleme sur la conf de PLL
-    rprintln!("Probleme pour lock la PLL ? = {:#x?}", 
-            dw3000.ll().sys_status().read().unwrap().pll_hilo());
-
-
-
+    rprintln!(
+        "Probleme pour lock la PLL ? = {:#x?}",
+        dw3000.ll().sys_status().read().unwrap().pll_hilo()
+    );
 
     delay.delay_ms(5000u16);
 
-
-    
-
     // let valid_instant   = Instant::new(TI*ME_MAX);
 
-    // ON PASSE EN MODE RECEVEUR 
-    let mut receiving = dw3000.receive(RxConfig {
-                frame_filtering: false,
-                .. RxConfig::default()
-            })
-            .expect("Failed configure receiver.");
+    // ON PASSE EN MODE RECEVEUR
+    let mut receiving = dw3000
+        .receive(RxConfig {
+            frame_filtering: false,
+            ..RxConfig::default()
+        })
+        .expect("Failed configure receiver.");
     rprintln!("On passe en mode reception = {:#x?}", receiving.state());
 
     // ETAPE 1 : recherche du preamble
@@ -136,21 +154,20 @@ fn main() -> ! {
 
     // ETAPE 2 : Accumulation preamble and await SFD
 
-    // ETAPE 3 : 
+    // ETAPE 3 :
 
     delay.delay_ms(1000u16);
-    rprintln!("\nOn regarde ou en est le receveur\n" );
+    rprintln!("\nOn regarde ou en est le receveur\n");
     rprintln!("Etat ? : {:#x?}", receiving.rx_state());
-
-
 
     loop {
         delay.delay_ms(2000u16);
         rprintln!("Etat ? : {:#x?}", receiving.rx_state());
         //frame_ready = receiving.ll().sys_status().read().unwrap().rxfr();
 
-        rprintln!("tested value = {:#x?}", 
-            receiving.ll().ldo_rload().read().unwrap().value());
-    }    
-
+        rprintln!(
+            "tested value = {:#x?}",
+            receiving.ll().ldo_rload().read().unwrap().value()
+        );
+    }
 }

@@ -115,44 +115,29 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Spi(error) => 
-                    write!(f, "Spi({:?})", error),
-            Error::Fcs => 
-                    write!(f, "Fcs"),
-            Error::Phy => 
-                    write!(f, "Phy"),
-            Error::BufferTooSmall { required_len } =>
-                    write!(f, "BufferTooSmall {{ required_len: {:?} }}", required_len,),
-            Error::ReedSolomon => 
-                    write!(f, "ReedSolomon"),
-            Error::FrameWaitTimeout => 
-                    write!(f, "FrameWaitTimeout"),
-            Error::Overrun => 
-                    write!(f, "Overrun"),
-            Error::PreambleDetectionTimeout => 
-                    write!(f, "PreambleDetectionTimeout"),
-            Error::SfdTimeout => 
-                    write!(f, "SfdTimeout"),
-            Error::FrameFilteringRejection => 
-                    write!(f, "FrameFilteringRejection"),
-            Error::Frame(error) => 
-                    write!(f, "Frame({:?})", error),
-            Error::DelayedSendTooLate => 
-                    write!(f, "DelayedSendTooLate"),
-            Error::DelayedSendPowerUpWarning => 
-                    write!(f, "DelayedSendPowerUpWarning"),
-            Error::Ssmarshal(error) => 
-                    write!(f, "Ssmarshal({:?})", error),
-            Error::InvalidConfiguration => 
-                    write!(f, "InvalidConfiguration"),
-            Error::RxNotFinished => 
-                    write!(f, "RxNotFinished"),
-            Error::StillAsleep => 
-                    write!(f, "StillAsleep"),
-            Error::BadRssiCalculation => 
-                    write!(f, "BadRssiCalculation"),
-            Error::RxConfigFrameFilteringUnsupported =>
-                    write!(f, "RxConfigFrameFilteringUnsupported"),
+            Error::Spi(error) => write!(f, "Spi({:?})", error),
+            Error::Fcs => write!(f, "Fcs"),
+            Error::Phy => write!(f, "Phy"),
+            Error::BufferTooSmall { required_len } => {
+                write!(f, "BufferTooSmall {{ required_len: {:?} }}", required_len,)
+            }
+            Error::ReedSolomon => write!(f, "ReedSolomon"),
+            Error::FrameWaitTimeout => write!(f, "FrameWaitTimeout"),
+            Error::Overrun => write!(f, "Overrun"),
+            Error::PreambleDetectionTimeout => write!(f, "PreambleDetectionTimeout"),
+            Error::SfdTimeout => write!(f, "SfdTimeout"),
+            Error::FrameFilteringRejection => write!(f, "FrameFilteringRejection"),
+            Error::Frame(error) => write!(f, "Frame({:?})", error),
+            Error::DelayedSendTooLate => write!(f, "DelayedSendTooLate"),
+            Error::DelayedSendPowerUpWarning => write!(f, "DelayedSendPowerUpWarning"),
+            Error::Ssmarshal(error) => write!(f, "Ssmarshal({:?})", error),
+            Error::InvalidConfiguration => write!(f, "InvalidConfiguration"),
+            Error::RxNotFinished => write!(f, "RxNotFinished"),
+            Error::StillAsleep => write!(f, "StillAsleep"),
+            Error::BadRssiCalculation => write!(f, "BadRssiCalculation"),
+            Error::RxConfigFrameFilteringUnsupported => {
+                write!(f, "RxConfigFrameFilteringUnsupported")
+            }
         }
     }
 }

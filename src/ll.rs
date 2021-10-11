@@ -15,17 +15,9 @@
 //! [high-level interface]: ../hl/index.html
 //! [filing an issue]: https://github.com/braun-robotics/rust-dw1000/issues/new
 
+use core::{fmt, marker::PhantomData};
 
-use core::{
-    fmt,
-    marker::PhantomData,
-};
-
-use embedded_hal::{
-    blocking::spi,
-    digital::v2::OutputPin,
-};
-
+use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
 /// Entry point to the DW1000 driver's low-level API
 ///
@@ -33,46 +25,35 @@ use embedded_hal::{
 ///
 /// [hl::DW1000]: ../hl/struct.DW1000.html
 pub struct DW1000<SPI, CS> {
-    spi        : SPI,
+    spi: SPI,
     chip_select: CS,
 }
 
-impl<SPI, CS> DW1000<SPI, CS> 
-{
+impl<SPI, CS> DW1000<SPI, CS> {
     /// Create a new instance of `DW1000`
     ///
     /// Requires the SPI peripheral and the chip select pin that are connected
     /// to the DW1000.
     pub fn new(spi: SPI, chip_select: CS) -> Self {
-        DW1000 {
-            spi,
-            chip_select,
-        }
+        DW1000 { spi, chip_select }
     }
 
     /// commentaire
-    pub fn fast_command(&mut self, fast: u8)
-            -> Result<(), Error<SPI, CS>>
-        where
-            SPI: spi::Transfer<u8> + spi::Write<u8>,
-            CS:  OutputPin,
-        {
+    pub fn fast_command(&mut self, fast: u8) -> Result<(), Error<SPI, CS>>
+    where
+        SPI: spi::Transfer<u8> + spi::Write<u8>,
+        CS: OutputPin,
+    {
         let mut buffer = [0];
-        buffer[0] =
-         (0x1            << 7) |
-        ((fast   << 1) & 0x3e) | 0x1;
+        buffer[0] = (0x1 << 7) | ((fast << 1) & 0x3e) | 0x1;
 
-        self.chip_select.set_low()
-            .map_err(Error::ChipSelect)?;
-        <SPI as spi::Write<u8>>::write(&mut self.spi, &buffer)
-            .map_err(Error::Write)?;
-        self.chip_select.set_high()
-            .map_err(Error::ChipSelect)?;
+        self.chip_select.set_low().map_err(Error::ChipSelect)?;
+        <SPI as spi::Write<u8>>::write(&mut self.spi, &buffer).map_err(Error::Write)?;
+        self.chip_select.set_high().map_err(Error::ChipSelect)?;
 
         Ok(())
     }
 }
-
 
 /// Provides access to a register
 ///
@@ -81,36 +62,31 @@ impl<SPI, CS> DW1000<SPI, CS>
 pub struct RegAccessor<'s, R, SPI, CS>(&'s mut DW1000<SPI, CS>, PhantomData<R>);
 
 impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
-    where
-        SPI: spi::Transfer<u8> + spi::Write<u8>,
-        CS:  OutputPin,
+where
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    CS: OutputPin,
 {
     /// Read from the register
-    pub fn read(&mut self)
-        -> Result<R::Read, Error<SPI, CS>>
-        where
-            R: Register + Readable,
+    pub fn read(&mut self) -> Result<R::Read, Error<SPI, CS>>
+    where
+        R: Register + Readable,
     {
-        let mut r      = R::read();
+        let mut r = R::read();
         let mut buffer = R::buffer(&mut r);
 
         init_header::<R>(false, &mut buffer);
-        self.0.chip_select.set_low()
-            .map_err(Error::ChipSelect)?;
-        self.0.spi.transfer(buffer)
-            .map_err(Error::Transfer)?;
-        self.0.chip_select.set_high()
-            .map_err(Error::ChipSelect)?;
+        self.0.chip_select.set_low().map_err(Error::ChipSelect)?;
+        self.0.spi.transfer(buffer).map_err(Error::Transfer)?;
+        self.0.chip_select.set_high().map_err(Error::ChipSelect)?;
 
         Ok(r)
     }
 
     /// Write to the register
-    pub fn write<F>(&mut self, f: F)
-        -> Result<(), Error<SPI, CS>>
-        where
-            R: Register + Writable,
-            F: FnOnce(&mut R::Write) -> &mut R::Write,
+    pub fn write<F>(&mut self, f: F) -> Result<(), Error<SPI, CS>>
+    where
+        R: Register + Writable,
+        F: FnOnce(&mut R::Write) -> &mut R::Write,
     {
         let mut w = R::write();
         f(&mut w);
@@ -118,53 +94,42 @@ impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
         let buffer = R::buffer(&mut w);
         init_header::<R>(true, buffer);
 
-        self.0.chip_select.set_low()
-            .map_err(Error::ChipSelect)?;
-        <SPI as spi::Write<u8>>::write(&mut self.0.spi, buffer)
-            .map_err(Error::Write)?;
-        self.0.chip_select.set_high()
-            .map_err(Error::ChipSelect)?;
+        self.0.chip_select.set_low().map_err(Error::ChipSelect)?;
+        <SPI as spi::Write<u8>>::write(&mut self.0.spi, buffer).map_err(Error::Write)?;
+        self.0.chip_select.set_high().map_err(Error::ChipSelect)?;
 
         Ok(())
     }
 
-
     /// Modify the register
-    pub fn modify<F>(&mut self, f: F)
-        -> Result<(), Error<SPI, CS>>
-        where
-            R: Register + Readable + Writable,
-            F: for<'r>
-                FnOnce(&mut R::Read, &'r mut R::Write) -> &'r mut R::Write,
+    pub fn modify<F>(&mut self, f: F) -> Result<(), Error<SPI, CS>>
+    where
+        R: Register + Readable + Writable,
+        F: for<'r> FnOnce(&mut R::Read, &'r mut R::Write) -> &'r mut R::Write,
     {
         let mut r = self.read()?;
         let mut w = R::write();
 
-        <R as Writable>::buffer(&mut w)
-            .copy_from_slice(<R as Readable>::buffer(&mut r));
+        <R as Writable>::buffer(&mut w).copy_from_slice(<R as Readable>::buffer(&mut r));
 
         f(&mut r, &mut w);
 
         let buffer = <R as Writable>::buffer(&mut w);
         init_header::<R>(true, buffer);
 
-        self.0.chip_select.set_low()
-            .map_err(Error::ChipSelect)?;
-        <SPI as spi::Write<u8>>::write(&mut self.0.spi, buffer)
-            .map_err(Error::Write)?;
-        self.0.chip_select.set_high()
-            .map_err(Error::ChipSelect)?;
+        self.0.chip_select.set_low().map_err(Error::ChipSelect)?;
+        <SPI as spi::Write<u8>>::write(&mut self.0.spi, buffer).map_err(Error::Write)?;
+        self.0.chip_select.set_high().map_err(Error::ChipSelect)?;
 
         Ok(())
     }
 }
 
-
 /// An SPI error that can occur when communicating with the DW1000
 pub enum Error<SPI, CS>
-    where
-        SPI: spi::Transfer<u8> + spi::Write<u8>,
-        CS:  OutputPin,
+where
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    CS: OutputPin,
 {
     /// SPI error occured during a transfer transaction
     Transfer(<SPI as spi::Transfer<u8>>::Error),
@@ -179,22 +144,21 @@ pub enum Error<SPI, CS>
 // We can't derive this implementation, as the compiler will complain that the
 // associated error type doesn't implement `Debug`.
 impl<SPI, CS> fmt::Debug for Error<SPI, CS>
-    where
-        SPI: spi::Transfer<u8> + spi::Write<u8>,
-        <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
-        <SPI as spi::Write<u8>>::Error: fmt::Debug,
-        CS: OutputPin,
-        <CS as OutputPin>::Error: fmt::Debug,
+where
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
+    <SPI as spi::Write<u8>>::Error: fmt::Debug,
+    CS: OutputPin,
+    <CS as OutputPin>::Error: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Transfer(error)   => write!(f, "Transfer({:?})", error),
-            Error::Write(error)      => write!(f, "Write({:?})", error),
+            Error::Transfer(error) => write!(f, "Transfer({:?})", error),
+            Error::Write(error) => write!(f, "Write({:?})", error),
             Error::ChipSelect(error) => write!(f, "ChipSelect({:?})", error),
         }
     }
 }
-
 
 /// Initializes the SPI message header
 ///
@@ -207,28 +171,26 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
     // bool write definit si on est en lecture ou en ecriture (premier bit)
     // sub_id est un bool qui definit si on est en full ou short command
     // on commmence par du full address !
-    buffer[0] =
-        (((write    as u8) << 7) & 0x80) |
-        (((sub_id   as u8) << 6) & 0x40) |
-        ((R::ID            << 1) & 0x3e) |
-        ((R::SUB_ID as u8) >> 6);
+    buffer[0] = (((write as u8) << 7) & 0x80)
+        | (((sub_id as u8) << 6) & 0x40)
+        | ((R::ID << 1) & 0x3e)
+        | ((R::SUB_ID as u8) >> 6);
 
-// fast command buffer
-/*
-    buffer[0] =
-        (((0x1            << 7) & 0x80) |
-        ((fast_command   << 1) & 0x3e) | 0x1;
-*/
+    // fast command buffer
+    /*
+        buffer[0] =
+            (((0x1            << 7) & 0x80) |
+            ((fast_command   << 1) & 0x3e) | 0x1;
+    */
 
     if !sub_id {
         return 1;
     }
 
-    buffer[1] = (R::SUB_ID as u8)  << 2; 
+    buffer[1] = (R::SUB_ID as u8) << 2;
 
     2
 }
-
 
 /// Implemented for all registers
 ///
@@ -633,11 +595,10 @@ macro_rules! impl_rw {
 // }
 //
 
-
 /*************************************************************************/
 /**********               DWM3000 MODIFICATIONS               ************/
 /*************************************************************************/
-// registers for DWM3000 
+// registers for DWM3000
 // Each field follows the following syntax:
 // <Id>, <Offset>, <Length>, <Access>, <NAME(name)>
 //      <name>, <first-bit-index>, <last-bit-index>, <type>; /// <doc>
@@ -652,7 +613,7 @@ impl_register! {
     }
     0x00, 0x04, 8, RW, EUI(eui) { /// Extended Unique Identifier
         value, 0, 63, u64; /// Extended Unique Identifier
-    }    
+    }
     0x00, 0x0C, 4, RW, PANADR(panadr) { /// PAN Identifier and Short Address
         short_addr,  0, 15, u16; /// Short Address
         pan_id,     16, 31, u16; /// PAN Identifier
@@ -674,7 +635,7 @@ impl_register! {
         cp_sdc,     15, 15, u8; /// configures the SDC
         pdoa_mode,  16, 17, u8; /// configure PDoA
         fast_aat,   18, 18, u8; /// enable fast RX to TX turn around mode
-    }   
+    }
     0x00, 0x14, 2, RW, FF_CFG(ff_cfg) { /// comments
         ffab,        0,  0, u8; /// Frame Filtering Allow Beacon
         ffad,        1,  1, u8; /// Frame Filtering Allow Data
@@ -692,7 +653,7 @@ impl_register! {
         le3_pend,    13,  13, u8; /// Data pending for device at led3 addr
         ssadrap,     14,  14, u8; /// Short Source Address Data Request
         lsadrape,    15,  15, u8; /// Long Source Address Data Request
-    }  
+    }
     0x00, 0x18, 1, RO, SPI_RD_CRC(spi_rd_crc) { /// SPI CRC read status
         value, 0, 7, u8; /// Comment
     }
@@ -809,7 +770,7 @@ impl_register! {
         rng,    15, 15, u8; /// Receiver Ranging
         rxprf,  16, 17, u8; /// RX Pulse Repetition Rate Report
         rxpsr,  18, 19, u8; /// RX Preamble Repetition
-        rxpacc, 20, 31, u16; /// Preamble Accumulation Count        
+        rxpacc, 20, 31, u16; /// Preamble Accumulation Count
     }
     0x00, 0x64, 16, RO, RX_TIME(rx_time) { /// Receive Time Stamp
         // A TESTER
@@ -935,10 +896,10 @@ impl_register! {
         // A TESTER
         value,  0x0, 0x7F, u128; /// value
     }
-    
+
     /*******************************************************************/
     /**************    STS CONFIG REGISTER   ***************************/
-    /*******************************************************************/  
+    /*******************************************************************/
     0x02, 0x00, 2, RW, STS_CFG(sts_cfg) { /// STS configuration
         // A TESTER
         cps_len,  0, 7, u8; /// STS length
@@ -1075,7 +1036,7 @@ impl_register! {
         gpd8,  8,  8, u8; ///   value of 0 means the pin is an output
     }
     0x05, 0x0C, 2, RW, GPIO_OUT(gpio_out) { /// GPIO Data Output Register
-        gop0,  0,  0, u8; ///   show the current output setting 
+        gop0,  0,  0, u8; ///   show the current output setting
         gop1,  1,  1, u8; ///   show the current output setting
         gop2,  2,  2, u8; ///   show the current output setting
         gop3,  3,  3, u8; ///   show the current output setting
@@ -1086,7 +1047,7 @@ impl_register! {
         gop8,  8,  8, u8; ///   show the current output setting
     }
     0x05, 0x10, 2, RW, GPIO_IRQE(gpio_irqe) { /// GPIO Interrupt Enable
-        girqe0,  0,  0, u8; ///   selected as interrupt source 
+        girqe0,  0,  0, u8; ///   selected as interrupt source
         girqe1,  1,  1, u8; ///   selected as interrupt source
         girqe2,  2,  2, u8; ///   selected as interrupt source
         girqe3,  3,  3, u8; ///   selected as interrupt source
@@ -1181,17 +1142,17 @@ impl_register! {
         pac,    0,  1, u8; ///   Preamble Acquisition Chunk size
         dt0b4,  4,  4, u8; ///   Tuning bit 4 of digital tuning reg0
     }
-    0x06, 0x02, 2, RW, RX_SFD_TOC(rx_sfd_toc) { /// SFD timeout 
-        value,  0,  15, u16; /// don't set to 0  
+    0x06, 0x02, 2, RW, RX_SFD_TOC(rx_sfd_toc) { /// SFD timeout
+        value,  0,  15, u16; /// don't set to 0
     }
     0x06, 0x04, 2, RW, PRE_TOC(pre_toc) { /// Preamble detection timeout
-        value,  0,  15, u16; /// digital receiver configuration  
+        value,  0,  15, u16; /// digital receiver configuration
     }
     0x06, 0x0C, 4, RW, DTUNE3(dtune3) { /// Receiver tuning register
         value,  0,  31, u32; /// value
     }
     0x06, 0x14, 4, RO, DTUNE5(dtune5) { /// Digital Tuning Reserved register
-        value,  0,  31, u32; /// value  
+        value,  0,  31, u32; /// value
     }
     0x06, 0x29, 3, RO, DRX_CAR_INT(drx_car_int) { /// Carrier recovery integrator register
         //  formule de math !! A FINIR
@@ -1201,27 +1162,27 @@ impl_register! {
     /*****************     RF_CONF REGISTER    *************************/
     /*******************************************************************/
     0x07, 0x00, 4, RW, RF_ENABLE(rf_enable) { /// RF control enable
-        value,  0,  31, u32; /// value  
+        value,  0,  31, u32; /// value
     }
     0x07, 0x04, 4, RW, RF_CTRL_MASK(rf_ctrl_mask) { /// RF enable mask
-        value,  0,  31, u32; /// value  
+        value,  0,  31, u32; /// value
     }
     0x07, 0x14, 4, RW, RF_SWITCH(rf_switch) { /// RF switch configuration
-        antswnotoggle,  0,  0, u8; /// CC  
-        antswpdoaport,  1,  1, u8; /// CC 
-        antswen,        8,  8, u8; /// CC 
-        antswctrl,     12, 14, u8; /// CC 
-        trxswen,       16, 16, u8; /// CC 
-        trxswctrl,     24, 29, u8; /// CC 
+        antswnotoggle,  0,  0, u8; /// CC
+        antswpdoaport,  1,  1, u8; /// CC
+        antswen,        8,  8, u8; /// CC
+        antswctrl,     12, 14, u8; /// CC
+        trxswen,       16, 16, u8; /// CC
+        trxswctrl,     24, 29, u8; /// CC
     }
     0x07, 0x1A, 1, RW, RF_TX_CTRL_1(rf_tx_ctrl_1) { /// RF transmitter configuration
-        value,  0,  7, u8; /// value  
+        value,  0,  7, u8; /// value
     }
     0x07, 0x1C, 4, RW, RF_TX_CTRL_2(rf_tx_ctrl_2) { /// RF transmitter configuration
-        value,  0,  31, u32; /// Pulse Generator Delay value 
+        value,  0,  31, u32; /// Pulse Generator Delay value
     }
     0x07, 0x28, 1, RW, TX_TEST(tx_test) { /// Transmitter test configuration
-        tx_entest,  0,  3, u8; /// Transmitter test enable 
+        tx_entest,  0,  3, u8; /// Transmitter test enable
     }
     0x07, 0x34, 1, RW, SAR_TEST(rsar_test) { /// Transmitter Calibration – SAR temperaturesensor read enable
         sar_rden,  2,  2, u8; /// Writing 1 enables the SAR temperature sensor reading
@@ -1240,33 +1201,33 @@ impl_register! {
     /*****************     RF_CAL REGISTER    **************************/
     /*******************************************************************/
     0x08, 0x00, 1, RW, SAR_CTRL(sar_ctrl) { /// Transmitter Calibration – SAR control
-        sar_start, 0, 0, u8; /// Writing 1 sets SAR enable and writing 0 clears the enable. 
+        sar_start, 0, 0, u8; /// Writing 1 sets SAR enable and writing 0 clears the enable.
     }
     0x08, 0x04, 1, RW, SAR_STATUS(sar_status) { /// Transmitter Calibration – SAR  status
-        sar_done, 0, 0, u8; /// Set to 1 when the data is ready to be read. 
+        sar_done, 0, 0, u8; /// Set to 1 when the data is ready to be read.
     }
     0x08, 0x08, 3, RO, SAR_READING(sar_reading) { /// Transmitter Calibration –Latest SAR readings
-        sar_lvbat, 0,  7, u8; /// Latest SAR reading for Voltage level.   
-        sar_ltemp, 8, 15, u8; /// Latest SAR reading for Temperature level.    
+        sar_lvbat, 0,  7, u8; /// Latest SAR reading for Voltage level.
+        sar_ltemp, 8, 15, u8; /// Latest SAR reading for Temperature level.
     }
     0x08, 0x0C, 2, RO, SAR_WAKE_RD(sar_wake_rd) { /// Transmitter Calibration – SAR readings at last wake-up
-        sar_wvbat, 0,  7, u8; /// SAR reading of Voltage level taken at last wake up event.  
+        sar_wvbat, 0,  7, u8; /// SAR reading of Voltage level taken at last wake up event.
         sar_wtemp, 8, 15, u8; /// To read the temp, use SAR_READING instead.
     }
     0x08, 0x10, 2, RW, PGC_CTRL(pgc_ctrl) { /// Transmitter Calibration – Pulse Generator control
-        pg_start,     0, 0, u8; /// Start the pulse generator calibration.  
-        pgc_auto_cal, 1, 1, u8; /// Start the pulse generator auto-calibration.  
-        pgc_tmeas,    2, 5, u8; /// Number of clock cycles over which to run the pulse generator calibration counter.  
+        pg_start,     0, 0, u8; /// Start the pulse generator calibration.
+        pgc_auto_cal, 1, 1, u8; /// Start the pulse generator auto-calibration.
+        pgc_tmeas,    2, 5, u8; /// Number of clock cycles over which to run the pulse generator calibration counter.
     }
-    0x08, 0x14, 2, RO, PGC_STATUS(pgc_status) { /// Transmitter Calibration – Pulse Generator status 
-        pg_delay_cnt,  0, 11, u16; /// Pulse generator count value 
-        autocal_done, 12, 12, u8; /// Auto-calibration of the PG_DELAY  has completed. 
+    0x08, 0x14, 2, RO, PGC_STATUS(pgc_status) { /// Transmitter Calibration – Pulse Generator status
+        pg_delay_cnt,  0, 11, u16; /// Pulse generator count value
+        autocal_done, 12, 12, u8; /// Auto-calibration of the PG_DELAY  has completed.
     }
     0x08, 0x18, 2, RW, PG_TEST(pg_test) { /// Transmitter Calibration – Pulse Generator test
         value, 0, 15, u16; /// Pulse Generator test
     }
-    0x08, 0x1C, 2, RO, PG_CAL_TARGET(pg_cal_target) { /// Transmitter Calibration – Pulse Generator count target value 
-        value, 0, 11, u16; /// Pulse generator target value of PG_COUNT at which point PG auto cal will complete. 
+    0x08, 0x1C, 2, RO, PG_CAL_TARGET(pg_cal_target) { /// Transmitter Calibration – Pulse Generator count target value
+        value, 0, 11, u16; /// Pulse generator target value of PG_COUNT at which point PG auto cal will complete.
     }
 
     /*******************************************************************/
@@ -1276,16 +1237,16 @@ impl_register! {
         value, 0, 15, u16; /// PLL configuration
     }
     0x09, 0x04, 3, RW, PLL_CC(pll_cc) { /// PLL coarse code – starting code for calibration procedure
-        ch9_code, 0,  7, u8; /// PLL calibration coarse code for channel 5. 
+        ch9_code, 0,  7, u8; /// PLL calibration coarse code for channel 5.
         ch5_code, 8, 21, u8; /// PLL calibration coarse code for channel 9.
     }
     0x09, 0x08, 2, RW, PLL_CAL(pll_cal) { /// PLL calibration configuration
-        use_old,    1, 1, u8; /// Use the coarse code value as set in PLL_CC register as starting point for PLL calibration. 
-        pll_cfg_ld, 4, 7, u8; /// PLL calibration configuration value. 
-        cal_en,     8, 8, u8; /// PLL  calibration  enable  bit.  
+        use_old,    1, 1, u8; /// Use the coarse code value as set in PLL_CC register as starting point for PLL calibration.
+        pll_cfg_ld, 4, 7, u8; /// PLL calibration configuration value.
+        cal_en,     8, 8, u8; /// PLL  calibration  enable  bit.
     }
     0x09, 0x14, 1, RW, XTAL(xtal) { /// Frequency synthesiser – Crystal trim
-        value, 0, 7, u8; /// Crystal Trim.  
+        value, 0, 7, u8; /// Crystal Trim.
     }
 
     /*******************************************************************/
@@ -1293,19 +1254,19 @@ impl_register! {
     /*******************************************************************/
     0x0A, 0x00, 3, RW, AON_DIG_CFG(aon_dig_cfg) { /// AON wake up configuration register
         onw_aon_dld, 0,  0, u8; /// On Wake-up download the AON array.
-        onw_run_sar, 1,  1, u8; /// On Wake-up Run the (temperature and voltage) Analog-to-Digital Convertors.  
-        onw_go2idle, 8,  8, u8; /// On Wake-up go to IDLE_PLL state. 
-        onw_go2rx,   9,  9, u8; /// On Wake-up go to RX. 
+        onw_run_sar, 1,  1, u8; /// On Wake-up Run the (temperature and voltage) Analog-to-Digital Convertors.
+        onw_go2idle, 8,  8, u8; /// On Wake-up go to IDLE_PLL state.
+        onw_go2rx,   9,  9, u8; /// On Wake-up go to RX.
         onw_pgfcal, 11, 11, u8; /// On Wake-up perform RX calibration
     }
     0x0A, 0x04, 1, RW, AON_CTRL(aon_ctrl) { /// AON control register
-        restore,      0, 0, u8; /// Copy the user configurations from the AON memory to the host interface register set.  
-        save,         1, 1, u8; /// Copy the user configurations from the host interface register  set  into  the  AON  memory.  
-        cfg_upload,   2, 2, u8; /// Upload the AON block configurations to the AON.    
-        dca_read,     3, 3, u8; /// Direct AON memory access read.  
+        restore,      0, 0, u8; /// Copy the user configurations from the AON memory to the host interface register set.
+        save,         1, 1, u8; /// Copy the user configurations from the host interface register  set  into  the  AON  memory.
+        cfg_upload,   2, 2, u8; /// Upload the AON block configurations to the AON.
+        dca_read,     3, 3, u8; /// Direct AON memory access read.
         dca_write,    4, 4, u8; /// Direct AON memory write access
         dca_write_hi, 5, 5, u8; /// Direct AON memory write access. Needs to be set when using address > 0xFF
-        dca_enab,     7, 7, u8; /// Direct AON memory access enable bit.    
+        dca_enab,     7, 7, u8; /// Direct AON memory access enable bit.
     }
     0x0A, 0x08, 1, RW, AON_RDATA(aon_rdata) { /// AON direct access read data result
         value, 0, 7, u8; /// AON direct access read data result
@@ -1317,12 +1278,12 @@ impl_register! {
         value, 0, 7, u8; /// AON direct access write data
     }
     0x0A, 0x14, 1, RW, AON_CFG(aon_cfg) { /// AON configuration register
-        sleep_en,   0, 0, u8; /// Sleep enable configuration bit.  
-        wake_cnt,   1, 1, u8; /// Wake when sleep counter elapses.  
-        brout_en,   2, 2, u8; /// Enable the BROWNOUT detector during SLEEP or DEEPSLEEP.   
-        wake_csn,   3, 3, u8; /// Wake using SPI access.    
-        wake_wup,   4, 4, u8; /// Wake using WAKEUP pin.  
-        pres_sleep, 5, 5, u8; /// Preserve Sleep. 
+        sleep_en,   0, 0, u8; /// Sleep enable configuration bit.
+        wake_cnt,   1, 1, u8; /// Wake when sleep counter elapses.
+        brout_en,   2, 2, u8; /// Enable the BROWNOUT detector during SLEEP or DEEPSLEEP.
+        wake_csn,   3, 3, u8; /// Wake using SPI access.
+        wake_wup,   4, 4, u8; /// Wake using WAKEUP pin.
+        pres_sleep, 5, 5, u8; /// Preserve Sleep.
     }
 
     /*******************************************************************/
@@ -1332,23 +1293,23 @@ impl_register! {
         value, 0, 31, u32; /// OTP data to program to a particular address
     }
     0x0B, 0x04, 4, RW, OTP_ADDR(otp_addr) { /// OTP address to which to program the data
-        otp_addr, 0, 10, u16; /// Address within OTP memory that will be accessed read or written.  
+        otp_addr, 0, 10, u16; /// Address within OTP memory that will be accessed read or written.
     }
     0x0B, 0x08, 2, RW, OTP_CFG(otp_cfg) { /// OTP configuration register
-        otp_man,       0,  0, u8; /// Enable manual control over OTP interface.   
-        otp_read,      1,  1, u8; /// OTP read enable.   
-        otp_write,     2,  2, u8; /// OTP write enable.   
-        otp_write_mr,  3,  3, u8; /// OTP write mode.   
-        dgc_kick,      6,  6, u8; /// Loading of the RX_TUNE_CAL parameter   
-        ldo_kick,      7,  7, u8; /// Loading of the LDOTUNE_CAL parameter 
-        bias_kick,     8,  8, u8; /// Loading of the BIASTUNE_CAL parameter 
-        ops_kick,     10, 10, u8; /// Loading of the operating parameter set selected by the OPS_SEL configuration 
-        ops_sel,      11, 12, u8; /// Operating parameter set selection.    
-        dgc_sel,      13, 13, u8; /// RX_TUNE parameter set selection.    
+        otp_man,       0,  0, u8; /// Enable manual control over OTP interface.
+        otp_read,      1,  1, u8; /// OTP read enable.
+        otp_write,     2,  2, u8; /// OTP write enable.
+        otp_write_mr,  3,  3, u8; /// OTP write mode.
+        dgc_kick,      6,  6, u8; /// Loading of the RX_TUNE_CAL parameter
+        ldo_kick,      7,  7, u8; /// Loading of the LDOTUNE_CAL parameter
+        bias_kick,     8,  8, u8; /// Loading of the BIASTUNE_CAL parameter
+        ops_kick,     10, 10, u8; /// Loading of the operating parameter set selected by the OPS_SEL configuration
+        ops_sel,      11, 12, u8; /// Operating parameter set selection.
+        dgc_sel,      13, 13, u8; /// RX_TUNE parameter set selection.
     }
     0x0B, 0x0C, 1, RW, OTP_STAT(otp_stat) { /// OTP memory programming status register
         otp_prog_done, 0,  0, u8; /// OTP Programming Done
-        otp_vpp_ok,    1,  1, u8; /// OTP Programming Voltage OK.  
+        otp_vpp_ok,    1,  1, u8; /// OTP Programming Voltage OK.
     }
     0x0B, 0x10, 4, RO, OTP_RDATA(otp_rdata) { /// OTP data read from given address
         value, 0, 31, u32; /// OTP data read from given address
@@ -1360,64 +1321,64 @@ impl_register! {
     /*******************************************************************/
     /*********************     CIA REGISTER    *************************/
     /*******************************************************************/
-    0x0C, 0x00, 8, RO, IP_TS(ip_ts) { /// Preamble sequence receive time stamp and status  
-        ip_toa,    0,  39, u64; /// Preamble sequence Time of Arrival estimate.  
+    0x0C, 0x00, 8, RO, IP_TS(ip_ts) { /// Preamble sequence receive time stamp and status
+        ip_toa,    0,  39, u64; /// Preamble sequence Time of Arrival estimate.
         ip_poa,   40,  53, u16; /// Phase of arrival as computed from the preamble CIR.
-        ip_toast, 56,  63, u8; /// Preamble sequence Time of Arrival status indicator.  
+        ip_toast, 56,  63, u8; /// Preamble sequence Time of Arrival status indicator.
     }
     0x0C, 0x08, 8, RO, STS_TS(sts_ts) { /// STS receive time stamp and status
-        sts_toa,    0,  39, u64; /// STS Time of Arrival estimate. 
+        sts_toa,    0,  39, u64; /// STS Time of Arrival estimate.
         sts_poa,   40,  53, u16; /// Phase of arrival as computed from the STS CIR.
-        sts_toast, 55,  63, u16; /// STS sequence Time of Arrival status indicator.  
+        sts_toast, 55,  63, u16; /// STS sequence Time of Arrival status indicator.
     }
     0x0C, 0x10, 8, RO, STS1_TS(sts1_ts) { /// 2nd STS receive time stamp and status
-        sts1_toa,    0,  39, u64; /// STS second Time of Arrival estimate. 
+        sts1_toa,    0,  39, u64; /// STS second Time of Arrival estimate.
         sts1_poa,   40,  53, u16; /// Phase of arrival as computed from the STS based CIR estimate.
-        sts1_toast, 55,  63, u16; /// STS second Time of Arrival status indicator.  
+        sts1_toast, 55,  63, u16; /// STS second Time of Arrival status indicator.
     }
-    0x0C, 0x18, 6, RO, TDOA(tdoa) { /// The TDoA between the two CIRs 
+    0x0C, 0x18, 6, RO, TDOA(tdoa) { /// The TDoA between the two CIRs
         value, 0, 47, u64; /// The TDoA between the two CIRs
     }
-    0x0C, 0x1E, 2, RO, PDOA(pdoa) { /// The PDoA between the two CIRs 
+    0x0C, 0x1E, 2, RO, PDOA(pdoa) { /// The PDoA between the two CIRs
         pdoa,      0, 13, u16; /// Phase difference result.
-        fp_th_md, 14, 14, u8; /// First path threshold test mode.  
+        fp_th_md, 14, 14, u8; /// First path threshold test mode.
     }
-    0x0C, 0x20, 4, RO, CIA_DIAG_0(cia_diag_0) { /// CIA Diagnostic 0 
-        coe_ppm, 0, 12, u16; /// Clock offset estimate. 
+    0x0C, 0x20, 4, RO, CIA_DIAG_0(cia_diag_0) { /// CIA Diagnostic 0
+        coe_ppm, 0, 12, u16; /// Clock offset estimate.
     }
     0x0C, 0x24, 4, RO, CIA_DIAG_1(cia_diag_1) { /// Reserved diagnostic data
     }
     0x0C, 0x28, 4, RO, IP_DIAG_0(ip_diag_0) { /// Preamble Diagnostic 0 – peak
-        ip_peaka,  0, 20, u32; /// Amplitude of the sample accumulated using the preamble sequence.  
-        ip_peaki, 21, 30, u16; /// Index of the sample accumulated using the preamble sequence.  
+        ip_peaka,  0, 20, u32; /// Amplitude of the sample accumulated using the preamble sequence.
+        ip_peaki, 21, 30, u16; /// Index of the sample accumulated using the preamble sequence.
     }
     0x0C, 0x2C, 4, RO, IP_DIAG_1(ip_diag_1) { /// Preamble Diagnostic 1 – power indication
-        ip_carea, 0, 16, u32; /// Channel area accumulated using the preamble sequence.  
+        ip_carea, 0, 16, u32; /// Channel area accumulated using the preamble sequence.
     }
     0x0C, 0x30, 4, RO, IP_DIAG_2(ip_diag_2) { /// Preamble Diagnostic 2 – magnitude @ FP + 1
-        ip_fp1m, 0, 21, u32; /// Magnitude of the sample at the first index immediately after the estimated first path position accumulated using the preamble sequence.  
+        ip_fp1m, 0, 21, u32; /// Magnitude of the sample at the first index immediately after the estimated first path position accumulated using the preamble sequence.
     }
     0x0C, 0x34, 4, RO, IP_DIAG_3(ip_diag_3) { /// Preamble Diagnostic 3 – magnitude @ FP + 2
-        ip_fp2m, 0, 21, u32; /// Magnitude of the sample at the second index immediately after the estimated first path position accumulated using the preamble sequence.  
+        ip_fp2m, 0, 21, u32; /// Magnitude of the sample at the second index immediately after the estimated first path position accumulated using the preamble sequence.
     }
     0x0C, 0x38, 4, RO, IP_DIAG_4(ip_diag_4) { /// Preamble Diagnostic 4 – magnitude @ FP + 3
-        ip_fp3m, 0, 21, u32; /// Magnitude of the sample at the third index immediately after the estimated first path position accumulated using the preamble sequence.  
+        ip_fp3m, 0, 21, u32; /// Magnitude of the sample at the third index immediately after the estimated first path position accumulated using the preamble sequence.
     }
-    0x0C, 0x3C, 12, RO, IP_DIAG_RES1(ip_diag_res1) { /// Reserved diagnostic data 
+    0x0C, 0x3C, 12, RO, IP_DIAG_RES1(ip_diag_res1) { /// Reserved diagnostic data
     }
-    0x0C, 0x48, 4, RO, IP_DIAG_8(ip_diag_8) { /// Preamble Diagnostic 8 – first path 
-        ip_fp, 0, 15, u16; /// Estimated first path location accumulated using the preamble sequence.  
+    0x0C, 0x48, 4, RO, IP_DIAG_8(ip_diag_8) { /// Preamble Diagnostic 8 – first path
+        ip_fp, 0, 15, u16; /// Estimated first path location accumulated using the preamble sequence.
     }
-    0x0C, 0x4C, 12, RO, IP_DIAG_RES2(ip_diag_res2) { /// Reserved diagnostic data 
+    0x0C, 0x4C, 12, RO, IP_DIAG_RES2(ip_diag_res2) { /// Reserved diagnostic data
     }
     0x0C, 0x58, 4, RO, IP_DIAG_12(ip_diag_12) { /// Preamble Diagnostic 12 – symbols accumulated
-        ip_nacc, 0, 11, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.  
+        ip_nacc, 0, 11, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.
     }
     0x0C, 0x5C, 4, RO, STS_DIAG_0(sts_diag_0) { /// STS 0 Diagnostic 0 – STS CIA peak amplitude
         cp0_peaka,  0, 20, u32; /// Amplitude of the sample accumulated using the STS
         cp0_peaki, 21, 29, u16; /// Index of the sample accumulated using the STS
     }
-    0x0C, 0x60, 4, RO, STS_DIAG_1(sts_diag_1) { /// STS 0 Diagnostic 1 – STS power indication 
+    0x0C, 0x60, 4, RO, STS_DIAG_1(sts_diag_1) { /// STS 0 Diagnostic 1 – STS power indication
         cp0_carea, 0, 15, u16; /// Channel area accumulated using the the STS
     }
     0x0C, 0x64, 4, RO, STS_DIAG_2(sts_diag_2) { /// STS 0 Diagnostic 2 – STS magnitude @ FP + 1
@@ -1429,17 +1390,17 @@ impl_register! {
     0x0D, 0x00, 4, RO, STS_DIAG_4(sts_diag_4) { /// STS 0 Diagnostic 4 – STS magnitude @ FP + 3
         cp0_fp3m, 0, 21, u32; /// Magnitude of the sample at the third index immediately after the estimated first path position accumulated using the STS
     }
-    0x0D, 0x04, 12, RO, STS0_DIAG_RES1(sts0_diag_res1) { /// Reserved diagnostic data 
+    0x0D, 0x04, 12, RO, STS0_DIAG_RES1(sts0_diag_res1) { /// Reserved diagnostic data
     }
     0x0D, 0x10, 4, RO, STS_DIAG_8(sts_diag_8) { /// STS 0 Diagnostic 8 – STS first path
         cp0_fp, 0, 14, u16; /// Estimated first path location accumulated using the STS
     }
-    0x0D, 0x14, 12, RO, STS0_DIAG_RES2(sts0_diag_res2) { /// Reserved diagnostic data 
+    0x0D, 0x14, 12, RO, STS0_DIAG_RES2(sts0_diag_res2) { /// Reserved diagnostic data
     }
     0x0D, 0x20, 4, RO, STS_DIAG_12(sts_diag_12) { /// STS 0 diagnostic 12 – accumulated STS length
-        cp0_nacc, 0, 10, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.  
+        cp0_nacc, 0, 10, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.
     }
-    0x0D, 0x24, 20, RO, STS0_DIAG_RES3(sts0_diag_res3) { /// Reserved diagnostic data 
+    0x0D, 0x24, 20, RO, STS0_DIAG_RES3(sts0_diag_res3) { /// Reserved diagnostic data
     }
     0x0D, 0x38, 4, RO, STS1_DIAG_0(sts1_diag_0) { /// STS 1 Diagnostic 0 – STS CIA peak amplitude
         cp1_peaka,  0, 20, u32; /// Amplitude of the sample accumulated using the STS
@@ -1448,7 +1409,7 @@ impl_register! {
     0x0D, 0x3C, 4, RO, STS1_DIAG_1(sts1_diag_1) { /// STS 1 Diagnostic 1 – STS power indication
         cp1_carea, 0, 15, u16; /// Channel area accumulated using the the STS
     }
-    0x0D, 0x40, 4, RO, STS1_DIAG_2(sts1_diag_2) { /// STS 1 Diagnostic 2 – STS magnitude @ FP + 1 
+    0x0D, 0x40, 4, RO, STS1_DIAG_2(sts1_diag_2) { /// STS 1 Diagnostic 2 – STS magnitude @ FP + 1
         cp1_fp1m, 0, 21, u32; /// Magnitude of the sample at the first index immediately after the estimated first path position accumulated using the STS
     }
     0x0D, 0x44, 4, RO, STS1_DIAG_3(sts1_diag_3) { /// STS 1 Diagnostic 3 – STS magnitude @ FP + 2
@@ -1457,105 +1418,105 @@ impl_register! {
     0x0D, 0x48, 4, RO, STS1_DIAG_4(sts1_diag_4) { /// STS 1 Diagnostic 4 – STS magnitude @ FP + 3
         cp1_fp3m, 0, 21, u32; /// Magnitude of the sample at the third index immediately after the estimated first path position accumulated using the STS
     }
-    0x0D, 0x4C, 12, RO, STS1_DIAG_RES1(sts1_diag_res1) { /// Reserved diagnostic data 
+    0x0D, 0x4C, 12, RO, STS1_DIAG_RES1(sts1_diag_res1) { /// Reserved diagnostic data
     }
     0x0D, 0x58, 4, RO, STS1_DIAG_8(sts1_diag_8) { /// STS 1 Diagnostic 8 – STS first path
         cp1_fp, 0, 14, u16; /// Estimated first path location accumulated using the STS
     }
-    0x0D, 0x5C, 12, RO, STS1_DIAG_RES2(sts1_diag_res2) { /// Reserved diagnostic data 
+    0x0D, 0x5C, 12, RO, STS1_DIAG_RES2(sts1_diag_res2) { /// Reserved diagnostic data
     }
     0x0D, 0x68, 4, RO, STS1_DIAG_12(sts1_diag_12) { /// STS 1 Diagnostic 12 – STS accumulated STS length
-        cp1_nacc, 0, 10, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.  
+        cp1_nacc, 0, 10, u16; /// Number of preamble sequence symbols that were accumulated to form the preamble CIR.
     }
     0x0E, 0x00, 4, RW, CIA_CONF(cia_conf) { /// CIA general configuration
-        rxantd,   0, 15, u16; /// Configures the receive antenna delay. 
-        mindiag, 20, 20, u8; ///  Minimum Diagnostics.  
+        rxantd,   0, 15, u16; /// Configures the receive antenna delay.
+        mindiag, 20, 20, u8; ///  Minimum Diagnostics.
     }
     0x0E, 0x04, 4, RW, FP_CONF(fp_conf) { /// First path temp adjustment and thresholds
-        fp_agreed_th, 8, 10, u8; /// The threshold to use when performing the FP_AGREE test.  
-        cal_temp,    11, 18, u8; /// Temperature at which the device was calibrated.  
-        tc_rxdly_en, 20, 20, u8; /// Temperature compensation for RX antenna delay. 
+        fp_agreed_th, 8, 10, u8; /// The threshold to use when performing the FP_AGREE test.
+        cal_temp,    11, 18, u8; /// Temperature at which the device was calibrated.
+        tc_rxdly_en, 20, 20, u8; /// Temperature compensation for RX antenna delay.
     }
     0x0E, 0x0C, 4, RW, IP_CONF(ip_conf) { /// Preamble Config – CIA preamble configuration
-        ip_ntm,   0, 4,  u8; /// Preamble Noise Threshold Multiplier.  
-        ip_pmult, 5, 6,  u8; /// Preamble Peak Multiplier.  
+        ip_ntm,   0, 4,  u8; /// Preamble Noise Threshold Multiplier.
+        ip_pmult, 5, 6,  u8; /// Preamble Peak Multiplier.
         ip_rtm,  16, 20, u8; /// Preamble replica threshold multiplier
     }
     0x0E, 0x12, 4, RW, STS_CONF_0(sts_conf_0) { /// STS Config 0 – CIA STS configuration
-        sts_ntm,   0,  4, u8; /// STS Noise Threshold Multiplier.  
-        sts_pmult, 5,  6, u8; /// STS Peak Multiplier.  
+        sts_ntm,   0,  4, u8; /// STS Noise Threshold Multiplier.
+        sts_pmult, 5,  6, u8; /// STS Peak Multiplier.
         sts_rtm,  16, 22, u8; /// STS replica threshold multiplier
     }
     0x0E, 0x16, 4, RW, STS_CONF_1(sts_conf_1) { /// STS Config 1 – CIA STS configuration
         res_b0,        0,  7, u8; /// Tuning value
-        fp_agreed_en, 28, 28, u8; /// Checks to see if the two ToA estimates are within allowed tolerances.  
-        sts_cq_en,    29, 29, u8; /// Checks how consistent the impulse response stays during the accumulation of the STS.  
-        sts_ss_en,    30, 30, u8; /// Compare the sampling statistics of the STS reception to those of the earlier reception of the preamble sequence.  
-        sts_pgr_en,   31, 31, u8; /// Test the growth rate of the STS based CIR to the earlier growth rate of the preamble based CIR.  
+        fp_agreed_en, 28, 28, u8; /// Checks to see if the two ToA estimates are within allowed tolerances.
+        sts_cq_en,    29, 29, u8; /// Checks how consistent the impulse response stays during the accumulation of the STS.
+        sts_ss_en,    30, 30, u8; /// Compare the sampling statistics of the STS reception to those of the earlier reception of the preamble sequence.
+        sts_pgr_en,   31, 31, u8; /// Test the growth rate of the STS based CIR to the earlier growth rate of the preamble based CIR.
     }
-    0x0E, 0x1A, 2, RO, CIA_ADJUST(cia_adjust) { /// User adjustment to the PDoA 
-        value, 0, 13, u8; /// Adjustment value to account for non-balanced antenna circuits.  
+    0x0E, 0x1A, 2, RO, CIA_ADJUST(cia_adjust) { /// User adjustment to the PDoA
+        value, 0, 13, u8; /// Adjustment value to account for non-balanced antenna circuits.
     }
 
     /*******************************************************************/
     /*****************     DIG_DIAG REGISTER    ************************/
-    /*******************************************************************/    
-    0x0F, 0x00, 1, RW, EVC_CTRL(evc_ctrl) { /// Event counter control 
-        evc_en,  0, 0, u8; /// Event Counters Enable.  
-        evc_clr, 1, 1, u8; /// Event Counters Clear.   
+    /*******************************************************************/
+    0x0F, 0x00, 1, RW, EVC_CTRL(evc_ctrl) { /// Event counter control
+        evc_en,  0, 0, u8; /// Event Counters Enable.
+        evc_clr, 1, 1, u8; /// Event Counters Clear.
     }
     0x0F, 0x04, 2, RO, EVC_PHE(evc_phe) { /// PHR error counter
-        value, 0, 11, u16; /// PHR Error Event Counter.  
+        value, 0, 11, u16; /// PHR Error Event Counter.
     }
-    0x0F, 0x06, 2, RO, EVC_RSE(evc_rse) { /// RSD error counter 
-        value, 0, 11, u16; /// Reed Solomon decoder (Sync Loss) Error Event Counter.   
+    0x0F, 0x06, 2, RO, EVC_RSE(evc_rse) { /// RSD error counter
+        value, 0, 11, u16; /// Reed Solomon decoder (Sync Loss) Error Event Counter.
     }
     0x0F, 0x08, 2, RO, EVC_FCG(evc_fcg) { /// Frame check sequence good counter
-        value, 0, 11, u16; /// Frame Check Sequence Good Event Counter.  
+        value, 0, 11, u16; /// Frame Check Sequence Good Event Counter.
     }
-    0x0F, 0x08, 2, RO, EVC_FCE(evc_fce) { /// Frame Check Sequence error counter 
-        value, 0, 11, u16; /// Frame Check Sequence Error Event Counter. 
+    0x0F, 0x08, 2, RO, EVC_FCE(evc_fce) { /// Frame Check Sequence error counter
+        value, 0, 11, u16; /// Frame Check Sequence Error Event Counter.
     }
-    0x0F, 0x0C, 1, RO, EVC_FFR(evc_ffr) { /// Frame filter rejection counter 
-        value, 0,  7, u8; /// Frame Filter Rejection Event Counter.  
+    0x0F, 0x0C, 1, RO, EVC_FFR(evc_ffr) { /// Frame filter rejection counter
+        value, 0,  7, u8; /// Frame Filter Rejection Event Counter.
     }
-    0x0F, 0x0E, 1, RO, EVC_OVR (evc_ovr) { /// RX overrun error counter   
-        value, 0,  7, u8; /// RX Overrun Error Event Counter. 
+    0x0F, 0x0E, 1, RO, EVC_OVR (evc_ovr) { /// RX overrun error counter
+        value, 0,  7, u8; /// RX Overrun Error Event Counter.
     }
-    0x0F, 0x10, 2, RO, EVC_STO(evc_sto) { /// SFD timeout counter 
-        value, 0, 11, u16; /// SFD timeout errors Event Counter.  
+    0x0F, 0x10, 2, RO, EVC_STO(evc_sto) { /// SFD timeout counter
+        value, 0, 11, u16; /// SFD timeout errors Event Counter.
     }
-    0x0F, 0x12, 2, RO, EVC_PTO(evc_pto) { /// Preamble timeout counter 
-        value, 0, 11, u16; /// Preamble  Detection  Timeout  Event  Counter.    
+    0x0F, 0x12, 2, RO, EVC_PTO(evc_pto) { /// Preamble timeout counter
+        value, 0, 11, u16; /// Preamble  Detection  Timeout  Event  Counter.
     }
-    0x0F, 0x14, 1, RO, EVC_FWTO(evc_fwto) { /// RX frame wait timeout counter 
-        value, 0, 7, u8; /// RX  Frame  Wait  Timeout  Event  Counter.   
+    0x0F, 0x14, 1, RO, EVC_FWTO(evc_fwto) { /// RX frame wait timeout counter
+        value, 0, 7, u8; /// RX  Frame  Wait  Timeout  Event  Counter.
     }
-    0x0F, 0x16, 2, RO, EVC_TXFS(evc_txfs) { /// TX frame sent counter 
-        value, 0, 11, u16; /// TX Frame Sent Event Counter. 
+    0x0F, 0x16, 2, RO, EVC_TXFS(evc_txfs) { /// TX frame sent counter
+        value, 0, 11, u16; /// TX Frame Sent Event Counter.
     }
-    0x0F, 0x18, 1, RO, EVC_HPW(evc_hpw) { /// Half period warning counter 
-        value, 0, 7, u8; /// Half Period Warning Event Counter.  
+    0x0F, 0x18, 1, RO, EVC_HPW(evc_hpw) { /// Half period warning counter
+        value, 0, 7, u8; /// Half Period Warning Event Counter.
     }
-    0x0F, 0x1A, 1, RO, EVC_SWCE(evc_swce) { /// SPI write CRC error counter 
-        value, 0, 7, u8; /// SPI write CRC error counter.  
+    0x0F, 0x1A, 1, RO, EVC_SWCE(evc_swce) { /// SPI write CRC error counter
+        value, 0, 7, u8; /// SPI write CRC error counter.
     }
-    0x0F, 0x1C, 8, RO, EVC_RES1(evc_res1) { /// Digital diagnostics reserved area 1  
+    0x0F, 0x1C, 8, RO, EVC_RES1(evc_res1) { /// Digital diagnostics reserved area 1
         value, 0, 63, u64; /// Digital diagnostics reserved area 1
     }
-    0x0F, 0x24, 4, RW, DIAG_TMC(diag_tmc) { /// Test mode control register 
+    0x0F, 0x24, 4, RW, DIAG_TMC(diag_tmc) { /// Test mode control register
         tx_pstm,    4,  4, u8; /// Transmit Power Spectrum Test Mode.
-        hirq_pol,  21, 21, u8; /// Host interrupt polarity. 
+        hirq_pol,  21, 21, u8; /// Host interrupt polarity.
         cia_wden,  24, 24, u8; /// Enable the CIA watchdog.
-        cia_run,   26, 26, u8; /// Run the CIA manually. 
+        cia_run,   26, 26, u8; /// Run the CIA manually.
     }
-    0x0F, 0x28, 1, RO, EVC_CPQE(evc_cpqe) { /// STS quality error counter 
-        value, 0, 7, u8; /// STS quality error counter 
+    0x0F, 0x28, 1, RO, EVC_CPQE(evc_cpqe) { /// STS quality error counter
+        value, 0, 7, u8; /// STS quality error counter
     }
-    0x0F, 0x2A, 1, RO, EVC_VWARN(evc_vwarn) { /// Low voltage warning error counter 
-        value, 0, 7, u8; /// Low voltage warning error counter 
+    0x0F, 0x2A, 1, RO, EVC_VWARN(evc_vwarn) { /// Low voltage warning error counter
+        value, 0, 7, u8; /// Low voltage warning error counter
     }
-    0x0F, 0x2C, 1, RO, SPI_MODE(spi_mode) { /// SPI mode 
+    0x0F, 0x2C, 1, RO, SPI_MODE(spi_mode) { /// SPI mode
         value, 0, 1, u8; /// SPI mode
     }
     0x0F, 0x30, 4, RO, SYS_STATE(sys_state) { /// System states *
@@ -1563,14 +1524,14 @@ impl_register! {
         rx_state,    8, 11, u8; /// Current Receive State Machine value
         pmsc_state, 16, 23, u8; /// Current PMSC State Machine value
     }
-    0x0F, 0x3C, 1, RO, FCMD_STAT(fcmd_stat) { /// Fast command status 
-        value, 0, 4, u8; /// Fast command status. 
+    0x0F, 0x3C, 1, RO, FCMD_STAT(fcmd_stat) { /// Fast command status
+        value, 0, 4, u8; /// Fast command status.
     }
-    0x0F, 0x48, 4, RO, CTR_DBG(ctr_dbg) { /// Current value of  the low 32-bits of the STS IV 
-        value, 0, 31, u32; /// Current value of  the low 32-bits of the STS IV 
+    0x0F, 0x48, 4, RO, CTR_DBG(ctr_dbg) { /// Current value of  the low 32-bits of the STS IV
+        value, 0, 31, u32; /// Current value of  the low 32-bits of the STS IV
     }
     0x0F, 0x4C, 1, RO, SPICRCINIT(spicrcinit) { /// SPI CRC LFSR initialisation code
-        value, 0, 7, u8; /// SPI CRC LFSR initialisation code for the SPI CRC function. 
+        value, 0, 7, u8; /// SPI CRC LFSR initialisation code for the SPI CRC function.
     }
 
     /*******************************************************************/
@@ -1588,39 +1549,39 @@ impl_register! {
         gpio_rst, 8, 8, u8; /// Soft GPIO reset
     }
     0x11, 0x04, 4, RW, CLK_CTRL(clk_ctrl) { /// PMSC clock control register
-        sys_clk,       0,  1, u8; /// System Clock Selection field. 
+        sys_clk,       0,  1, u8; /// System Clock Selection field.
         rx_clk,        2,  3, u8; /// Receiver Clock Selection
-        tx_clk,        4,  5, u8; /// Transmitter Clock Selection. 
+        tx_clk,        4,  5, u8; /// Transmitter Clock Selection.
         acc_clk_en,    6,  6, u8; /// Force Accumulator Clock Enable
         cia_clk_en,    8,  8, u8; /// Force CIA Clock Enable
-        sar_clk_en,   10, 10, u8; /// Analog-to-Digital Convertor Clock Enable.  
-        acc_mclk_en,  15, 15, u8; /// Accumulator Memory Clock Enable.   
+        sar_clk_en,   10, 10, u8; /// Analog-to-Digital Convertor Clock Enable.
+        acc_mclk_en,  15, 15, u8; /// Accumulator Memory Clock Enable.
         gpio_clk_en,  16, 16, u8; /// GPIO clock Enable
-        gpio_dclk_en, 18, 18, u8; /// GPIO De-bounce Clock Enable. 
-        gpio_drst_n,  19, 19, u8; /// GPIO de-bounce reset (NOT), active low.  
-        lp_clk_en,    23, 23, u8; /// Kilohertz clock Enable.  
+        gpio_dclk_en, 18, 18, u8; /// GPIO De-bounce Clock Enable.
+        gpio_drst_n,  19, 19, u8; /// GPIO de-bounce reset (NOT), active low.
+        lp_clk_en,    23, 23, u8; /// Kilohertz clock Enable.
     }
-    0x11, 0x08, 4, RW, SEQ_CTRL(seq_ctrl) { /// PMSC sequencing control register 
-        ainit2idle,    8,  8, u8; /// Automatic  IDLE_RC  to  IDLE_PLL.     
-        atx2slp,      11, 11, u8; /// After TX automatically Sleep.  
-        arx2slp,      12, 12, u8; /// After RX automatically Sleep.  
-        pll_sync,     15, 15, u8; /// This enables a 1 GHz clock used for some external SYNC modes.  
-        ciarune,      17, 17, u8; /// CIA run enable. 
-        force2init,   23, 23, u8; /// Force to IDLE_RC state.  
-        lp_clk_div,   26, 31, u8; /// Kilohertz clock divisor.     
+    0x11, 0x08, 4, RW, SEQ_CTRL(seq_ctrl) { /// PMSC sequencing control register
+        ainit2idle,    8,  8, u8; /// Automatic  IDLE_RC  to  IDLE_PLL.
+        atx2slp,      11, 11, u8; /// After TX automatically Sleep.
+        arx2slp,      12, 12, u8; /// After RX automatically Sleep.
+        pll_sync,     15, 15, u8; /// This enables a 1 GHz clock used for some external SYNC modes.
+        ciarune,      17, 17, u8; /// CIA run enable.
+        force2init,   23, 23, u8; /// Force to IDLE_RC state.
+        lp_clk_div,   26, 31, u8; /// Kilohertz clock divisor.
     }
     0x11, 0x12, 4, RW, TXFSEQ(txfseq) { /// PMSC fine grain TX sequencing control
         value, 0, 31, u32; /// PMSC fine grain TX sequencing control
     }
     0x11, 0x16, 4, RW, LED_CTRL(led_ctrl) { /// PMSC fine grain TX sequencing control
-        blink_tim,   0,  7, u8; /// Blink time count value.  
-        blink_en,    8,  8, u8; /// Blink Enable.  
-        force_trig, 16, 19, u8; /// Manually triggers an LED blink. 
-    } 
+        blink_tim,   0,  7, u8; /// Blink time count value.
+        blink_en,    8,  8, u8; /// Blink Enable.
+        force_trig, 16, 19, u8; /// Manually triggers an LED blink.
+    }
     0x11, 0x1A, 4, RW, RX_SNIFF(rx_sniff) { /// Receiver SNIFF mode configuration
-        sniff_on,   0,  3, u8; /// SNIFF Mode ON time.   
-        sniff_off,  8, 15, u8; /// SNIFF Mode OFF time specified in μs.  
-    } 
+        sniff_on,   0,  3, u8; /// SNIFF Mode ON time.
+        sniff_off,  8, 15, u8; /// SNIFF Mode OFF time specified in μs.
+    }
     0x11, 0x1F, 2, RW, BIAS_CTRL(bias_ctrl) { /// Analog blocks’ calibration values
         value, 0, 13, u16; /// Analog blocks’ calibration values
     }
@@ -1630,7 +1591,7 @@ impl_register! {
     /*******************************************************************/
     0x15, 0x00, 12288, RO, ACC_MEM(acc_mem) { /// Read access to accumulator data memory
     } // If the code doesn't run properly, reduce the length from 12288 to 8096
-    
+
     /*******************************************************************/
     /*****************     SCRATCH_RAM REGISTER    *********************/
     /*******************************************************************/
@@ -1640,15 +1601,15 @@ impl_register! {
     /*******************************************************************/
     /*****************     AES_RAM REGISTER    *************************/
     /*******************************************************************/
-    0x17, 0x00, 128, RW, AES_KEY_RAM(aes_key_ram) { /// storage for up to 8 x 128 bit AES KEYs 
-        aes_key1,   0x0,  0x7F, u128; /// 1st AES key 
-        aes_key2,  0x80,  0xFF, u128; /// 2nd AES key 
-        aes_key3, 0x100, 0x17F, u128; /// 3rd AES key 
-        aes_key4, 0x180, 0x1FF, u128; /// 4th AES key 
-        aes_key5, 0x200, 0x27F, u128; /// 5th AES key 
-        aes_key6, 0x280, 0x2FF, u128; /// 6th AES key 
-        aes_key7, 0x300, 0x37F, u128; /// 7th AES key 
-        aes_key8, 0x380, 0x3FF, u128; /// 8th AES key    
+    0x17, 0x00, 128, RW, AES_KEY_RAM(aes_key_ram) { /// storage for up to 8 x 128 bit AES KEYs
+        aes_key1,   0x0,  0x7F, u128; /// 1st AES key
+        aes_key2,  0x80,  0xFF, u128; /// 2nd AES key
+        aes_key3, 0x100, 0x17F, u128; /// 3rd AES key
+        aes_key4, 0x180, 0x1FF, u128; /// 4th AES key
+        aes_key5, 0x200, 0x27F, u128; /// 5th AES key
+        aes_key6, 0x280, 0x2FF, u128; /// 6th AES key
+        aes_key7, 0x300, 0x37F, u128; /// 7th AES key
+        aes_key8, 0x380, 0x3FF, u128; /// 8th AES key
     }
 
     /*******************************************************************/
@@ -1664,41 +1625,41 @@ impl_register! {
     /*******************************************************************/
     /*****************     INDIRECT_PTR_A REGISTER    ******************/
     /*******************************************************************/
-    0x1D, 0x00, 1, RW, INDIRECT_PTR_A(indirect_ptr_a) { /// Indirect pointer A 
-        value, 0, 7, u8; /// Indirect pointer A 
+    0x1D, 0x00, 1, RW, INDIRECT_PTR_A(indirect_ptr_a) { /// Indirect pointer A
+        value, 0, 7, u8; /// Indirect pointer A
     }
 
     /*******************************************************************/
     /*****************     INDIRECT_PTR_B REGISTER    ******************/
     /*******************************************************************/
-    0x1E, 0x00, 1, RW, INDIRECT_PTR_B(indirect_ptr_b) { /// Indirect pointer B 
-        value, 0, 7, u8; /// Indirect pointer B 
+    0x1E, 0x00, 1, RW, INDIRECT_PTR_B(indirect_ptr_b) { /// Indirect pointer B
+        value, 0, 7, u8; /// Indirect pointer B
     }
 
     /*******************************************************************/
     /*****************     IN_PTR_CFG REGISTER    **********************/
     /*******************************************************************/
     0x1F, 0x00, 1, RO, FINT_STAT(fint_stat) { /// Fast System Event Status Register
-        txok,       0,  0,  u8; /// TXFRB or TXPRS or TXPHS or TXFRS.  
-        cca_fail,   1,  1,  u8; /// AAT or CCA_FAIL. 
-        rxtserr,    2,  2,  u8; /// CIAERR 
-        rxok,       3,  3,  u8; /// RXFR and CIADONE or RXFCG. 
-        rxerr,      4,  4,  u8; /// RXFCE or RXFSL or  RXPHE or  ARFE or  RXSTO or RXOVRR. 
-        rxto,       5,  5,  u8; /// RXFTO  or  RXPTO. 
+        txok,       0,  0,  u8; /// TXFRB or TXPRS or TXPHS or TXFRS.
+        cca_fail,   1,  1,  u8; /// AAT or CCA_FAIL.
+        rxtserr,    2,  2,  u8; /// CIAERR
+        rxok,       3,  3,  u8; /// RXFR and CIADONE or RXFCG.
+        rxerr,      4,  4,  u8; /// RXFCE or RXFSL or  RXPHE or  ARFE or  RXSTO or RXOVRR.
+        rxto,       5,  5,  u8; /// RXFTO  or  RXPTO.
         sys_event,  6,  6,  u8; /// VT_DET or GPIOIRQ or RCINIT or SPIRDY.
         sys_panic,  7,  7,  u8; /// AES_ERR or CMD_ERR or SPI_UNF or SPI_OVF or SPIERR or PLL_HILO or VWARN.
     }
     0x1F, 0x04, 1, RW, PTR_ADDR_A(ptr_addr_a) { /// Base address of the register to be accessed through indirect pointer A
-        ptra_base,  0,  4,  u8; /// Base address of the register to be accessed through indirect pointer A 
+        ptra_base,  0,  4,  u8; /// Base address of the register to be accessed through indirect pointer A
     }
-    0x1F, 0x08, 2, RW, PTR_OFFSET_A(ptr_offset_a) { /// Offset address of the register to be accessed through indirect pointer A 
-        ptra_ofs,   0, 14,  u16; /// Offset address of the register to be accessed through indirect pointer A 
+    0x1F, 0x08, 2, RW, PTR_OFFSET_A(ptr_offset_a) { /// Offset address of the register to be accessed through indirect pointer A
+        ptra_ofs,   0, 14,  u16; /// Offset address of the register to be accessed through indirect pointer A
     }
     0x1F, 0x0C, 1, RW, PTR_ADDR_B(ptr_addr_b) { /// Base address of the register to be accessed through indirect pointer B
         ptrb_base,  0,  4,  u8; /// Base address of the register to be accessed through indirect pointer B
     }
-    0x1F, 0x10, 2, RW, PTR_OFFSET_B(ptr_offset_b) { /// Offset address of the register to be accessed through indirect pointer B 
-        ptrb_ofs,   0, 14,  u16; /// Offset address of the register to be accessed through indirect pointer B 
+    0x1F, 0x10, 2, RW, PTR_OFFSET_B(ptr_offset_b) { /// Offset address of the register to be accessed through indirect pointer B
+        ptrb_ofs,   0, 14,  u16; /// Offset address of the register to be accessed through indirect pointer B
     }
 }
 
@@ -1710,9 +1671,9 @@ impl_register! {
 pub struct TX_BUFFER;
 
 impl Register for TX_BUFFER {
-    const ID:     u8    = 0x14;
-    const SUB_ID: u16   = 0x00;
-    const LEN:    usize = 127;
+    const ID: u8 = 0x14;
+    const SUB_ID: u16 = 0x00;
+    const LEN: usize = 127;
 }
 
 impl Writable for TX_BUFFER {
@@ -1734,7 +1695,6 @@ impl<SPI, CS> DW1000<SPI, CS> {
     }
 }
 
-
 /// Transmit Data Buffer
 pub mod tx_buffer {
     /// Used to write to the register
@@ -1748,7 +1708,6 @@ pub mod tx_buffer {
     }
 }
 
-
 /// Receive Data Buffer 0
 ///
 /// Currently only the first 127 bytes of the buffer are supported, which is
@@ -1757,9 +1716,9 @@ pub mod tx_buffer {
 pub struct RX_BUFFER_0;
 
 impl Register for RX_BUFFER_0 {
-    const ID:     u8    = 0x12;
-    const SUB_ID: u16   = 0x00;
-    const LEN:    usize = 127;
+    const ID: u8 = 0x12;
+    const SUB_ID: u16 = 0x00;
+    const LEN: usize = 127;
 }
 
 impl Readable for RX_BUFFER_0 {
@@ -1781,15 +1740,12 @@ impl<SPI, CS> DW1000<SPI, CS> {
     }
 }
 
-
 /// Receive Data Buffer
 pub mod rx_buffer_0 {
     use core::fmt;
 
-
     const HEADER_LEN: usize = 1;
-    const LEN:        usize = 127;
-
+    const LEN: usize = 127;
 
     /// Used to read from the register
     pub struct R(pub(crate) [u8; HEADER_LEN + LEN]);
@@ -1797,14 +1753,14 @@ pub mod rx_buffer_0 {
     impl R {
         /// Provides read access to the buffer contents
         pub fn data(&self) -> &[u8] {
-            &self.0[HEADER_LEN .. HEADER_LEN + LEN]
+            &self.0[HEADER_LEN..HEADER_LEN + LEN]
         }
     }
 
     impl fmt::Debug for R {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "0x")?;
-            for i in (0 .. LEN).rev() {
+            for i in (0..LEN).rev() {
                 write!(f, "{:02x}", self.0[HEADER_LEN + i])?;
             }
 
@@ -1821,9 +1777,9 @@ pub mod rx_buffer_0 {
 pub struct RX_BUFFER_1;
 
 impl Register for RX_BUFFER_1 {
-    const ID:     u8    = 0x13;
-    const SUB_ID: u16   = 0x00;
-    const LEN:    usize = 127;
+    const ID: u8 = 0x13;
+    const SUB_ID: u16 = 0x00;
+    const LEN: usize = 127;
 }
 
 impl Readable for RX_BUFFER_1 {
@@ -1845,15 +1801,12 @@ impl<SPI, CS> DW1000<SPI, CS> {
     }
 }
 
-
 /// Receive Data Buffer
 pub mod rx_buffer_1 {
     use core::fmt;
 
-
     const HEADER_LEN: usize = 1;
-    const LEN:        usize = 127;
-
+    const LEN: usize = 127;
 
     /// Used to read from the register
     pub struct R(pub(crate) [u8; HEADER_LEN + LEN]);
@@ -1861,14 +1814,14 @@ pub mod rx_buffer_1 {
     impl R {
         /// Provides read access to the buffer contents
         pub fn data(&self) -> &[u8] {
-            &self.0[HEADER_LEN .. HEADER_LEN + LEN]
+            &self.0[HEADER_LEN..HEADER_LEN + LEN]
         }
     }
 
     impl fmt::Debug for R {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "0x")?;
-            for i in (0 .. LEN).rev() {
+            for i in (0..LEN).rev() {
                 write!(f, "{:02x}", self.0[HEADER_LEN + i])?;
             }
 
@@ -1876,7 +1829,6 @@ pub mod rx_buffer_1 {
         }
     }
 }
-
 
 /// Internal trait used by `impl_registers!`
 trait FromBytes {
