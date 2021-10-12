@@ -59,11 +59,11 @@ clippy-be:
   script:
     - cargo clippy --examples
   after_script:
-    - cargo clippy --message-format=json &> report.json || true
+    - cargo clippy &> report.txt || true
    # - curl -X POST "https://gitlab-cq-rust.herokuapp.com/clippy" --data-binary @clippy.txt --output report.json
   artifacts:
     reports:
-      codequality: report.json
+      codequality: report.txt
     expire_in: 1 week
   rules:
     - if: '$CODE_QUALITY_DISABLED'
