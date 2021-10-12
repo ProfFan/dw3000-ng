@@ -59,7 +59,7 @@ clippy-be:
   script:
     - cargo clippy --examples
   after_script:
-    - cargo clippy &> report.txt || true
+    - cargo clippy --examples &> report.txt || true
    # - curl -X POST "https://gitlab-cq-rust.herokuapp.com/clippy" --data-binary @clippy.txt --output report.json
   artifacts:
     reports:
