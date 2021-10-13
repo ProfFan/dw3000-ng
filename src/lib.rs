@@ -35,7 +35,7 @@ pub mod time;
 pub use ieee802154::mac;
 
 pub use crate::{
-	configs::{RxConfig, TxConfig},
+	configs::{RxConfig, TxConfig, Config},
 	hl::{
 		AutoDoubleBufferReceiving,
 		Error,

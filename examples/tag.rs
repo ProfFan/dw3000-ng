@@ -13,7 +13,7 @@ use stm32f1xx_hal::{
 };
 use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, RxConfig, TxConfig};
+use dw3000::{hl, RxConfig, TxConfig, Config};
 use nb::block;
 
 #[entry]
@@ -89,7 +89,7 @@ fn main() -> ! {
 
 	rprintln!("On initialise le module : new + init en meme temps");
 	let mut dw3000 = hl::DW1000::new(spi, cs)
-		.init(&mut delay)
+		.init(Config::default())
 		.expect("Failed init.");
 	rprintln!("dm3000 = {:?}", dw3000);
 
@@ -136,6 +136,7 @@ fn main() -> ! {
 		/**************************** */
 		/******** TRANSMITTER ******* */
 		/**************************** */
+		/*
 		let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
 
 		let mut sending = dw3000
@@ -163,5 +164,6 @@ fn main() -> ! {
 		rprintln!("result = {:?}", result);
 
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
+		*/	
 	}
 }

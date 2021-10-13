@@ -238,48 +238,10 @@ where
 		self.ll.tx_fctrl().modify(|_, w| {
 			let txflen = len as u16 + 2;
 			w.txflen(txflen) // data length + two-octet CRC
-				.txbr(config.bitrate as u8) // configured bitrate
 				.tr(config.ranging_enable as u8) // configured ranging bit
-				.txpsr(config.preamble_length as u8) // first two bits of configured preamble length
 				.txb_offset(txb_offset_errata) // no offset in TX_BUFFER
-				.fine_plen(0) // Not implemented, replacing txpsr
 		})?;
 
-		// Set the channel and sfd settings
-		self.ll.chan_ctrl().modify(|_, w| {
-			w.rf_chan(config.channel as u8)
-				.rf_chan(config.channel as u8)
-				.sfd_type(config.sfd_sequence as u8)
-				// .dwsfd((config.sfd_sequence == SfdSequence::Decawave8
-				//         || config.sfd_sequence == SfdSequence::Decawave16) as u8)
-				// .rxprf(config.pulse_repetition_frequency as u8)
-				// .tnssfd(
-				//     (config.sfd_sequence == SfdSequence::Ieee
-				//         || config.sfd_sequence == SfdSequence::Decawave16) as u8)
-				// .rnssfd(
-				//     (config.sfd_sequence == SfdSequence::Ieee
-				//         || config.sfd_sequence == SfdSequence::Decawave16) as u8)
-				.tx_pcode(
-					config
-						.channel
-						.get_recommended_preamble_code(config.pulse_repetition_frequency),
-				)
-				.rx_pcode(
-					config
-						.channel
-						.get_recommended_preamble_code(config.pulse_repetition_frequency),
-				)
-		})?;
-
-		// Copied from recieiving
-
-		self.ll.rf_tx_ctrl_1().modify(|_, w| w.value(0x0E))?;
-		self.ll
-			.rf_tx_ctrl_2()
-			.modify(|_, w| w.value(config.channel.get_recommanded_rf_tx_ctrl_2()))?;
-		self.ll
-			.pll_cfg()
-			.modify(|_, w| w.value(config.channel.get_recommanded_pll_conf()))?;
 
 		// Tune for the correct channel
 		// self.ll
@@ -295,47 +257,7 @@ where
 		//     .fs_plltune()
 		//     .write(|w| w.value(config.channel.get_recommended_fs_plltune()))?;
 
-		// match config.sfd_sequence {
-		//     SfdSequence::IEEE => {} // IEEE has predefined sfd lengths and the
-		// register has no effect.     SfdSequence::Decawave =>
-		// self.ll.sfd_length().write(|w| w.value(8))?, // This isn't entirely necessary
-		// as the Decawave8 settings in chan_ctrl already force it to 8     SfdSequence:
-		// :DecawaveAlt => self.ll.sfd_length().write(|w| w.value(16))?, // Set to 16
-		//     SfdSequence::User => {} // Users are responsible for setting the lengths
-		// themselves }
 
-		// PREAMBLE LENGHT CONF
-		// registre DTUN0
-
-		self.ll.dtune0().modify(|_, w| {
-			w.pac(config.preamble_length.get_recommended_pac_size())
-				.dt0b4(1)
-		})?;
-		self.ll.dtune3().write(|w| w.value(0xaf5f35cc))?;
-
-		// REGISTRE LDO_RLOAD
-		self.ll.ldo_rload().write(|w| w.value(0x14))?;
-
-		/**************    CONF PLL      **************************** */
-		// REGISTRE PLL_CAL semble pas utile
-		self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x81))?;
-		// clear CPLOCK bit
-		// set bit SYS_CLK to auto
-		// check if CPLOCK is set to 1
-
-		// // Set the LDE registers
-		// self.ll
-		//     .lde_cfg2()
-		//     .modify(|_, w|
-		// w.value(config.pulse_repetition_frequency.get_recommended_lde_cfg2()))?;
-		// self.ll.lde_repc().write(|w| {
-		//     w.value(
-		//         config.channel.get_recommended_lde_repc_value(
-		//             config.pulse_repetition_frequency,
-		//             config.bitrate,
-		//         ),
-		//     )
-		// })?;
 
 		// Todo: Power control (register 0x1E)
 		/*

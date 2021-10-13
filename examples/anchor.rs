@@ -13,7 +13,7 @@ use stm32f1xx_hal::{
 };
 use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, RxConfig, TxConfig};
+use dw3000::{hl, RxConfig, TxConfig, Config};
 use nb::block;
 
 #[entry]
@@ -88,7 +88,7 @@ fn main() -> ! {
 	/****************************************************** */
 
 	let mut dw3000 = hl::DW1000::new(spi, cs)
-		.init(&mut delay)
+		.init(Config::default())
 		.expect("Failed init.");
 	rprintln!("dm3000 = {:?}", dw3000);
 

@@ -1,11 +1,11 @@
 use core::num::Wrapping;
 
 use embedded_hal::{
-	blocking::{delay::DelayMs, spi},
+	blocking::spi,
 	digital::v2::OutputPin,
 };
 
-use crate::{ll, Error, Ready, Uninitialized, DW1000};
+use crate::{ll, Error, Ready, Uninitialized, DW1000, Config};
 //use rtt_target::{rprintln};
 
 impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
@@ -35,26 +35,73 @@ where
 	/// Please note that this method assumes that you kept the default
 	/// configuration. It is generally recommended not to change configuration
 	/// before calling this method.
-	pub fn init<D: DelayMs<u8>>(
+	pub fn init(
 		mut self,
-		_delay: &mut D,
+		config: Config,
 	) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
 
 		// Wait for the IDLE_RC state
 		while self.ll.sys_status().read()?.rcinit() == 0 {}
 
-		// CONFIGURATION GENERALE
-		// DRX_CONF have some values that should be modified
-		// for best performance
-		// TO DO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		// 1 STEP : GENERAL CONFIG 
+		self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
+		self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
+		self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
+		self.ll.dgc_lut_1().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
+		self.ll.dgc_lut_2().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
+		self.ll.dgc_lut_3().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_3()))?;
+		self.ll.dgc_lut_4().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_4()))?;
+		self.ll.dgc_lut_5().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_5()))?;
+		self.ll.dgc_lut_6().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
 
-		// RF_TX_CTRL_1 need to be changed for optimal performance (page 151)
+
+		// 2 STEP : SPECIFIC CONFIG
+		// 2.1 STEP : CHANNEL, SFD et PRF (page 110)
+		self.ll.chan_ctrl().modify(|_, w| {
+			w
+				.rf_chan(config.channel as u8) // 0 if channel5 and 1 if channel9
+				.sfd_type(config.sfd_sequence as u8)
+				.tx_pcode( // set the PRF for transmitter
+					config
+						.channel
+						.get_recommended_preamble_code(config.pulse_repetition_frequency),
+				)
+				.rx_pcode( // set the PRF for receiver
+					config
+						.channel
+						.get_recommended_preamble_code(config.pulse_repetition_frequency),
+				)
+		})?;
+		self.ll.rf_tx_ctrl_1().modify(|_, w| w.value(0x0E))?;
+		self.ll
+			.rf_tx_ctrl_2()
+			.modify(|_, w| w.value(config.channel.get_recommended_rf_tx_ctrl_2()))?;
+
+		// 2.2 STEP : TRANSMITTER (TX_FCTRL) CONFIG (page 85) define BITRATE
+		// , PREAMBLE LENGTH (using number of symbol)
+		self.ll.tx_fctrl().modify(|_, w| {
+			w
+				.txbr(config.bitrate as u8) // configured bitrate
+				.txpsr(config.preamble_length as u8) // configure preamble length
+				.fine_plen(0) // Not implemented, replacing txpsr
+		})?;
+
+		// 2.3 STEP : RECEIVER (DRX_CONF) CONF
+		self.ll.dtune0().modify(|_, w| {
+			w
+				.pac(config.preamble_length.get_recommended_pac_size())
+				.dt0b4(0)
+		})?;
+		self.ll.dtune3().modify(|_, w| w.value(0xAF5F35CC))?;
+	
 
 		// CONFIGURATION DE LA PLL POUR PASSER DANS L'ETAT IDLE PLL
 		// need to change default cal value for pll (page164)
 		self.ll.pll_cal().modify(|_, w| w.pll_cfg_ld(0x81))?;
 		// clear cplock
 		self.ll.sys_status().write(|w| w.cplock(0))?;
+		// est ce que ca plante ?? OUI, c'est BEUGUEEEEEEEE
+		//self.ll.pll_cfg().modify(|_, w| w.value(config.channel.get_recommended_pll_conf()))?;
 		// select PLL mode auto
 		self.ll.clk_ctrl().modify(|_, w| w.sys_clk(0))?;
 		// set ainit2idle

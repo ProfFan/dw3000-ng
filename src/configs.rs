@@ -4,9 +4,31 @@
 //! transmitted and received. The configs are passed to the send and receive
 //! functions.
 
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+/// General configuration for TX and RX
+pub struct Config {
+	/// The channel that the DW3000 will transmit at.
+	pub channel:                    UwbChannel, 
+	/// The SFD sequence that is used to transmit a frame.
+	pub sfd_sequence:               SfdSequence,
+	/// Sets the PRF value of the transmission.
+	pub pulse_repetition_frequency: PulseRepetitionFrequency,
+	/// The length of the preamble.
+	pub preamble_length:            PreambleLength,
+	/// Sets the bitrate of the transmission.
+	pub bitrate:                    BitRate,
+}
 
-use crate::Error;
+impl Default for Config {
+	fn default() -> Self {
+		Config {
+			channel:                    Default::default(),
+			sfd_sequence:               Default::default(),
+			pulse_repetition_frequency: Default::default(),
+			preamble_length:			Default::default(),
+			bitrate:					Default::default(),
+		}
+	}
+}
 
 /// Transmit configuration
 pub struct TxConfig {
@@ -14,6 +36,7 @@ pub struct TxConfig {
 	pub bitrate:                    BitRate,
 	/// Sets the ranging bit in the transmitted frame.
 	/// This has no effect on the capabilities of the DW1000.
+	/// maybe can be degaged
 	pub ranging_enable:             bool,
 	/// Sets the PRF value of the transmission.
 	pub pulse_repetition_frequency: PulseRepetitionFrequency,
@@ -81,34 +104,16 @@ impl Default for RxConfig {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// The bitrate at which a message is transmitted
 pub enum BitRate {
-	/// 110 kilobits per second.
-	/// This is an unofficial extension from decawave.
-	Kbps110  = 0b00,
 	/// 850 kilobits per second.
-	Kbps850  = 0b01,
+	Kbps850  = 0,
 	/// 6.8 megabits per second.
-	Kbps6800 = 0b10,
+	Kbps6800 = 1,
 }
 
 impl Default for BitRate {
 	fn default() -> Self { BitRate::Kbps6800 }
 }
-/*
-impl BitRate {
-	/// Gets the recommended drx_tune0b value for the bitrate and sfd.
-	pub fn get_recommended_drx_tune0b(&self, sfd_sequence: SfdSequence) -> u16 {
-		// Values are taken from Table 30 of the DW1000 User Manual.
-		match (self, sfd_sequence) {
-			(BitRate::Kbps110, SfdSequence::IEEE) => 0x000A,
-			(BitRate::Kbps110, _) => 0x0016,
-			(BitRate::Kbps850, SfdSequence::IEEE) => 0x0001,
-			(BitRate::Kbps850, _) => 0x0006,
-			(BitRate::Kbps6800, SfdSequence::IEEE) => 0x0001,
-			(BitRate::Kbps6800, _) => 0x0002,
-		}
-	}
-}
-*/
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// The PRF value
 pub enum PulseRepetitionFrequency {
@@ -121,39 +126,6 @@ pub enum PulseRepetitionFrequency {
 impl Default for PulseRepetitionFrequency {
 	fn default() -> Self { PulseRepetitionFrequency::Mhz64 }
 }
-/*
-impl PulseRepetitionFrequency {
-	/// Gets the recommended value for the drx_tune1a register based on the PRF
-	pub fn get_recommended_drx_tune1a(&self) -> u16 {
-		// Values taken from Table 31 of the DW1000 User Manual.
-		match self {
-			PulseRepetitionFrequency::Mhz16 => 0x0087,
-			PulseRepetitionFrequency::Mhz64 => 0x008D,
-		}
-	}
-
-	/// Gets the recommended value for the drx_tune2 register based on the PRF and PAC size
-	pub fn get_recommended_drx_tune2<SPI, CS>(&self, pac_size: u8) -> Result<u32, Error<SPI, CS>>
-	where
-		SPI: spi::Transfer<u8> + spi::Write<u8>,
-		CS: OutputPin,
-	{
-		// Values taken from Table 33 of the DW1000 User Manual.
-		match (self, pac_size) {
-			(PulseRepetitionFrequency::Mhz16, 8) => Ok(0x311A002D),
-			(PulseRepetitionFrequency::Mhz64, 8) => Ok(0x313B006B),
-			(PulseRepetitionFrequency::Mhz16, 16) => Ok(0x331A0052),
-			(PulseRepetitionFrequency::Mhz64, 16) => Ok(0x333B00BE),
-			(PulseRepetitionFrequency::Mhz16, 32) => Ok(0x351A009A),
-			(PulseRepetitionFrequency::Mhz64, 32) => Ok(0x353B015E),
-			(PulseRepetitionFrequency::Mhz16, 64) => Ok(0x371A011D),
-			(PulseRepetitionFrequency::Mhz64, 64) => Ok(0x373B0296),
-			// The PAC size is something we didn't expect
-			_ => Err(Error::InvalidConfiguration),
-		}
-	}
-}
-*/
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// An enum that specifies the length of the preamble.
@@ -167,33 +139,26 @@ impl PulseRepetitionFrequency {
 pub enum PreambleLength {
 	/// 64 symbols of preamble.
 	/// Only supported at Bitrate::Kbps6800.
-	Symbols64   = 0b0100,
+	Symbols64   = 0b0001,
+	/// 1024 symbols of preamble.
+	/// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
+	Symbols1024 = 0b0010,
 	/// 128 symbols of preamble.
 	/// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
 	/// Unofficial extension from decawave.
-	Symbols128  = 0b0101,
-	/// 256 symbols of preamble.
-	/// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
-	/// Unofficial extension from decawave.
-	Symbols256  = 0b0110,
-	/// 512 symbols of preamble.
-	/// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
-	/// Unofficial extension from decawave.
-	Symbols512  = 0b0111,
-	/// 1024 symbols of preamble.
-	/// Only supported at Bitrate::Kbps850 & Bitrate::Kbps6800.
-	Symbols1024 = 0b1000,
-	/// 1536 symbols of preamble.
-	/// Only supported at Bitrate::Kbps110.
-	/// Unofficial extension from decawave.
-	Symbols1536 = 0b1001,
-	/// 2048 symbols of preamble.
-	/// Only supported at Bitrate::Kbps110.
-	/// Unofficial extension from decawave.
-	Symbols2048 = 0b1010,
+	Symbols4096 = 0b0011,
 	/// 4096 symbols of preamble.
-	/// Only supported at Bitrate::Kbps110.
-	Symbols4096 = 0b1100,
+	Symbols32 = 0b0100,
+	/// 32 symbols of preamble.
+	Symbols128 = 0b0101,
+	/// 128 symbols of preamble.
+	Symbols1536 = 0b0110,
+	/// 1536 symbols of preamble.
+	Symbols256 = 0b1001,
+	/// 256 symbols of preamble.
+	Symbols2048 = 0b1010,
+	/// 512 symbols of preamble.
+	Symbols512 = 0b1101,
 }
 
 impl Default for PreambleLength {
@@ -205,52 +170,15 @@ impl PreambleLength {
 	pub fn get_recommended_pac_size(&self) -> u8 {
 		// Values are taken from Table 6 of the DW1000 User manual
 		match self {
-			| PreambleLength::Symbols64 => 0, // PAC size = 8
-			| PreambleLength::Symbols128 => 0,
-			| PreambleLength::Symbols256 => 1, // PAC size = 16
+			| PreambleLength::Symbols32 => 3,
+			| PreambleLength::Symbols64 => 0,
+			| PreambleLength::Symbols128 => 1,
+			| PreambleLength::Symbols256 => 1,
 			| PreambleLength::Symbols512 => 1,
-			| PreambleLength::Symbols1024 => 2,
-			| PreambleLength::Symbols1536 => 2,
-			| PreambleLength::Symbols2048 => 2,
-			| PreambleLength::Symbols4096 => 2,
-		}
-	}
-
-	/// Gets the recommended drx_tune1b register value based on the preamble
-	/// length and the bitrate.
-	pub fn get_recommended_drx_tune1b<SPI, CS>(
-		&self,
-		bitrate: BitRate,
-	) -> Result<u16, Error<SPI, CS>>
-	where
-		SPI: spi::Transfer<u8> + spi::Write<u8>,
-		CS: OutputPin,
-	{
-		// Values are taken from Table 32 of the DW1000 User manual
-		match (self, bitrate) {
-			| (PreambleLength::Symbols64, BitRate::Kbps6800) => Ok(0x0010),
-			| (PreambleLength::Symbols128, BitRate::Kbps6800) => Ok(0x0020),
-			| (PreambleLength::Symbols256, BitRate::Kbps6800) => Ok(0x0020),
-			| (PreambleLength::Symbols512, BitRate::Kbps6800) => Ok(0x0020),
-			| (PreambleLength::Symbols1024, BitRate::Kbps6800) => Ok(0x0020),
-			| (PreambleLength::Symbols128, BitRate::Kbps850) => Ok(0x0020),
-			| (PreambleLength::Symbols256, BitRate::Kbps850) => Ok(0x0020),
-			| (PreambleLength::Symbols512, BitRate::Kbps850) => Ok(0x0020),
-			| (PreambleLength::Symbols1024, BitRate::Kbps850) => Ok(0x0020),
-			| (PreambleLength::Symbols1536, BitRate::Kbps110) => Ok(0x0064),
-			| (PreambleLength::Symbols2048, BitRate::Kbps110) => Ok(0x0064),
-			| (PreambleLength::Symbols4096, BitRate::Kbps110) => Ok(0x0064),
-			| _ => Err(Error::InvalidConfiguration),
-		}
-	}
-
-	/// Gets the recommended dxr_tune4h register value based on the preamble
-	/// length.
-	pub fn get_recommended_dxr_tune4h(&self) -> u16 {
-		// Values are taken from Table 34 of the DW1000 User manual
-		match self {
-			| PreambleLength::Symbols64 => 0x0010,
-			| _ => 0x0028,
+			| PreambleLength::Symbols1024 => 1,
+			| PreambleLength::Symbols1536 => 1,
+			| PreambleLength::Symbols2048 => 1,
+			| PreambleLength::Symbols4096 => 1,
 		}
 	}
 }
@@ -312,15 +240,15 @@ impl UwbChannel {
 		// Many have overlapping possibilities, so the numbers have been chosen so that
 		// there's no overlap here
 		match (self, prf_value) {
-			| (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz16) => 4,
-			| (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz16) => 4,
-			| (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz64) => 9, // Previoulsy 12,
-			| (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz64) => 9,
+			| (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz16) => 4, // ou 3
+			| (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz16) => 4, // ou 3
+			| (UwbChannel::Channel5, PulseRepetitionFrequency::Mhz64) => 9, // ou 10,11,12
+			| (UwbChannel::Channel9, PulseRepetitionFrequency::Mhz64) => 9, // ou 10,11,12
 		}
 	}
 
 	/// Gets the recommended value for rf_tx_ctrl_2
-	pub fn get_recommanded_rf_tx_ctrl_2(&self) -> u32 {
+	pub fn get_recommended_rf_tx_ctrl_2(&self) -> u32 {
 		match self {
 			| UwbChannel::Channel5 => 0x1C071134,
 			| UwbChannel::Channel9 => 0x1C010034,
@@ -328,10 +256,66 @@ impl UwbChannel {
 	}
 
 	/// Gets the recommended value for pll conf
-	pub fn get_recommanded_pll_conf(&self) -> u16 {
+	pub fn get_recommended_pll_conf(&self) -> u16 {
 		match self {
 			| UwbChannel::Channel5 => 0x1F3C,
 			| UwbChannel::Channel9 => 0x0F3C,
+		}
+	}
+
+	/// Gets the recommended value for pll conf
+	pub fn get_recommended_dgc_lut_0(&self) -> u32 {
+		match self {
+			| UwbChannel::Channel5 => 0x0001C0FD,
+			| UwbChannel::Channel9 => 0x0002A8FE,
+		}
+	}
+
+	/// Gets the recommended value for pll conf
+	pub fn get_recommended_dgc_lut_1(&self) -> u32 {
+		match self {
+			| UwbChannel::Channel5 => 0x0001C43E,
+			| UwbChannel::Channel9 => 0x0002AC36,
+		}
+	}
+
+	/// Gets the recommended value for pll conf
+	pub fn get_recommended_dgc_lut_2(&self) -> u32 {
+		match self {
+			| UwbChannel::Channel5 => 0x0001C6BE,
+			| UwbChannel::Channel9 => 0x0002A5FE,
+		}
+	}
+
+	/// Gets the recommended value for pll conf
+	pub fn get_recommended_dgc_lut_3(&self) -> u32 {
+		match self {
+			| UwbChannel::Channel5 => 0x0001C77E,
+			| UwbChannel::Channel9 => 0x0002AF3E,
+		}
+	}
+
+	/// Gets the recommended value for pll conf
+	pub fn get_recommended_dgc_lut_4(&self) -> u32 {
+		match self {
+			| UwbChannel::Channel5 => 0x0001CF36,
+			| UwbChannel::Channel9 => 0x0002AF7d,
+		}
+	}
+
+	/// Gets the recommended value for pll conf
+	pub fn get_recommended_dgc_lut_5(&self) -> u32 {
+		match self {
+			| UwbChannel::Channel5 => 0x0001CFB5,
+			| UwbChannel::Channel9 => 0x0002AFB5,
+		}
+	}
+
+	/// Gets the recommended value for pll conf
+	pub fn get_recommended_dgc_lut_6(&self) -> u32 {
+		match self {
+			| UwbChannel::Channel5 => 0x0001CFF5,
+			| UwbChannel::Channel9 => 0x0002AFB5,
 		}
 	}
 }

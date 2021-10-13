@@ -87,84 +87,25 @@ fn main() -> ! {
 	/*********       CONFIGURATION du DW3000       ******** */
 	/****************************************************** */
 
-	let mut dw3000 = hl::DW1000::new(spi, cs);
+	// initialisation of the UWB module
+	let mut dw3000 = hl::DW1000::new(spi, cs)
+		.init(&mut delay)
+		.expect("Failed init.");;
 	delay.delay_ms(1000u16);
 
-	// variable pour recuperer l'etat du module
-	rprintln!(
-		"Etat après un new et une attente de 1sec = {:#x?}",
-		dw3000.state()
-	);
+	// conf du big registre RX_TUNE
+	dw3000.ll().dgc_cfg0().write(|w| w.value(0x10000240));
+	dw3000.ll().dgc_cfg1().write(|w| w.value(0x1b6da489));
+	dw3000.ll().dgc_lut_0().write(|w| w.value(0x0001C0FD));
+	dw3000.ll().dgc_lut_1().write(|w| w.value(0x0001C43E));
+	dw3000.ll().dgc_lut_2().write(|w| w.value(0x0001C6BE));
+	dw3000.ll().dgc_lut_3().write(|w| w.value(0x0001C77E));
+	dw3000.ll().dgc_lut_4().write(|w| w.value(0x0001CF36));
+	dw3000.ll().dgc_lut_5().write(|w| w.value(0x0001CFB5));
+	dw3000.ll().dgc_lut_6().write(|w| w.value(0x0001CFF5));
 
-	// activation de la calibration auto
-	dw3000
-		.ll()
-		.aon_dig_cfg()
-		.write(|w| w.onw_pgfcal(1))
-		.expect("Write to onw_pgfcal failed.");
-
-	rprintln!(
-		"On est dans l'état IDLE_RC -> SPIRDY = {:#x?}",
-		dw3000.idle_rc_passed()
-	);
-
-	// On initialise le module pour passer à l'état IDLE
-	rprintln!("On fait maintenant un init !");
-	let mut dw3000 = dw3000.init(&mut delay).expect("Failed init.");
-	delay.delay_ms(1000u16);
-	rprintln!("Après l'init, l'état est = {:#x?}", dw3000.state());
-
-	// après ces états, on peux vérifier l'etat du systeme avec les reg:
-	// SPIRDY -> indique qu'on a finit les config d'allumage (IDLE_RC)
-	rprintln!(
-		"Est ce qu'on est dans l'état IDLE_RC ? = {:#x?}",
-		dw3000.idle_rc_passed()
-	);
-
-	// CPLOCK -> indique si l'horloge PLL est bloquée (IDLE_PLL)
-	rprintln!(
-		"Est ce qu'on est dans l'état IDLE_PLL ? = {:#x?}",
-		dw3000.idle_pll_passed()
-	);
-
-	// PLL_HILO -> indique un probleme sur la conf de PLL
-	rprintln!(
-		"Probleme pour lock la PLL ? = {:#x?}",
-		dw3000.ll().sys_status().read().unwrap().pll_hilo()
-	);
-
-	delay.delay_ms(5000u16);
-
-	// let valid_instant   = Instant::new(TI*ME_MAX);
-
-	// ON PASSE EN MODE RECEVEUR
-	let mut receiving = dw3000
-		.receive(RxConfig {
-			frame_filtering: false,
-			..RxConfig::default()
-		})
-		.expect("Failed configure receiver.");
-	rprintln!("On passe en mode reception = {:#x?}", receiving.state());
-
-	// ETAPE 1 : recherche du preamble
-	// fait automatiquement, on desactive le time-out pre-toc (default)
-
-	// ETAPE 2 : Accumulation preamble and await SFD
-
-	// ETAPE 3 :
-
-	delay.delay_ms(1000u16);
-	rprintln!("\nOn regarde ou en est le receveur\n");
-	rprintln!("Etat ? : {:#x?}", receiving.rx_state());
 
 	loop {
-		delay.delay_ms(2000u16);
-		rprintln!("Etat ? : {:#x?}", receiving.rx_state());
-		//frame_ready = receiving.ll().sys_status().read().unwrap().rxfr();
-
-		rprintln!(
-			"tested value = {:#x?}",
-			receiving.ll().ldo_rload().read().unwrap().value()
-		);
+		delay.delay_ms(1000u16);
 	}
 }
