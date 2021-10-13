@@ -39,34 +39,6 @@ where
 		mut self,
 		_delay: &mut D,
 	) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
-		// no need for basic initialisation anymore !!!
-
-		// Much of the systeme conf is conf in SYS_CFG register
-		// page 26 section 2.5.2
-		/*
-			   // Set LDOTUNE. See user manual, section 2.5.5.11.
-			   self.ll.otp_addr().write(|w| w.value(0x004))?;
-			   self.ll.otp_ctrl().modify(|_, w|
-				   w
-					   .otprden(0b1)
-					   .otpread(0b1)
-			   )?;
-			   while self.ll.otp_ctrl().read()?.otpread() == 0b1 {}
-			   let ldotune_low = self.ll.otp_rdat().read()?.value();
-			   if ldotune_low != 0 {
-				   self.ll.otp_addr().write(|w| w.value(0x005))?;
-				   self.ll.otp_ctrl().modify(|_, w|
-					   w
-						   .otprden(0b1)
-						   .otpread(0b1)
-				   )?;
-				   while self.ll.otp_ctrl().read()?.otpread() == 0b1 {}
-				   let ldotune_high = self.ll.otp_rdat().read()?.value();
-
-				   let ldotune = ldotune_low as u64 | (ldotune_high as u64) << 32;
-				   self.ll.ldotune().write(|w| w.value(ldotune))?;
-			   }
-		*/
 
 		// Wait for the IDLE_RC state
 		while self.ll.sys_status().read()?.rcinit() == 0 {}

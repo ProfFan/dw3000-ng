@@ -145,7 +145,7 @@ fn main() -> ! {
 		.expect("Write to AINIT2IDLE failed");
 	// wait for CP_LOCK = 1
 
-	// set PLL_CFG (4 bytes) / PLL8CFG8CH
+	// set PLL_CFG (4 bytes) / PLL_CFG_CH
 	dw3000
 		.ll()
 		.pll_cfg()

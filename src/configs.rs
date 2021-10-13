@@ -69,7 +69,7 @@ impl Default for RxConfig {
 	fn default() -> Self {
 		Self {
 			bitrate:                    Default::default(),
-			frame_filtering:            true,
+			frame_filtering:            false,
 			pulse_repetition_frequency: Default::default(),
 			expected_preamble_length:   Default::default(),
 			channel:                    Default::default(),
