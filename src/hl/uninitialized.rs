@@ -38,7 +38,7 @@ where
 	pub fn init(
 		mut self,
 		config: Config,
-	) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
+	) -> Result<DW1000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
 
 		// Wait for the IDLE_RC state
 		while self.ll.sys_status().read()?.rcinit() == 0 {}
@@ -68,6 +68,7 @@ where
 		})
 	}
 
+	/// DOCUMENTATION
 	pub fn config(
 		mut self,
 		config: Config,
@@ -142,7 +143,7 @@ where
 		self.ll.dtune3().modify(|_, w| w.value(0xAF5F35CC))?;
 
 		self.ll.ldo_rload().write(|w| w.value(0x14))?;
-		self.ll.pll_cal().write(|w| w.pll_cfg_id(0x1))?;
+		self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x1))?;
 
 		Ok(DW1000 {
 			ll:    self.ll,
