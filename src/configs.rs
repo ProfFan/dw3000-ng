@@ -16,6 +16,8 @@ pub struct Config {
 	pub preamble_length:            PreambleLength,
 	/// Sets the bitrate of the transmission.
 	pub bitrate:                    BitRate,
+	/// Defaults to `true`.
+	pub frame_filtering:            bool,
 }
 
 impl Default for Config {
@@ -26,6 +28,7 @@ impl Default for Config {
 			pulse_repetition_frequency: Default::default(),
 			preamble_length:			Default::default(),
 			bitrate:					Default::default(),
+			frame_filtering:			Default::default(),
 		}
 	}
 }

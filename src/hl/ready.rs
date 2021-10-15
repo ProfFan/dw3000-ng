@@ -238,8 +238,11 @@ where
 		self.ll.tx_fctrl().modify(|_, w| {
 			let txflen = len as u16 + 2;
 			w.txflen(txflen) // data length + two-octet CRC
+				.txbr(config.bitrate as u8) // configured bitrate
 				.tr(config.ranging_enable as u8) // configured ranging bit
 				.txb_offset(txb_offset_errata) // no offset in TX_BUFFER
+				.txpsr(config.preamble_length as u8) // configure preamble length
+				.fine_plen(0) // Not implemented, replacing txpsr
 		})?;
 
 
