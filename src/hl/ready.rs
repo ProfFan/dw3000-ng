@@ -245,7 +245,6 @@ where
 				.fine_plen(0) // Not implemented, replacing txpsr
 		})?;
 
-
 		// Tune for the correct channel
 		// self.ll
 		//     .rf_txctrl()
@@ -259,8 +258,6 @@ where
 		// self.ll
 		//     .fs_plltune()
 		//     .write(|w| w.value(config.channel.get_recommended_fs_plltune()))?;
-
-
 
 		// Todo: Power control (register 0x1E)
 		/*

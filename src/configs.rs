@@ -4,10 +4,56 @@
 //! transmitted and received. The configs are passed to the send and receive
 //! functions.
 
+#[allow(non_camel_case_types)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+/// On verra
+pub enum FastCommand {
+	/// Fast command to go to IDLE PLL
+	CMD_TXRXOFF     = 0x0,
+	/// Fast command to start TX
+	CMD_TX          = 0x1,
+	/// Fast command to start RX
+	CMD_RX          = 0x2,
+	/// Fast command to
+	CMD_DTX         = 0x3,
+	/// Fast command to
+	CMD_DRX         = 0x4,
+	/// Fast command to
+	CMD_DTX_TS      = 0x5,
+	/// Fast command to
+	CMD_DRX_TS      = 0x6,
+	/// Fast command to
+	CMD_DTX_RS      = 0x7,
+	/// Fast command to
+	CMD_DRX_RS      = 0x8,
+	/// Fast command to
+	CMD_DTX_REF     = 0x9,
+	/// Fast command to
+	CMD_DRX_REF     = 0xA,
+	/// Fast command to
+	CMD_CCA_TX      = 0xB,
+	/// Fast command to
+	CMD_TX_W4R      = 0xC,
+	/// Fast command to
+	CMD_DTX_W4R     = 0xD,
+	/// Fast command to
+	CMD_DTX_TS_W4R  = 0xE,
+	/// Fast command to
+	CMD_DTX_RS_W4R  = 0xF,
+	/// Fast command to
+	CMD_DTX_REF_W4R = 0x10,
+	/// Fast command to
+	CMD_CCA_TX_W4R  = 0x11,
+	/// Fast command to
+	CMD_CLR_IRQS    = 0x12,
+	/// Fast command to
+	CMD_DB_TOGGLE   = 0x13,
+}
+
 /// General configuration for TX and RX
 pub struct Config {
 	/// The channel that the DW3000 will transmit at.
-	pub channel:                    UwbChannel, 
+	pub channel:                    UwbChannel,
 	/// The SFD sequence that is used to transmit a frame.
 	pub sfd_sequence:               SfdSequence,
 	/// Sets the PRF value of the transmission.
@@ -26,9 +72,9 @@ impl Default for Config {
 			channel:                    Default::default(),
 			sfd_sequence:               Default::default(),
 			pulse_repetition_frequency: Default::default(),
-			preamble_length:			Default::default(),
-			bitrate:					Default::default(),
-			frame_filtering:			Default::default(),
+			preamble_length:            Default::default(),
+			bitrate:                    Default::default(),
+			frame_filtering:            Default::default(),
 		}
 	}
 }
@@ -129,7 +175,7 @@ pub enum PulseRepetitionFrequency {
 impl Default for PulseRepetitionFrequency {
 	fn default() -> Self { PulseRepetitionFrequency::Mhz64 }
 }
-	
+
 /// imple
 impl PulseRepetitionFrequency {
 	/// activate rx_tune_en if prf = 64MHz
@@ -138,7 +184,6 @@ impl PulseRepetitionFrequency {
 			| PulseRepetitionFrequency::Mhz16 => 0,
 			| PulseRepetitionFrequency::Mhz64 => 1,
 		}
-		
 	}
 }
 
@@ -163,17 +208,17 @@ pub enum PreambleLength {
 	/// Unofficial extension from decawave.
 	Symbols4096 = 0b0011,
 	/// 4096 symbols of preamble.
-	Symbols32 = 0b0100,
+	Symbols32   = 0b0100,
 	/// 32 symbols of preamble.
-	Symbols128 = 0b0101,
+	Symbols128  = 0b0101,
 	/// 128 symbols of preamble.
 	Symbols1536 = 0b0110,
 	/// 1536 symbols of preamble.
-	Symbols256 = 0b1001,
+	Symbols256  = 0b1001,
 	/// 256 symbols of preamble.
 	Symbols2048 = 0b1010,
 	/// 512 symbols of preamble.
-	Symbols512 = 0b1101,
+	Symbols512  = 0b1101,
 }
 
 impl Default for PreambleLength {
@@ -314,7 +359,7 @@ impl UwbChannel {
 	pub fn get_recommended_dgc_lut_4(&self) -> u32 {
 		match self {
 			| UwbChannel::Channel5 => 0x0001CF36,
-			| UwbChannel::Channel9 => 0x0002AF7d,
+			| UwbChannel::Channel9 => 0x0002AF7D,
 		}
 	}
 
@@ -334,4 +379,3 @@ impl UwbChannel {
 		}
 	}
 }
-

@@ -14,7 +14,7 @@ use stm32f1xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 use dw3000::hl;
 // use dw3000::time::{TIME_MAX,Instant,};
-use dw3000::RxConfig;
+use dw3000::Config;
 
 #[entry]
 fn main() -> ! {
@@ -89,21 +89,58 @@ fn main() -> ! {
 
 	// initialisation of the UWB module
 	let mut dw3000 = hl::DW1000::new(spi, cs)
-		.init(&mut delay)
-		.expect("Failed init.");;
+		.init()
+		.expect("Failed init.")
+		.config(Config::default())
+		.expect("Failed init.");
 	delay.delay_ms(1000u16);
 
 	// conf du big registre RX_TUNE
-	dw3000.ll().dgc_cfg0().write(|w| w.value(0x10000240));
-	dw3000.ll().dgc_cfg1().write(|w| w.value(0x1b6da489));
-	dw3000.ll().dgc_lut_0().write(|w| w.value(0x0001C0FD));
-	dw3000.ll().dgc_lut_1().write(|w| w.value(0x0001C43E));
-	dw3000.ll().dgc_lut_2().write(|w| w.value(0x0001C6BE));
-	dw3000.ll().dgc_lut_3().write(|w| w.value(0x0001C77E));
-	dw3000.ll().dgc_lut_4().write(|w| w.value(0x0001CF36));
-	dw3000.ll().dgc_lut_5().write(|w| w.value(0x0001CFB5));
-	dw3000.ll().dgc_lut_6().write(|w| w.value(0x0001CFF5));
-
+	dw3000
+		.ll()
+		.dgc_cfg0()
+		.write(|w| w.value(0x10000240))
+		.expect("Aie");
+	dw3000
+		.ll()
+		.dgc_cfg1()
+		.write(|w| w.value(0x1b6da489))
+		.expect("Aie");
+	dw3000
+		.ll()
+		.dgc_lut_0()
+		.write(|w| w.value(0x0001C0FD))
+		.expect("Aie");
+	dw3000
+		.ll()
+		.dgc_lut_1()
+		.write(|w| w.value(0x0001C43E))
+		.expect("Aie");
+	dw3000
+		.ll()
+		.dgc_lut_2()
+		.write(|w| w.value(0x0001C6BE))
+		.expect("Aie");
+	dw3000
+		.ll()
+		.dgc_lut_3()
+		.write(|w| w.value(0x0001C77E))
+		.expect("Aie");
+	dw3000
+		.ll()
+		.dgc_lut_4()
+		.write(|w| w.value(0x0001CF36))
+		.expect("Aie");
+	dw3000
+		.ll()
+		.dgc_lut_5()
+		.write(|w| w.value(0x0001CFB5))
+		.expect("Aie");
+	dw3000
+		.ll()
+		.dgc_lut_6()
+		.write(|w| w.value(0x0001CFF5))
+		.expect("Aie");
 
 	loop {
 		delay.delay_ms(1000u16);

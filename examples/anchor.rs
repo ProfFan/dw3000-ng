@@ -13,7 +13,7 @@ use stm32f1xx_hal::{
 };
 use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, RxConfig, TxConfig, Config};
+use dw3000::{hl, Config, TxConfig};
 use nb::block;
 
 #[entry]
@@ -88,7 +88,9 @@ fn main() -> ! {
 	/****************************************************** */
 
 	let mut dw3000 = hl::DW1000::new(spi, cs)
-		.init(Config::default())
+		.init()
+		.expect("alo")
+		.config(Config::default())
 		.expect("Failed init.");
 	rprintln!("dm3000 = {:?}", dw3000);
 
@@ -123,33 +125,35 @@ fn main() -> ! {
 		rprintln!("result = {:?}", result);
 
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
+		/*
+			/**************************** */
+			/********* RECEIVER ********* */
+			/**************************** */
+			let mut receiving = dw3000
+				.receive(RxConfig::default())
+				.expect("Failed configure receiver.");
 
-		/**************************** */
-		/********* RECEIVER ********* */
-		/**************************** */
-		let mut receiving = dw3000
-			.receive(RxConfig::default())
-			.expect("Failed configure receiver.");
+			rprintln!("receiver = {:?}", receiving);
+			rprintln!("cmd_status = {:#x?}", receiving.cmd_status());
+			rprintln!("state = {:#x?}", receiving.state());
+			rprintln!("RX state = {:#x?}", receiving.rx_state());
 
-		rprintln!("receiver = {:?}", receiving);
-		rprintln!("cmd_status = {:#x?}", receiving.cmd_status());
-		rprintln!("state = {:#x?}", receiving.state());
-		rprintln!("RX state = {:#x?}", receiving.rx_state());
+			// on cré un buffer pour stoquer le resultat message du receveur
+			let mut buffer = [0; 1024];
+			delay.delay_ms(10u8);
 
-		// on cré un buffer pour stoquer le resultat message du receveur
-		let mut buffer = [0; 1024];
-		delay.delay_ms(10u8);
+			// on recupère un message avec une fonction bloquante
+			rprintln!("on commence une fonction qui bloque !");
+			let result = block!(receiving.wait(&mut buffer));
+			rprintln!("on est sorti de la fonction qui bloque !");
 
-		// on recupère un message avec une fonction bloquante
-		rprintln!("on commence une fonction qui bloque !");
-		let result = block!(receiving.wait(&mut buffer));
-		rprintln!("on est sorti de la fonction qui bloque !");
+			// on affiche le resultat
+			rprintln!("result = {:?}", result);
 
-		// on affiche le resultat
-		rprintln!("result = {:?}", result);
-
-		dw3000 = receiving
-			.finish_receiving()
-			.expect("Failed to finish receiving");
+			dw3000 = receiving
+				.finish_receiving()
+				.expect("Failed to finish receiving");
+		*/
+		delay.delay_ms(5_000_u16);
 	}
 }

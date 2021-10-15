@@ -6,6 +6,7 @@ use crate::{
 	time::{Duration, Instant},
 	Error,
 	DW1000,
+	configs,
 };
 use super::Awake;
 
@@ -134,6 +135,13 @@ where
 		self.ll.fast_command(0)?;
 		Ok(())
 	}
+
+	/// ENUCUELELEBUDAHUDJOA
+	pub fn fast_cmd(&mut self, fc: configs::FastCommand) -> Result<(), Error<SPI, CS>> {
+		self.ll.fast_command(fc as u8)?;
+		Ok(())
+	}
+
 	/*
 		pub(crate) fn read_otp(&mut self, address: u16) -> Result<u32, Error<SPI, CS>> {
 			// Set address

@@ -1,11 +1,8 @@
 use core::num::Wrapping;
 
-use embedded_hal::{
-	blocking::spi,
-	digital::v2::OutputPin,
-};
+use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
-use crate::{ll, Error, Ready, Uninitialized, DW1000, Config};
+use crate::{ll, Config, Error, Ready, Uninitialized, DW1000};
 //use rtt_target::{rprintln};
 
 impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
@@ -35,10 +32,7 @@ where
 	/// Please note that this method assumes that you kept the default
 	/// configuration. It is generally recommended not to change configuration
 	/// before calling this method.
-	pub fn init(
-		mut self,
-	) -> Result<DW1000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
-
+	pub fn init(mut self) -> Result<DW1000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
 		// Wait for the IDLE_RC state
 		while self.ll.sys_status().read()?.rcinit() == 0 {}
 
@@ -64,26 +58,22 @@ where
 	}
 
 	/// DOCUMENTATION
-	pub fn config(
-		mut self,
-		config: Config,
-	) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
+	pub fn config(mut self, config: Config) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
+		/*
+				// 1 STEP : GENERAL CONFIG
+				self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
+				self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
+				self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
+				self.ll.dgc_lut_1().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
+				self.ll.dgc_lut_2().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
+				self.ll.dgc_lut_3().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_3()))?;
+				self.ll.dgc_lut_4().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_4()))?;
+				self.ll.dgc_lut_5().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_5()))?;
+				self.ll.dgc_lut_6().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
+		*/
 
-/*
-		// 1 STEP : GENERAL CONFIG 
-		self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
-		self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
-		self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
-		self.ll.dgc_lut_1().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
-		self.ll.dgc_lut_2().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
-		self.ll.dgc_lut_3().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_3()))?;
-		self.ll.dgc_lut_4().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_4()))?;
-		self.ll.dgc_lut_5().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_5()))?;
-		self.ll.dgc_lut_6().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
-*/
-		/**
-				 FRAME FILTERING CONFIGURATION
-		**/
+		//  FRAME FILTERING CONFIGURATION
+
 		if config.frame_filtering {
 			self.ll.sys_cfg().modify(
 				|_, w| w.ffen(0b1), // enable frame filtering
@@ -101,9 +91,8 @@ where
 			self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
 		}
 
-		/**
-		 * 			CHANNEL, SFD et PRF (page 110)
-		 * */
+		// CHANNEL, SFD et PRF (page 110)
+
 		self.ll.chan_ctrl().modify(|_, w| {
 			w
 				.rf_chan(config.channel as u8) // 0 if channel5 and 1 if channel9
@@ -123,22 +112,25 @@ where
 		self.ll
 			.rf_tx_ctrl_2()
 			.modify(|_, w| w.value(config.channel.get_recommended_rf_tx_ctrl_2()))?;
-		self.ll.pll_cfg().modify(|_, w| w.value(config.channel.get_recommended_pll_conf()))?;
+		self.ll
+			.pll_cfg()
+			.modify(|_, w| w.value(config.channel.get_recommended_pll_conf()))?;
 		// DGC_CFG (page 126)
-		self.ll.dgc_cfg().modify(|_, w| w
-				.rx_tune_en(config.pulse_repetition_frequency.get_recommended_rx_tune_en())
-				.thr_64(0x32)
-		)?;
-
+		self.ll.dgc_cfg().modify(|_, w| {
+			w.rx_tune_en(
+				config
+					.pulse_repetition_frequency
+					.get_recommended_rx_tune_en(),
+			)
+			.thr_64(0x32)
+		})?;
 
 		// 2.2 STEP : TRANSMITTER (TX_FCTRL) CONFIG (page 85) define BITRATE
 		// , PREAMBLE LENGTH (using number of symbol)
 
-
 		// 2.3 STEP : RECEIVER (DRX_CONF) CONF
 		self.ll.dtune0().modify(|_, w| {
-			w
-				.pac(config.preamble_length.get_recommended_pac_size())
+			w.pac(config.preamble_length.get_recommended_pac_size())
 				.dt0b4(0)
 		})?;
 		self.ll.dtune3().modify(|_, w| w.value(0xAF5F35CC))?;

@@ -2,6 +2,8 @@
 #![no_std]
 
 // crates de gestion des messages de debug
+// use core::mem::size_of;
+
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_rt::entry;
@@ -12,9 +14,11 @@ use stm32f1xx_hal::{
 	spi::{Mode, Phase, Polarity, Spi},
 };
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use dw3000::{hl, RxConfig, Config};
+use dw3000::{hl, Config, TxConfig, configs::FastCommand};
+use ieee802154::mac;
 
-use core::mem::size_of;
+
+
 
 fn check_states<SPI, CS, State>(
 	dw3000: &mut hl::DW1000<SPI, CS, State>,
@@ -128,54 +132,60 @@ fn main() -> ! {
 	check_states(&mut dw3000).unwrap();
 
 	// CONF DE LA PLL pour passer en mode IDLE_PLL
-/*
-	// set CAL_EN in PLL_CAL register
-	dw3000
-		.ll()
-		.pll_cal()
-		.write(|w| w.cal_en(1))
-		.expect("Write to PLL_CAL failed");
-	//clear CP_LOCK
-*/
+	/*
+		// set CAL_EN in PLL_CAL register
+		dw3000
+			.ll()
+			.pll_cal()
+			.write(|w| w.cal_en(1))
+			.expect("Write to PLL_CAL failed");
+		//clear CP_LOCK
+	*/
 	// In CLK_CTRL sub register, the 2 bits of SYS_CLK are set to AUTO
 
-/*	
+	/*
 
-	// set PLL_CFG (4 bytes) / PLL_CFG_CH
-	dw3000
-		.ll()
-		.pll_cfg()
-		.write(|w| w.value(0x1F3C))
-		.expect("Write 0x1F3C to PLL_CFG failed");
-*/
-	
-	
+		// set PLL_CFG (4 bytes) / PLL_CFG_CH
+		dw3000
+			.ll()
+			.pll_cfg()
+			.write(|w| w.value(0x1F3C))
+			.expect("Write 0x1F3C to PLL_CFG failed");
+	*/
+
 	rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
-	delay.delay_ms(2000u16);
+	delay.delay_ms(10_000_u16);
 
-	let mut dw3000 = dw3000.config(Config::default()).expect("Failed config.");
+	let mut dw3000 = dw3000.config(Config::default()).expect("Failed init.");
 
 	check_states(&mut dw3000).unwrap();
 	rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
-	
-	// ON PASSE EN MODE RECEVEUR
-	let mut receiving = dw3000
-		.receive(RxConfig {
-			frame_filtering: false,
-			..RxConfig::default()
-		})
-		.expect("Failed configure receiver.");
-	rprintln!("On passe en mode reception = {:#x?}", receiving.state());
+	// ON PASSE EN MODE TRANSMITTER
+
+	let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
+
+	let mut sending = dw3000
+		.send(
+			b"ping",
+			mac::Address::broadcast(&mac::AddressMode::Short),
+			hl::SendTime::Delayed(delayed_tx_time),
+			TxConfig::default(),
+		)
+		.expect("Failed configure transmitter");
+	rprintln!("On passe en mode transmitter = {:#x?}", sending.state());
 
 	delay.delay_ms(1000u16);
 
-	rprintln!("\nOn regarde ou en est le receveur\n");
-	rprintln!("Etat ? : {:#x?}", receiving.rx_state());
-	
+	rprintln!("\nOn regarde ou en est le transmitter\n");
+	rprintln!("Etat ? : {:#x?}", sending.tx_state());
+
+	let mut dw3000 = sending.finish_sending().expect("");
 
 	loop {
+		dw3000.ll().fast_command(FastCommand::CMD_RX as u8).expect("");
+		dw3000.fast_cmd(FastCommand::CMD_RX).expect("");
 		delay.delay_ms(10000u16);
 	}
 }

@@ -11,9 +11,9 @@ use stm32f1xx_hal::{
 	prelude::*,
 	spi::{Mode, Phase, Polarity, Spi},
 };
-use ieee802154::mac;
+// use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, RxConfig, TxConfig, Config};
+use dw3000::{hl, Config, RxConfig};
 use nb::block;
 
 #[entry]
@@ -166,6 +166,6 @@ fn main() -> ! {
 		rprintln!("result = {:?}", result);
 
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
-		*/	
+		*/
 	}
 }

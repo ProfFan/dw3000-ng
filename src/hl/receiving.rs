@@ -124,7 +124,6 @@ where
 			self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
 		}
 
-
 		self.ll.fast_command(2)?;
 
 		Ok(())
@@ -176,7 +175,7 @@ where
 			}
 			if sys_status.rxsto() == 0b1 {
 				//self.ll.sys_status().write(|w| w.rxsto(1))
-			//.map_err(|error| nb::Error::Other(Error::Spi(error)))?;
+				//.map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 				return Err(nb::Error::Other(Error::SfdTimeout))
 			}
 			/*
