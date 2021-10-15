@@ -37,13 +37,10 @@ where
 	/// before calling this method.
 	pub fn init(
 		mut self,
-		config: Config,
 	) -> Result<DW1000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
 
 		// Wait for the IDLE_RC state
 		while self.ll.sys_status().read()?.rcinit() == 0 {}
-
-	
 
 		// CONFIGURATION DE LA PLL POUR PASSER DANS L'ETAT IDLE PLL
 		// need to change default cal value for pll (page164)
@@ -58,8 +55,6 @@ where
 		self.ll.aon_dig_cfg().modify(|_, w| w.onw_go2idle(1))?;
 		// wait for CPLOCK to be set
 		while self.ll.sys_status().read()?.cplock() == 0 {}
-
-		
 
 		Ok(DW1000 {
 			ll:    self.ll,
@@ -129,6 +124,12 @@ where
 			.rf_tx_ctrl_2()
 			.modify(|_, w| w.value(config.channel.get_recommended_rf_tx_ctrl_2()))?;
 		self.ll.pll_cfg().modify(|_, w| w.value(config.channel.get_recommended_pll_conf()))?;
+		// DGC_CFG (page 126)
+		self.ll.dgc_cfg().modify(|_, w| w
+				.rx_tune_en(config.pulse_repetition_frequency.get_recommended_rx_tune_en())
+				.thr_64(0x32)
+		)?;
+
 
 		// 2.2 STEP : TRANSMITTER (TX_FCTRL) CONFIG (page 85) define BITRATE
 		// , PREAMBLE LENGTH (using number of symbol)

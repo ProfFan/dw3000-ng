@@ -175,8 +175,8 @@ where
 				return Err(nb::Error::Other(Error::PreambleDetectionTimeout))
 			}
 			if sys_status.rxsto() == 0b1 {
-				self.ll.sys_status().write(|w| w.rxsto(1))
-			.map_err(|error| nb::Error::Other(Error::Spi(error)))?;
+				//self.ll.sys_status().write(|w| w.rxsto(1))
+			//.map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 				return Err(nb::Error::Other(Error::SfdTimeout))
 			}
 			/*

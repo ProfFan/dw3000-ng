@@ -129,6 +129,18 @@ pub enum PulseRepetitionFrequency {
 impl Default for PulseRepetitionFrequency {
 	fn default() -> Self { PulseRepetitionFrequency::Mhz64 }
 }
+	
+/// imple
+impl PulseRepetitionFrequency {
+	/// activate rx_tune_en if prf = 64MHz
+	pub fn get_recommended_rx_tune_en(&self) -> u8 {
+		match self {
+			| PulseRepetitionFrequency::Mhz16 => 0,
+			| PulseRepetitionFrequency::Mhz64 => 1,
+		}
+		
+	}
+}
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// An enum that specifies the length of the preamble.

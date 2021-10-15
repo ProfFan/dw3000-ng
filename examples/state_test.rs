@@ -123,7 +123,7 @@ fn main() -> ! {
 	// dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1));
 
 	// INIT
-	let mut dw3000 = dw3000.init(Config::default()).expect("Failed init.");
+	let mut dw3000 = dw3000.init().expect("Failed init.");
 
 	check_states(&mut dw3000).unwrap();
 
@@ -152,7 +152,14 @@ fn main() -> ! {
 	
 	rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
-	/*
+	delay.delay_ms(2000u16);
+
+	let mut dw3000 = dw3000.config(Config::default()).expect("Failed config.");
+
+	check_states(&mut dw3000).unwrap();
+	rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
+
+	
 	// ON PASSE EN MODE RECEVEUR
 	let mut receiving = dw3000
 		.receive(RxConfig {
@@ -166,7 +173,7 @@ fn main() -> ! {
 
 	rprintln!("\nOn regarde ou en est le receveur\n");
 	rprintln!("Etat ? : {:#x?}", receiving.rx_state());
-	*/
+	
 
 	loop {
 		delay.delay_ms(10000u16);

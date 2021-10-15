@@ -89,8 +89,10 @@ fn main() -> ! {
 
 	rprintln!("On initialise le module : new + init en meme temps");
 	let mut dw3000 = hl::DW1000::new(spi, cs)
-		.init(Config::default())
-		.expect("Failed init.");
+		.init()
+		.expect("Failed init.")
+		.config(Config::default())
+		.expect("Failed config.");
 	rprintln!("dm3000 = {:?}", dw3000);
 
 	delay.delay_ms(3000u16);
