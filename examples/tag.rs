@@ -104,8 +104,7 @@ fn main() -> ! {
 		.write(|w| w.onw_pgfcal(1))
 		.expect("Write to onw_pgfcal failed.");
 
-	rprintln!("SFT timeout = {:?}", dw3000.ll().rx_sfd_toc().read().unwrap().value());
-	
+
 	
 	delay.delay_ms(1000u16);
 
@@ -117,21 +116,19 @@ fn main() -> ! {
 			.receive(RxConfig::default())
 			.expect("Failed configure receiver.");
 
-		rprintln!("receiver = {:?}", receiving);
-		rprintln!("cmd_status = {:#x?}", receiving.cmd_status());
-		rprintln!("state = {:#x?}", receiving.state());
-		rprintln!("RX state = {:#x?}", receiving.rx_state());
 
 		// on cré un buffer pour stoquer le resultat message du receveur
 		let mut buffer = [0; 1024];
 		delay.delay_ms(10u8);
 
 		// on recupère un message avec une fonction bloquante
-		rprintln!("on commence une fonction qui bloque !");
 		let result = block!(receiving.wait(&mut buffer));
-		rprintln!("on est sorti de la fonction qui bloque !");
 
 		// on affiche le resultat
+		match result {
+			Ok(_) => rprintln!("result = {:?}", result),
+			Err(_) => rprintln!("ERREURE !!!! RECOMMENCE !!!!" ),
+		};
 		rprintln!("result = {:?}", result);
 
 		dw3000 = receiving
