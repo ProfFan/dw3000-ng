@@ -59,19 +59,28 @@ where
 
 	/// DOCUMENTATION
 	pub fn config(mut self, config: Config) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
-		/*
-				// 1 STEP : GENERAL CONFIG
-				self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
-				self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
-				self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
-				self.ll.dgc_lut_1().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
-				self.ll.dgc_lut_2().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
-				self.ll.dgc_lut_3().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_3()))?;
-				self.ll.dgc_lut_4().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_4()))?;
-				self.ll.dgc_lut_5().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_5()))?;
-				self.ll.dgc_lut_6().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
-		*/
+		
+			// 1 STEP : GENERAL CONFIG
+			self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
+			self.ll.dgc_lut_1().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
+			self.ll.dgc_lut_2().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
+			self.ll.dgc_lut_3().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_3()))?;
+			self.ll.dgc_lut_4().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_4()))?;
+			self.ll.dgc_lut_5().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_5()))?;
+			self.ll.dgc_lut_6().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
+			self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
+			self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
 
+			self.ll.dgc_cfg().modify(|_, w| {
+				w.rx_tune_en(
+					config
+						.pulse_repetition_frequency
+						.get_recommended_rx_tune_en(),
+				)
+				.thr_64(0x32)
+			})?;
+		
+/*
 		//  FRAME FILTERING CONFIGURATION
 
 		if config.frame_filtering {
@@ -137,7 +146,7 @@ where
 
 		self.ll.ldo_rload().write(|w| w.value(0x14))?;
 		self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x1))?;
-
+*/
 		Ok(DW1000 {
 			ll:    self.ll,
 			seq:   self.seq,

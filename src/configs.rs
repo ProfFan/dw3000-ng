@@ -230,9 +230,9 @@ impl PreambleLength {
 	pub fn get_recommended_pac_size(&self) -> u8 {
 		// Values are taken from Table 6 of the DW1000 User manual
 		match self {
-			| PreambleLength::Symbols32 => 3,
-			| PreambleLength::Symbols64 => 0,
-			| PreambleLength::Symbols128 => 1,
+			| PreambleLength::Symbols32 => 3, // 4
+			| PreambleLength::Symbols64 => 0, // 8
+			| PreambleLength::Symbols128 => 1, // 16
 			| PreambleLength::Symbols256 => 1,
 			| PreambleLength::Symbols512 => 1,
 			| PreambleLength::Symbols1024 => 1,

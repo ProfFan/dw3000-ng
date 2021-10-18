@@ -104,6 +104,9 @@ fn main() -> ! {
 		.write(|w| w.onw_pgfcal(1))
 		.expect("Write to onw_pgfcal failed.");
 
+	rprintln!("SFT timeout = {:?}", dw3000.ll().rx_sfd_toc().read().unwrap().value());
+	
+	
 	delay.delay_ms(1000u16);
 
 	loop {
