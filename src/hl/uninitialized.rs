@@ -60,7 +60,8 @@ where
 	/// DOCUMENTATION
 	pub fn config(mut self, config: Config) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
 		
-			// 1 STEP : GENERAL CONFIG
+			// 1 STEP : CONFIGURATION DEPENDING ON PRF AND CHANNEL
+			// Registre DGC_CFG
 			self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
 			self.ll.dgc_lut_1().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
 			self.ll.dgc_lut_2().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
@@ -70,7 +71,7 @@ where
 			self.ll.dgc_lut_6().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
 			self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
 			self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
-
+			// page 126
 			self.ll.dgc_cfg().modify(|_, w| {
 				w.rx_tune_en(
 					config
@@ -124,15 +125,7 @@ where
 		self.ll
 			.pll_cfg()
 			.modify(|_, w| w.value(config.channel.get_recommended_pll_conf()))?;
-		// DGC_CFG (page 126)
-		self.ll.dgc_cfg().modify(|_, w| {
-			w.rx_tune_en(
-				config
-					.pulse_repetition_frequency
-					.get_recommended_rx_tune_en(),
-			)
-			.thr_64(0x32)
-		})?;
+
 
 		// 2.2 STEP : TRANSMITTER (TX_FCTRL) CONFIG (page 85) define BITRATE
 		// , PREAMBLE LENGTH (using number of symbol)
@@ -147,6 +140,31 @@ where
 		self.ll.ldo_rload().write(|w| w.value(0x14))?;
 		self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x1))?;
 */
+
+		// CALIBRATION 
+		// RF_CONF
+		let val = self.ll.ldo_ctrl().read()?.value();
+		self.ll.ldo_ctrl().modify(|_, w| w.value(val | 0x105))?;
+
+		self.ll.rx_cal().modify(|_, w| {
+			w
+				.comp_dly(0x2)
+				.cal_mode(1)
+		})?;
+		self.ll.rx_cal().modify(|_, w| w.cal_en(1))?;
+		while self.ll.rx_cal_sts().read()?.value() == 0 {}
+		self.ll.rx_cal().modify(|_, w| {
+			w
+				.cal_mode(0)
+				.cal_en(0)
+		})?;
+		self.ll.rx_cal_sts().write(|w| w.value(1))?;
+
+		if self.ll.rx_cal_resi().read()?.value() == 0x1fffffff || self.ll.rx_cal_resq().read()?.value() == 0x1fffffff {
+			return Err(Error::InvalidConfiguration)
+		}
+		self.ll.ldo_ctrl().write(|w| w.value(val))?;
+
 		Ok(DW1000 {
 			ll:    self.ll,
 			seq:   self.seq,

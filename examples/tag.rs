@@ -122,14 +122,15 @@ fn main() -> ! {
 		delay.delay_ms(10u8);
 
 		// on recupère un message avec une fonction bloquante
+		rprintln!("ON BLOQUE !!!!" );
 		let result = block!(receiving.wait(&mut buffer));
+		rprintln!("ON DEBLOQUE !!!!" );
 
 		// on affiche le resultat
 		match result {
 			Ok(_) => rprintln!("result = {:?}", result),
 			Err(_) => rprintln!("ERREURE !!!! RECOMMENCE !!!!" ),
 		};
-		rprintln!("result = {:?}", result);
 
 		dw3000 = receiving
 			.finish_receiving()
