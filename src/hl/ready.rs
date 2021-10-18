@@ -18,6 +18,7 @@ use crate::{
 	Sleeping,
 	TxConfig,
 	DW1000,
+	FastCommand,
 };
 
 /// The behaviour of the sync pin
@@ -237,7 +238,7 @@ where
 
 		self.ll.tx_fctrl().modify(|_, w| {
 			let txflen = len as u16 + 2;
-			w.txflen(txflen) // data length + two-octet CRC
+			w   .txflen(txflen) // data length + two-octet CRC
 				.txbr(config.bitrate as u8) // configured bitrate
 				.tr(config.ranging_enable as u8) // configured ranging bit
 				.txb_offset(txb_offset_errata) // no offset in TX_BUFFER
@@ -279,7 +280,10 @@ where
 				})?;
 		*/
 
-		self.ll.fast_command(0x1)?; // Start TX
+		match send_time {
+			SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
+			_ =>  self.fast_cmd(FastCommand::CMD_DTX)?, // Start TX
+		}
 
 		Ok(DW1000 {
 			ll:    self.ll,

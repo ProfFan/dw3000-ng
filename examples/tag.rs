@@ -13,7 +13,7 @@ use stm32f1xx_hal::{
 };
 // use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, Config, RxConfig};
+use dw3000::{hl, Config, RxConfig, time::Duration};
 use nb::block;
 
 #[entry]
@@ -104,9 +104,9 @@ fn main() -> ! {
 		.write(|w| w.onw_pgfcal(1))
 		.expect("Write to onw_pgfcal failed.");
 
+	// delay.delay_ms(1000u16);
 
-	
-	delay.delay_ms(1000u16);
+	let FIXED_DELAY = Duration::from_nanos(100_000_000_u32);
 
 	loop {
 		/**************************** */
@@ -138,14 +138,12 @@ fn main() -> ! {
 		/**************************** */
 		/******** TRANSMITTER ******* */
 		/**************************** */
-		/*
-		let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
-
+		
 		let mut sending = dw3000
 			.send(
 				b"ping",
 				mac::Address::broadcast(&mac::AddressMode::Short),
-				hl::SendTime::Delayed(delayed_tx_time),
+				hl::SendTime::Delayed(result.unwrap().rx_time + FIXED_DELAY),
 				TxConfig::default(),
 			)
 			.expect("Failed configure transmitter");
