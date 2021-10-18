@@ -123,101 +123,6 @@ where
 		else {
 			self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
 		}
-		/*
-				// Set PLLLDT bit in EC_CTRL. According to the documentation of the
-				// CLKPLL_LL bit in SYS_STATUS, this bit needs to be set to ensure the
-				// reliable operation of the CLKPLL_LL bit. Since I've seen that bit
-				// being set, I want to make sure I'm not just seeing crap.
-				self.ll.ec_ctrl().modify(|_, w| w.pllldt(0b1))?;
-
-				// Now that PLLLDT is set, clear all bits in SYS_STATUS that depend on
-				// it for reliable operation. After that is done, these bits should work
-				// reliably.
-				self.ll
-					.sys_status()
-					.write(|w| w.cplock(0b1).clkpll_ll(0b1))?;
-		*/
-		// Apply the config
-
-		// Conf du channel page 110
-		self.ll.chan_ctrl().modify(|_, w| {
-			w.rf_chan(config.channel as u8)
-				.sfd_type(config.sfd_sequence as u8)
-				//.dwsfd((config.sfd_sequence == SfdSequence::Decawave || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
-				//.rxprf(config.pulse_repetition_frequency as u8)
-				//.tnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
-				//.rnssfd((config.sfd_sequence == SfdSequence::User || config.sfd_sequence == SfdSequence::DecawaveAlt) as u8)
-				.tx_pcode(
-					config
-						.channel
-						.get_recommended_preamble_code(config.pulse_repetition_frequency),
-				)
-				.rx_pcode(
-					config
-						.channel
-						.get_recommended_preamble_code(config.pulse_repetition_frequency),
-				)
-		})?;
-		self.ll.rf_tx_ctrl_1().modify(|_, w| w.value(0x0E))?;
-		self.ll
-			.rf_tx_ctrl_2()
-			.modify(|_, w| w.value(config.channel.get_recommanded_rf_tx_ctrl_2()))?;
-		self.ll
-			.pll_cfg()
-			.modify(|_, w| w.value(config.channel.get_recommanded_pll_conf()))?;
-		/*
-				match config.sfd_sequence {
-					SfdSequence::IEEE => {} // IEEE has predefined sfd lengths and the register has no effect.
-					SfdSequence::Decawave => self.ll.sfd_length().write(|w| w.value(8))?, // This isn't entirely necessary as the Decawave8 settings in chan_ctrl already force it to 8
-					SfdSequence::DecawaveAlt => self.ll.sfd_length().write(|w| w.value(16))?, // Set to 16
-					SfdSequence::User => {} // Users are responsible for setting the lengths themselves
-				}
-		*/
-		// PREAMBLE LENGHT CONF
-		// registre DTUN0
-
-		self.ll.dtune0().modify(|_, w| {
-			w.pac(config.expected_preamble_length.get_recommended_pac_size())
-				.dt0b4(1)
-		})?;
-		self.ll.dtune3().write(|w| w.value(0xaf5f35cc))?;
-
-		// REGISTRE LDO_RLOAD
-		self.ll.ldo_rload().write(|w| w.value(0x14))?;
-
-		/**************    CONF PLL      **************************** */
-		// REGISTRE PLL_CAL semble pas utile
-		self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x81))?;
-		// clear CPLOCK bit
-		// set bit SYS_CLK to auto
-		// check if CPLOCK is set to 1
-
-		/*
-
-				// Set general tuning
-				self.ll.drx_tune0b().write(|w| w.value(config.bitrate.get_recommended_drx_tune0b(config.sfd_sequence)))?;
-				self.ll.drx_tune1a().write(|w| w.value(config.pulse_repetition_frequency.get_recommended_drx_tune1a()))?;
-				let drx_tune1b = config.expected_preamble_length.get_recommended_drx_tune1b(config.bitrate)?;
-				self.ll.drx_tune1b().write(|w| w.value(drx_tune1b))?;
-				let drx_tune2 = config.pulse_repetition_frequency.get_recommended_drx_tune2(config.expected_preamble_length.get_recommended_pac_size())?;
-				self.ll.drx_tune2().write(|w| w.value(drx_tune2))?;
-				self.ll.drx_tune4h().write(|w| w.value(config.expected_preamble_length.get_recommended_dxr_tune4h()))?;
-
-				// Set channel tuning
-				self.ll.rf_rxctrlh().write(|w| w.value(config.channel.get_recommended_rf_rxctrlh()))?;
-				self.ll.fs_pllcfg().write(|w| w.value(config.channel.get_recommended_fs_pllcfg()))?;
-				self.ll.fs_plltune().write(|w| w.value(config.channel.get_recommended_fs_plltune()))?;
-
-				// Set the rx bitrate
-				// never set for dw3000
-				self.ll.sys_cfg().modify(|_, w| w.rxm110k((config.bitrate == BitRate::Kbps110) as u8))?;
-
-				self.ll
-					.sys_ctrl()
-					.modify(|_, w|
-						w.rxenab(0b1)
-					)?;
-		*/
 
 		self.ll.fast_command(2)?;
 
@@ -269,6 +174,8 @@ where
 				return Err(nb::Error::Other(Error::PreambleDetectionTimeout))
 			}
 			if sys_status.rxsto() == 0b1 {
+				self.ll.sys_status().write(|w| w.rxsto(1))
+				.map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 				return Err(nb::Error::Other(Error::SfdTimeout))
 			}
 			/*
