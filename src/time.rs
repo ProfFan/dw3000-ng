@@ -1,6 +1,6 @@
 //! Time-related types based on the DW1000's system time
 
-use core::ops::Add;
+use core::ops::{Add, Sub};
 
 use serde::{Deserialize, Serialize};
 
@@ -104,6 +104,26 @@ impl Add<Duration> for Instant {
 		// Both `Instant` and `Duration` are guaranteed to contain 40-bit
 		// numbers, so this addition will never overflow.
 		let value = (self.value() + rhs.value()) % (TIME_MAX + 1);
+
+		// We made sure to keep the result of the addition within `TIME_MAX`, so
+		// the following will never panic.
+		Instant::new(value).unwrap()
+	}
+}
+
+impl Sub<Duration> for Instant {
+	type Output = Instant;
+
+	fn sub(self, rhs: Duration) -> Self::Output {
+		// Both `Instant` and `Duration` are guaranteed to contain 40-bit
+		// numbers, so this addition will never overflow.
+		let value : u64;
+		if (self.value() as i64 - rhs.value() as i64) < 0 {
+			value = TIME_MAX - self.value() + rhs.value();
+		}
+		else {
+			value = self.value() - rhs.value();
+		}
 
 		// We made sure to keep the result of the addition within `TIME_MAX`, so
 		// the following will never panic.

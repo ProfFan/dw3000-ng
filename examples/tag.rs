@@ -120,7 +120,7 @@ fn main() -> ! {
 
 		// on cré un buffer pour stoquer le resultat message du receveur
 		let mut buffer = [0; 1024];
-		delay.delay_ms(10u8);
+		// delay.delay_ms(10u8);
 
 		// on recupère un message avec une fonction bloquante
 		let result = block!(receiving.wait(&mut buffer));
@@ -133,7 +133,7 @@ fn main() -> ! {
 		match result {
 			Ok(_) => {
 				received_instant = result.unwrap().rx_time;
-				rprintln!("première reception = {:?}", received_instant);
+				// rprintln!("première reception = {:?}", received_instant);
 			}
 			_ => {
 				rprintln!("ERREURE !!!! RECOMMENCE !!!!" );
@@ -146,7 +146,7 @@ fn main() -> ! {
 		/**************************** */
 
 
-		let FIXED_DELAY = Duration::from_nanos(100_000_000_u32);
+		// let FIXED_DELAY = Duration::from_nanos(100_000_000_u32);
 
 
 		// valeure max 0xffffffffff
@@ -158,6 +158,8 @@ fn main() -> ! {
 
 		}*/
 		let delayed_tx_time = received_instant + FIXED_DELAY;
+		// rprintln!("delayed : {:?}", delayed_tx_time);
+		// rprintln!("FIXED : {:?}", FIXED_DELAY.value());
 
 		let mut sending = dw3000
 			.send(
@@ -174,9 +176,9 @@ fn main() -> ! {
 		//rprintln!("TX state = {:#x?}", sending.tx_state());
 
 		// on recupère un message avec une fonction bloquante
-		rprintln!("on commence une fonction qui bloque !");
+		// rprintln!("on commence une fonction qui bloque !");
 		let result = block!(sending.wait());
-		rprintln!("on est sorti de la fonction qui bloque !");
+		// rprintln!("on est sorti de la fonction qui bloque !");
 
 		// on affiche le resultat
 		rprintln!("result = {:?}", result);
