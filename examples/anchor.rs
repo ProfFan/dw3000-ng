@@ -157,8 +157,8 @@ fn main() -> ! {
 			continue},
 		};
 		rprintln!("result = {:?}", result);
-		// let elapsed_time = (elapsed_time - result.unwrap().rx_time.value()) as f64 * 15.65;
+		let elapsed_time: f64 = (elapsed_time - result.unwrap().rx_time.value()) as f64 * 15.65;
 
-		rprintln!("Temps de vol : {:?} picosecondes.", (elapsed_time - result.unwrap().rx_time.value()) as f64 * 15.65);
+		rprintln!("Temps de vol : {:?} picosecondes.", (elapsed_time as u32));
 	}
 }

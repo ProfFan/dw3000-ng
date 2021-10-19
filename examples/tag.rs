@@ -11,9 +11,9 @@ use stm32f1xx_hal::{
 	prelude::*,
 	spi::{Mode, Phase, Polarity, Spi},
 };
-// use ieee802154::mac;
+use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, Config, RxConfig, time::Duration};
+use dw3000::{hl, Config, RxConfig, TxConfig, time::{Instant, Duration}};
 use nb::block;
 
 #[entry]
@@ -109,6 +109,8 @@ fn main() -> ! {
 	let FIXED_DELAY = Duration::from_nanos(100_000_000_u32);
 
 	loop {
+		let received_instant: Instant;
+
 		/**************************** */
 		/********* RECEIVER ********* */
 		/**************************** */
@@ -116,45 +118,60 @@ fn main() -> ! {
 			.receive(RxConfig::default())
 			.expect("Failed configure receiver.");
 
-
 		// on cré un buffer pour stoquer le resultat message du receveur
 		let mut buffer = [0; 1024];
 		delay.delay_ms(10u8);
 
 		// on recupère un message avec une fonction bloquante
-		rprintln!("ON BLOQUE !!!!" );
 		let result = block!(receiving.wait(&mut buffer));
-		rprintln!("ON DEBLOQUE !!!!" );
-
-		// on affiche le resultat
-		match result {
-			Ok(_) => rprintln!("result = {:?}", result),
-			Err(_) => rprintln!("ERREURE !!!! RECOMMENCE !!!!" ),
-		};
 
 		dw3000 = receiving
 			.finish_receiving()
 			.expect("Failed to finish receiving");
 
+		// on affiche le resultat
+		match result {
+			Ok(_) => {
+				received_instant = result.unwrap().rx_time;
+				rprintln!("première reception = {:?}", received_instant);
+			}
+			_ => {
+				rprintln!("ERREURE !!!! RECOMMENCE !!!!" );
+				continue }
+		};
+
+
 		/**************************** */
 		/******** TRANSMITTER ******* */
 		/**************************** */
-		
+
+
+		let FIXED_DELAY = Duration::from_nanos(100_000_000_u32);
+
+
+		// valeure max 0xffffffffff
+		/*
+		if received_instant.value() <= 1_099_411_627_775 {
+			
+		}
+		else {
+
+		}*/
+		let delayed_tx_time = received_instant + FIXED_DELAY;
+
 		let mut sending = dw3000
 			.send(
-				b"ping",
+				&[1,2,3,4,5],
 				mac::Address::broadcast(&mac::AddressMode::Short),
-				hl::SendTime::Delayed(result.unwrap().rx_time + FIXED_DELAY),
+				hl::SendTime::Delayed(delayed_tx_time),
 				TxConfig::default(),
 			)
 			.expect("Failed configure transmitter");
 
-		rprintln!("transmitter = {:?}", sending);
-		rprintln!("cmd_status = {:#x?}", sending.cmd_status());
-		rprintln!("state = {:#x?}", sending.state());
-		rprintln!("TX state = {:#x?}", sending.tx_state());
-
-		delay.delay_ms(10u8);
+		//rprintln!("transmitter = {:?}", sending);
+		//rprintln!("cmd_status = {:#x?}", sending.cmd_status());
+		//rprintln!("state = {:#x?}", sending.state());
+		//rprintln!("TX state = {:#x?}", sending.tx_state());
 
 		// on recupère un message avec une fonction bloquante
 		rprintln!("on commence une fonction qui bloque !");
@@ -165,6 +182,5 @@ fn main() -> ! {
 		rprintln!("result = {:?}", result);
 
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
-		*/
 	}
 }
