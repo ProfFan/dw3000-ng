@@ -14,11 +14,8 @@ use stm32f1xx_hal::{
 	spi::{Mode, Phase, Polarity, Spi},
 };
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use dw3000::{hl, Config, TxConfig, configs::FastCommand};
+use dw3000::{configs::FastCommand, hl, Config, TxConfig};
 use ieee802154::mac;
-
-
-
 
 fn check_states<SPI, CS, State>(
 	dw3000: &mut hl::DW1000<SPI, CS, State>,
@@ -184,7 +181,10 @@ fn main() -> ! {
 	let mut dw3000 = sending.finish_sending().expect("");
 
 	loop {
-		dw3000.ll().fast_command(FastCommand::CMD_RX as u8).expect("");
+		dw3000
+			.ll()
+			.fast_command(FastCommand::CMD_RX as u8)
+			.expect("");
 		dw3000.fast_cmd(FastCommand::CMD_RX).expect("");
 		delay.delay_ms(10000u16);
 	}

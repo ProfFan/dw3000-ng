@@ -13,7 +13,7 @@ use stm32f1xx_hal::{
 };
 use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, Config, RxConfig, TxConfig, time::Duration};
+use dw3000::{hl, time::Duration, Config, RxConfig, TxConfig};
 use nb::block;
 
 #[entry]
@@ -128,14 +128,13 @@ fn main() -> ! {
 		rprintln!("result = {:?}", elapsed_time);
 
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
-	
+
 		/**************************** */
 		/********* RECEIVER ********* */
 		/**************************** */
 		let mut receiving = dw3000
 			.receive(RxConfig::default())
 			.expect("Failed configure receiver.");
-
 
 		// on cré un buffer pour stoquer le resultat message du receveur
 		let mut buffer = [0; 1024];
@@ -145,16 +144,17 @@ fn main() -> ! {
 		let result = block!(receiving.wait(&mut buffer));
 		// let rx_time : u64;// = result.unwrap().rx_time.value();
 
-
 		dw3000 = receiving
 			.finish_receiving()
 			.expect("Failed to finish receiving");
 
 		// on affiche le resultat
 		match result {
-			Ok(_) => {},
-			Err(_) => {rprintln!("ERREURE !!!! RECOMMENCE !!!!" );
-			continue},
+			| Ok(_) => {},
+			| Err(_) => {
+				rprintln!("ERREURE !!!! RECOMMENCE !!!!");
+				continue
+			},
 		};
 		rprintln!("result = {:?}", result);
 		let elapsed_time: f64 = (elapsed_time - result.unwrap().rx_time.value()) as f64 * 15.65;

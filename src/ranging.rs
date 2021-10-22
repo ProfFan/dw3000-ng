@@ -39,12 +39,10 @@
 //! [`Response`]: struct.Response.html
 //! [examples]: https://github.com/braun-robotics/rust-dwm1001/tree/master/examples
 //! [this DWM1001 issue]: https://github.com/braun-robotics/rust-dwm1001/issues/55
-
+/*
 #![allow(unused_imports)]
 
 use core::mem::size_of;
-
-/*
 
 use embedded_hal::{
 	blocking::spi,
@@ -192,7 +190,7 @@ impl<T> TxMessage<T> where T: Message {
 		let future = dw1000.send(
 			&buf[..T::LEN],
 			self.recipient,
-			Some(self.tx_time),
+			hl::SendTime::Delayed(self.tx_time),
 			TxConfig::default()
 		)?;
 
@@ -422,7 +420,6 @@ pub fn compute_distance_mm(response: &RxMessage<Response>)
 
 	Ok(distance_mm)
 }
-
 
 /// Returned from [`compute_distance_mm`] in case of an error
 #[derive(Debug)]

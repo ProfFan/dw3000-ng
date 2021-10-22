@@ -16,6 +16,7 @@ use crate::{
 	Ready,
 	RxConfig,
 	DW1000,
+	FastCommand,
 };
 use super::{AutoDoubleBufferReceiving, Receiving};
 
@@ -479,7 +480,7 @@ where
 	/// If the receive operation has finished, as indicated by `wait`, this is a
 	/// no-op. If the receive operation is still ongoing, it will be aborted.
 	pub fn finish_receiving(mut self) -> Result<DW1000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
-		if !self.state.is_finished() {
+		/*if !self.state.is_finished() {
 			// Can't use `map_err` and `?` here, as the compiler will complain
 			// about `self` moving into the closure.
 			match self.force_idle(RECEIVING::DOUBLE_BUFFERED) {
@@ -488,6 +489,8 @@ where
 			}
 		}
 
+		self.fast_cmd(FastCommand::CMD_TXRXOFF);//.map_err(Err())?;
+*/
 		// let state = self.ll.sys_state().read()?.pmsc_state();
 		// if state > 0x3 { //(not in idle)
 		//     self.force_idle(RECEIVING::);

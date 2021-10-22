@@ -97,8 +97,8 @@ where
 	///
 	/// If the send operation has finished, as indicated by `wait`, this is a
 	/// no-op. If the send operation is still ongoing, it will be aborted.
-	pub fn finish_sending(mut self) -> Result<DW1000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
-		if !self.state.finished {
+	pub fn finish_sending(mut self) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
+		/*if !self.state.finished {
 			// Can't use `map_err` and `?` here, as the compiler will complain
 			// about `self` moving into the closure.
 			match self.force_idle(false) {
@@ -110,7 +110,7 @@ where
 				| Err(error) => return Err((self, error)),
 			}
 		}
-		/*
+		
 		// Turn off the external transmit synchronization
 		match self.ll.ec_ctrl().modify(|_, w| w.ostsm(0)) {
 			Ok(_) => {}

@@ -13,7 +13,13 @@ use stm32f1xx_hal::{
 };
 use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, Config, RxConfig, TxConfig, time::{Instant, Duration}};
+use dw3000::{
+	hl,
+	time::{Duration, Instant},
+	Config,
+	RxConfig,
+	TxConfig,
+};
 use nb::block;
 
 #[entry]
@@ -106,10 +112,14 @@ fn main() -> ! {
 
 	// delay.delay_ms(1000u16);
 
-	let FIXED_DELAY = Duration::from_nanos(100_000_000_u32);
+	// let FIXED_DELAY = Duration::from_nanos(5_000_000_u32);
+
+	// on cré un buffer pour stoquer le resultat message du receveur
+	let mut buffer = [0; 1024];
+	// let mut received_instant: Instant;
+	dw3000.set_antenna_delay(0,0).unwrap();
 
 	loop {
-		let received_instant: Instant;
 
 		/**************************** */
 		/********* RECEIVER ********* */
@@ -118,71 +128,69 @@ fn main() -> ! {
 			.receive(RxConfig::default())
 			.expect("Failed configure receiver.");
 
-		// on cré un buffer pour stoquer le resultat message du receveur
-		let mut buffer = [0; 1024];
-		// delay.delay_ms(10u8);
-
 		// on recupère un message avec une fonction bloquante
-		let result = block!(receiving.wait(&mut buffer));
+		let t2 = block!(receiving.wait(&mut buffer)).expect("bug pas stp").rx_time.value();
+		let t2_tab = [
+			((t2 >> (8 * 4) ) & 0xFF ) as u8,
+			((t2 >> (8 * 3) ) & 0xFF ) as u8,
+			((t2 >> (8 * 2) ) & 0xFF ) as u8,
+			((t2 >>  8      ) & 0xFF ) as u8,
+			 (t2              & 0xFF ) as u8,
+		];
 
 		dw3000 = receiving
 			.finish_receiving()
 			.expect("Failed to finish receiving");
 
-		// on affiche le resultat
-		match result {
-			Ok(_) => {
-				received_instant = result.unwrap().rx_time;
-				// rprintln!("première reception = {:?}", received_instant);
-			}
-			_ => {
-				rprintln!("ERREURE !!!! RECOMMENCE !!!!" );
-				continue }
-		};
+		/**************************** */
+		/******** TRANSMITTER ******* */
+		/**************************** */
 
+		let mut sending = dw3000
+			.send(
+				&t2_tab,
+				mac::Address::broadcast(&mac::AddressMode::Short),
+				hl::SendTime::Now, //Delayed(received_instant + FIXED_DELAY - Instant::new(low_bits as u64).unwrap()),
+				TxConfig::default(),
+			)
+			.expect("Failed configure transmitter");
+			
+		let t3 = block!(sending.wait()).unwrap().value();
+		let t3_tab = [
+			((t3 >> (8 * 4) ) & 0xFF ) as u8,
+			((t3 >> (8 * 3) ) & 0xFF ) as u8,
+			((t3 >> (8 * 2) ) & 0xFF ) as u8,
+			((t3 >>  8      ) & 0xFF ) as u8,
+			 (t3              & 0xFF ) as u8,
+		];
+
+		dw3000 = sending.finish_sending().expect("Failed to finish sending");
+
+		delay.delay_ms(100_u32);
 
 		/**************************** */
 		/******** TRANSMITTER ******* */
 		/**************************** */
 
-
-		// let FIXED_DELAY = Duration::from_nanos(100_000_000_u32);
-
-
-		// valeure max 0xffffffffff
-		/*
-		if received_instant.value() <= 1_099_411_627_775 {
-			
-		}
-		else {
-
-		}*/
-		let delayed_tx_time = received_instant + FIXED_DELAY;
-		// rprintln!("delayed : {:?}", delayed_tx_time);
-		// rprintln!("FIXED : {:?}", FIXED_DELAY.value());
-
 		let mut sending = dw3000
 			.send(
-				&[1,2,3,4,5],
+				&t3_tab,
 				mac::Address::broadcast(&mac::AddressMode::Short),
-				hl::SendTime::Delayed(delayed_tx_time),
+				hl::SendTime::Now, //Delayed(received_instant + FIXED_DELAY - Instant::new(low_bits as u64).unwrap()),
 				TxConfig::default(),
 			)
 			.expect("Failed configure transmitter");
-
-		//rprintln!("transmitter = {:?}", sending);
-		//rprintln!("cmd_status = {:#x?}", sending.cmd_status());
-		//rprintln!("state = {:#x?}", sending.state());
-		//rprintln!("TX state = {:#x?}", sending.tx_state());
-
-		// on recupère un message avec une fonction bloquante
-		// rprintln!("on commence une fonction qui bloque !");
-		let result = block!(sending.wait());
-		// rprintln!("on est sorti de la fonction qui bloque !");
-
-		// on affiche le resultat
-		rprintln!("result = {:?}", result);
+			
+		let _t5 = block!(sending.wait()).unwrap();
 
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
+
+		// on affiche le resultat
+		rprintln!("t2 = {:?}", t2);
+		rprintln!("t3 = {:?}\n", t3);
+		// rprintln!(
+		// 	"erreur DX = {:?}\n",
+		// 	result - received_instant - FIXED_DELAY
+		// );
 	}
 }
