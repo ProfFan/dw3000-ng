@@ -12,6 +12,7 @@ use stm32f1xx_hal::{
 	spi::{Mode, Phase, Polarity, Spi},
 };
 use ieee802154::mac;
+use ieee802154::mac::frame;
 use embedded_hal::digital::v2::OutputPin;
 use dw3000::{hl, time::Duration, Config, RxConfig, TxConfig};
 use nb::block;
@@ -39,7 +40,8 @@ fn main() -> ! {
 	let clocks = rcc
 		.cfgr
 		.use_hse(8.mhz())
-		.sysclk(36.mhz())
+		.sysclk(72.mhz())
+		.pclk1(36.mhz())
 		.freeze(&mut flash.acr);
 
 	let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
@@ -75,7 +77,7 @@ fn main() -> ! {
 	/*****       CONFIGURATION DU RESET du DW3000   ******* */
 	/****************************************************** */
 
-	// let mut delay = Delay::new(cp.SYST, clocks);
+	let mut delay = Delay::new(cp.SYST, clocks);
 
 	let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
 
@@ -92,16 +94,21 @@ fn main() -> ! {
 		.expect("alo")
 		.config(Config::default())
 		.expect("Failed init.");
-	rprintln!("dm3000 = {:?}", dw3000);
+	//rprintln!("dm3000 = {:?}", dw3000);
 
-	let FIXED_DELAY = Duration::from_nanos(1_000_000_u32);
+	// let FIXED_DELAY = Duration::from_nanos(5_000_000_u32);
+
+	// on cré un buffer pour stoquer le resultat message du receveur
+	let mut buffer = [0; 1024];
+
+	dw3000.set_antenna_delay(0,0).expect("Failed set antenna delay.");;
 
 	loop {
 		/**************************** */
 		/******** TRANSMITTER ******* */
 		/**************************** */
 		// let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
-
+		delay.delay_ms(5000_u32);
 		let mut sending = dw3000
 			.send(
 				&[1, 2, 3, 4, 5],
@@ -110,27 +117,17 @@ fn main() -> ! {
 				TxConfig::default(),
 			)
 			.expect("Failed configure transmitter");
-
-		// rprintln!("transmitter = {:?}", sending);
-		// rprintln!("cmd_status = {:#x?}", sending.cmd_status());
-		// rprintln!("state = {:#x?}", sending.state());
-		// rprintln!("TX state = {:#x?}", sending.tx_state());
-
-		// delay.delay_ms(10u8);
-
-		// on recupère un message avec une fonction bloquante
-		// rprintln!("on commence une fonction qui bloque !");
 		let result = block!(sending.wait());
-		let elapsed_time = result.unwrap().value();
-		// rprintln!("on est sorti de la fonction qui bloque !");
+		let t1:u64 = result.unwrap().value();
+
 
 		// on affiche le resultat
-		rprintln!("result = {:?}", elapsed_time);
+		//rprintln!("Trame envoyée !!!\n");
 
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
 
 		/**************************** */
-		/********* RECEIVER ********* */
+		/********* RECEIVER T2 ****** */
 		/**************************** */
 		let mut receiving = dw3000
 			.receive(RxConfig::default())
@@ -147,18 +144,39 @@ fn main() -> ! {
 		dw3000 = receiving
 			.finish_receiving()
 			.expect("Failed to finish receiving");
+		let result = result.unwrap();
+		let t4:u64 = result.rx_time.value();
+		let x = result.frame.payload;
+		let t2: u64 = ((x[0] as u64) << (8 * 4)) 
+					+ ((x[1] as u64) << (8 * 3))
+					+ ((x[2] as u64) << (8 * 2))
+					+ ((x[3] as u64) << (8 * 1))
+					+ (x[4] as u64);
+		//rprintln!("data = {:x?}", x);
+		//rprintln!("data = {:x?}", t2);
 
-		// on affiche le resultat
-		match result {
-			| Ok(_) => {},
-			| Err(_) => {
-				rprintln!("ERREURE !!!! RECOMMENCE !!!!");
-				continue
-			},
-		};
-		rprintln!("result = {:?}", result);
-		let elapsed_time: f64 = (elapsed_time - result.unwrap().rx_time.value()) as f64 * 15.65;
+		/**************************** */
+		/********* RECEIVER T3 ****** */
+		/**************************** */
+		let mut receiving = dw3000
+			.receive(RxConfig::default())
+			.expect("Failed configure receiver.");
+		let result = block!(receiving.wait(&mut buffer));
+		dw3000 = receiving
+			.finish_receiving()
+			.expect("Failed to finish receiving");
+		let x = result.unwrap().frame.payload;
+		let t3: u64 = ((x[0] as u64) << (8 * 4)) 
+					+ ((x[1] as u64) << (8 * 3))
+					+ ((x[2] as u64) << (8 * 2))
+					+ ((x[3] as u64) << (8 * 1))
+					+ (x[4] as u64);
 
-		rprintln!("Temps de vol : {:?} picosecondes.", (elapsed_time as u32));
+		rprintln!("T1 = {:?}", t1);
+		rprintln!("T2 = {:?}", t2);
+		rprintln!("T3 = {:?}", t3);
+		rprintln!("T4 = {:?}", t4);
+		rprintln!("distance = {:?}\n\n", ((t4-t1-t3+t2) / 2) as i64);
+		// (((result_time - transmit_time - 320_000_000)as f64 * 299.792_458) / 128.0) as u64);
 	}
 }

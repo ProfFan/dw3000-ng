@@ -59,7 +59,7 @@ use crate::{hl, mac, time::{
 	Instant,
 }, DW1000, Error, Ready, Sending, TxConfig};
 
-
+/*
 /// The transmission delay
 ///
 /// This defines the transmission delay as 10 ms. This should be enough to

@@ -103,11 +103,11 @@ where
 			// about `self` moving into the closure.
 			match self.force_idle(false) {
 				| Ok(()) => (),
-				| Err(error) => return Err((self, error)),
+				| Err(error) => return Err(error),
 			}
 			match self.reset_flags() {
 				| Ok(()) => (),
-				| Err(error) => return Err((self, error)),
+				| Err(error) => return Err(error),
 			}
 		}
 		
@@ -115,8 +115,24 @@ where
 		match self.ll.ec_ctrl().modify(|_, w| w.ostsm(0)) {
 			Ok(_) => {}
 			Err(e) => return Err((self, Error::Spi(e))),
-		}*/
+		}
 
+		while self.ll.sys_status().read()?.rcinit() == 0 {}
+
+		// CONFIGURATION DE LA PLL POUR PASSER DANS L'ETAT IDLE PLL
+		// need to change default cal value for pll (page164)
+		self.ll.pll_cal().modify(|_, w| w.pll_cfg_ld(0x81))?;
+		// clear cplock
+		self.ll.sys_status().write(|w| w.cplock(0))?;
+		// select PLL mode auto
+		self.ll.clk_ctrl().modify(|_, w| w.sys_clk(0))?;
+		// set ainit2idle
+		self.ll.seq_ctrl().modify(|_, w| w.ainit2idle(1))?;
+		// Set the on wake up switch from idle RC to idle PLL
+		self.ll.aon_dig_cfg().modify(|_, w| w.onw_go2idle(1))?;
+		// wait for CPLOCK to be set
+		while self.ll.sys_status().read()?.cplock() == 0 {}
+*/
 		Ok(DW1000 {
 			ll:    self.ll,
 			seq:   self.seq,

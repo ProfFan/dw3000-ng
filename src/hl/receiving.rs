@@ -488,13 +488,18 @@ where
 				| Err(error) => return Err((self, error)),
 			}
 		}
+<<<<<<< Updated upstream
 
 		self.fast_cmd(FastCommand::CMD_TXRXOFF);//.map_err(Err())?;
+=======
+>>>>>>> Stashed changes
 */
 		// let state = self.ll.sys_state().read()?.pmsc_state();
 		// if state > 0x3 { //(not in idle)
 		//     self.force_idle(RECEIVING::);
 		// }
+
+		//self.fast_cmd(FastCommand::CMD_TXRXOFF);
 
 		Ok(DW1000 {
 			ll:    self.ll,
