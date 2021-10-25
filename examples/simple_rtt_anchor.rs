@@ -1,7 +1,9 @@
 #![no_main]
 #![no_std]
 
-// crates de gestion des messages de debug
+// This exemple should be used with simple_rtt_tag exemple and is the implementation of 
+// RTT localisation process
+
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_rt::entry;
@@ -11,10 +13,8 @@ use stm32f1xx_hal::{
 	prelude::*,
 	spi::{Mode, Phase, Polarity, Spi},
 };
-use ieee802154::mac;
-use ieee802154::mac::frame;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, time::Duration, Config, RxConfig, TxConfig};
+use dw3000::{hl, Config};
 use nb::block;
 
 #[entry]
@@ -23,7 +23,7 @@ fn main() -> ! {
 	rprintln!("Coucou copain !");
 
 	/******************************************************* */
-	/************       CONFIGURATION DE BASE     ********** */
+	/************       BASE CONFIGURATION        ********** */
 	/******************************************************* */
 
 	// Get access to the device specific peripherals from the peripheral access
@@ -89,19 +89,14 @@ fn main() -> ! {
 	/*********       CONFIGURATION du DW3000       ******** */
 	/****************************************************** */
 
-	let mut dw3000 = hl::DW1000::new(spi, cs)
+	let mut dw3000 = hl::DW3000::new(spi, cs)
 		.init()
 		.expect("alo")
 		.config(Config::default())
 		.expect("Failed init.");
 	//rprintln!("dm3000 = {:?}", dw3000);
 
-	// let FIXED_DELAY = Duration::from_nanos(5_000_000_u32);
-
-	// on cré un buffer pour stoquer le resultat message du receveur
-	let mut buffer = [0; 1024];
-
-	dw3000.set_antenna_delay(0,0).expect("Failed set antenna delay.");;
+	dw3000.set_antenna_delay(0,0).expect("Failed set antenna delay.");
 
 	loop {
 		/**************************** */
@@ -112,12 +107,11 @@ fn main() -> ! {
 		let mut sending = dw3000
 			.send(
 				&[1, 2, 3, 4, 5],
-				mac::Address::broadcast(&mac::AddressMode::Short),
 				hl::SendTime::Now,
-				TxConfig::default(),
+				Config::default(),
 			)
 			.expect("Failed configure transmitter");
-		let result = block!(sending.wait());
+		let result = block!(sending.s_wait());
 		let t1:u64 = result.unwrap().value();
 
 
@@ -130,7 +124,7 @@ fn main() -> ! {
 		/********* RECEIVER T2 ****** */
 		/**************************** */
 		let mut receiving = dw3000
-			.receive(RxConfig::default())
+			.receive(Config::default())
 			.expect("Failed configure receiver.");
 
 		// on cré un buffer pour stoquer le resultat message du receveur
@@ -138,7 +132,7 @@ fn main() -> ! {
 		// delay.delay_ms(10u8);
 
 		// on recupère un message avec une fonction bloquante
-		let result = block!(receiving.wait(&mut buffer));
+		let result = block!(receiving.r_wait(&mut buffer));
 		// let rx_time : u64;// = result.unwrap().rx_time.value();
 
 		dw3000 = receiving
@@ -159,9 +153,9 @@ fn main() -> ! {
 		/********* RECEIVER T3 ****** */
 		/**************************** */
 		let mut receiving = dw3000
-			.receive(RxConfig::default())
+			.receive(Config::default())
 			.expect("Failed configure receiver.");
-		let result = block!(receiving.wait(&mut buffer));
+		let result = block!(receiving.r_wait(&mut buffer));
 		dw3000 = receiving
 			.finish_receiving()
 			.expect("Failed to finish receiving");
@@ -176,7 +170,7 @@ fn main() -> ! {
 		rprintln!("T2 = {:?}", t2);
 		rprintln!("T3 = {:?}", t3);
 		rprintln!("T4 = {:?}", t4);
-		rprintln!("distance = {:?}\n\n", ((t4-t1-t3+t2) / 2) as i64);
+		rprintln!("distance = {:?}\n\n", ((t4-t1-t3+t2) / 2) as i64); // speed in ns
 		// (((result_time - transmit_time - 320_000_000)as f64 * 299.792_458) / 128.0) as u64);
 	}
 }

@@ -1,6 +1,6 @@
 [package]
 name    = "dw3000"
-version = "0.5.0"
+version = "0.1.0"
 authors = ["Clement Pene <clement.pene@sii.fr>", "Romain Saboret <romain.saboret@sii.fr>"]
 edition = "2018"
 

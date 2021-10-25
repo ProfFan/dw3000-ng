@@ -1,8 +1,7 @@
 #![no_main]
 #![no_std]
 
-// crates de gestion des messages de debug
-// use core::mem::size_of;
+// Exemple to look at the different module states 
 
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
@@ -14,8 +13,7 @@ use stm32f1xx_hal::{
 	spi::{Mode, Phase, Polarity, Spi},
 };
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use dw3000::{configs::FastCommand, hl, Config, TxConfig};
-use ieee802154::mac;
+use dw3000::{configs::FastCommand, hl, Config, Config};
 
 fn check_states<SPI, CS, State>(
 	dw3000: &mut hl::DW1000<SPI, CS, State>,
@@ -26,16 +24,16 @@ where
 	State: hl::Awake,
 {
 	if dw3000.init_rc_passed()? {
-		rprintln!("Après la fonction new, on est dans l'état INIT_RC (rcinit = 1)");
+		rprintln!("INIT_RC state (rcinit = 1)");
 	}
 	if dw3000.idle_rc_passed()? {
-		rprintln!("Après la fonction new, on est dans l'état IDLE_RC (spirdy = 1)");
+		rprintln!("IDLE_RC state (spirdy = 1)");
 	}
 	if dw3000.idle_pll_passed()? {
-		rprintln!("Après la fonction new, on est dans l'état IDLE_PLL (cpclock = 1)");
+		rprintln!("IDLE_PLL state (cpclock = 1)");
 	}
 	rprintln!(
-		"Après la fonction new, on est dans l'état {:#x?}\n\n",
+		"the state is {:#x?}\n\n",
 		dw3000.state()?
 	);
 	Ok(())
@@ -47,7 +45,7 @@ fn main() -> ! {
 	rprintln!("Coucou copain !\n\n");
 
 	/******************************************************* */
-	/************       CONFIGURATION DE BASE     ********** */
+	/************       BASE CONFIGURATION        ********** */
 	/******************************************************* */
 
 	// Get access to the device specific peripherals from the peripheral access
@@ -71,7 +69,7 @@ fn main() -> ! {
 	let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
 
 	/***************************************************** */
-	/************       CONFIGURATION DU SPI       ******* */
+	/************       SPI CONFIGURATION        ********* */
 	/***************************************************** */
 
 	let pins = (
@@ -97,7 +95,7 @@ fn main() -> ! {
 	);
 
 	/****************************************************** */
-	/*****       CONFIGURATION DU RESET du DW3000   ******* */
+	/*****                 DW3000 RESET             ******* */
 	/****************************************************** */
 
 	// NEW
@@ -110,45 +108,23 @@ fn main() -> ! {
 	rst_n.set_high().unwrap();
 
 	/****************************************************** */
-	/*********       CONFIGURATION du DW3000       ******** */
+	/*********          DW3000 CONFIGURATION       ******** */
 	/****************************************************** */
 
-	let mut dw3000 = hl::DW1000::new(spi, cs);
+	let mut dw3000 = hl::DW3000::new(spi, cs);
 
 	check_states(&mut dw3000).unwrap();
 	delay.delay_ms(1000u16);
 
 	check_states(&mut dw3000).unwrap();
 
-	// activation de la calibration auto
+	// auto calibration activation
 	// dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1));
 
 	// INIT
 	let mut dw3000 = dw3000.init().expect("Failed init.");
 
 	check_states(&mut dw3000).unwrap();
-
-	// CONF DE LA PLL pour passer en mode IDLE_PLL
-	/*
-		// set CAL_EN in PLL_CAL register
-		dw3000
-			.ll()
-			.pll_cal()
-			.write(|w| w.cal_en(1))
-			.expect("Write to PLL_CAL failed");
-		//clear CP_LOCK
-	*/
-	// In CLK_CTRL sub register, the 2 bits of SYS_CLK are set to AUTO
-
-	/*
-
-		// set PLL_CFG (4 bytes) / PLL_CFG_CH
-		dw3000
-			.ll()
-			.pll_cfg()
-			.write(|w| w.value(0x1F3C))
-			.expect("Write 0x1F3C to PLL_CFG failed");
-	*/
 
 	rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
@@ -159,7 +135,7 @@ fn main() -> ! {
 	check_states(&mut dw3000).unwrap();
 	rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
-	// ON PASSE EN MODE TRANSMITTER
+	// TRANSMITTER
 
 	let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
 
@@ -171,12 +147,12 @@ fn main() -> ! {
 			TxConfig::default(),
 		)
 		.expect("Failed configure transmitter");
-	rprintln!("On passe en mode transmitter = {:#x?}", sending.state());
+	rprintln!("changing to transmitter = {:#x?}", sending.state());
 
 	delay.delay_ms(1000u16);
 
-	rprintln!("\nOn regarde ou en est le transmitter\n");
-	rprintln!("Etat ? : {:#x?}", sending.tx_state());
+	rprintln!("\nhow is the transmitter ?\n");
+	rprintln!("State ? : {:#x?}", sending.tx_state());
 
 	let mut dw3000 = sending.finish_sending().expect("");
 

@@ -1,6 +1,6 @@
-//! Low-level interface to the DW1000
+//! Low-level interface to the DW3000
 //!
-//! This module implements a register-level interface to the DW1000. Users of
+//! This module implements a register-level interface to the DW3000. Users of
 //! this library should typically not need to use this. Please consider using
 //! the [high-level interface] instead.
 //!
@@ -13,28 +13,28 @@
 //! silently truncated.
 //!
 //! [high-level interface]: ../hl/index.html
-//! [filing an issue]: https://github.com/braun-robotics/rust-dw1000/issues/new
+//! [filing an issue]: https://github.com/braun-robotics/rust-dw3000/issues/new
 
 use core::{fmt, marker::PhantomData};
 
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
-/// Entry point to the DW1000 driver's low-level API
+/// Entry point to the DW3000 driver's low-level API
 ///
-/// Please consider using [hl::DW1000] instead.
+/// Please consider using [hl::DW3000] instead.
 ///
-/// [hl::DW1000]: ../hl/struct.DW1000.html
-pub struct DW1000<SPI, CS> {
+/// [hl::DW3000]: ../hl/struct.DW3000.html
+pub struct DW3000<SPI, CS> {
 	spi:         SPI,
 	chip_select: CS,
 }
 
-impl<SPI, CS> DW1000<SPI, CS> {
-	/// Create a new instance of `DW1000`
+impl<SPI, CS> DW3000<SPI, CS> {
+	/// Create a new instance of `DW3000`
 	///
 	/// Requires the SPI peripheral and the chip select pin that are connected
-	/// to the DW1000.
-	pub fn new(spi: SPI, chip_select: CS) -> Self { DW1000 { spi, chip_select } }
+	/// to the DW3000.
+	pub fn new(spi: SPI, chip_select: CS) -> Self { DW3000 { spi, chip_select } }
 
 	/// commentaire
 	pub fn fast_command(&mut self, fast: u8) -> Result<(), Error<SPI, CS>>
@@ -56,8 +56,8 @@ impl<SPI, CS> DW1000<SPI, CS> {
 /// Provides access to a register
 ///
 /// You can get an instance for a given register using one of the methods on
-/// [`DW1000`].
-pub struct RegAccessor<'s, R, SPI, CS>(&'s mut DW1000<SPI, CS>, PhantomData<R>);
+/// [`DW3000`].
+pub struct RegAccessor<'s, R, SPI, CS>(&'s mut DW3000<SPI, CS>, PhantomData<R>);
 
 impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
 where
@@ -123,7 +123,7 @@ where
 	}
 }
 
-/// An SPI error that can occur when communicating with the DW1000
+/// An SPI error that can occur when communicating with the DW3000
 pub enum Error<SPI, CS>
 where
 	SPI: spi::Transfer<u8> + spi::Write<u8>,
@@ -196,7 +196,7 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
 /// directly by users of this crate. It is exposed through the public API
 /// though, so it can't be made private.
 ///
-/// The DW1000 user manual, section 7.1, specifies what the values of the
+/// The DW3000 user manual, section 7.1, specifies what the values of the
 /// constant should be for each register.
 pub trait Register {
 	/// The register index
@@ -535,7 +535,7 @@ macro_rules! impl_register {
         )*
 
 
-        impl<SPI, CS> DW1000<SPI, CS> {
+        impl<SPI, CS> DW3000<SPI, CS> {
             $(
                 #[$doc]
                 pub fn $name_lower(&mut self) -> RegAccessor<$name, SPI, CS> {
@@ -1682,7 +1682,7 @@ impl Writable for TX_BUFFER {
 	fn buffer(w: &mut Self::Write) -> &mut [u8] { &mut w.0 }
 }
 
-impl<SPI, CS> DW1000<SPI, CS> {
+impl<SPI, CS> DW3000<SPI, CS> {
 	/// Transmit Data Buffer
 	pub fn tx_buffer(&mut self) -> RegAccessor<TX_BUFFER, SPI, CS> {
 		RegAccessor(self, PhantomData)
@@ -1721,7 +1721,7 @@ impl Readable for RX_BUFFER_0 {
 	fn buffer(w: &mut Self::Read) -> &mut [u8] { &mut w.0 }
 }
 
-impl<SPI, CS> DW1000<SPI, CS> {
+impl<SPI, CS> DW3000<SPI, CS> {
 	/// Receive Data Buffer
 	pub fn rx_buffer_0(&mut self) -> RegAccessor<RX_BUFFER_0, SPI, CS> {
 		RegAccessor(self, PhantomData)
@@ -1776,7 +1776,7 @@ impl Readable for RX_BUFFER_1 {
 	fn buffer(w: &mut Self::Read) -> &mut [u8] { &mut w.0 }
 }
 
-impl<SPI, CS> DW1000<SPI, CS> {
+impl<SPI, CS> DW3000<SPI, CS> {
 	/// Receive Data Buffer1
 	pub fn rx_buffer_1(&mut self) -> RegAccessor<RX_BUFFER_1, SPI, CS> {
 		RegAccessor(self, PhantomData)

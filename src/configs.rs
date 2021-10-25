@@ -6,50 +6,51 @@
 
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-/// On verra
+/// Fast command enumeration to easily control the module
 pub enum FastCommand {
-	/// Fast command to go to IDLE PLL
+	/// Fast command to go to IDLE state and clears any events
 	CMD_TXRXOFF     = 0x0,
-	/// Fast command to start TX
+	/// Fast command to Immediate start of transmission
 	CMD_TX          = 0x1,
-	/// Fast command to start RX
+	/// Fast command to Enable RX immediately
 	CMD_RX          = 0x2,
-	/// Fast command to
+	/// Fast command to Delayed TX w.r.t. DX_TIME
 	CMD_DTX         = 0x3,
-	/// Fast command to
+	/// Fast command to Delayed RX w.r.t. DX_TIME
 	CMD_DRX         = 0x4,
-	/// Fast command to
+	/// Fast command to Delayed TX w.r.t. TX timestamp + DX_TIME
 	CMD_DTX_TS      = 0x5,
-	/// Fast command to
+	/// Fast command to Delayed RX w.r.t. TX timestamp + DX_TIME
 	CMD_DRX_TS      = 0x6,
-	/// Fast command to
+	/// Fast command to Delayed TX w.r.t. RX timestamp + DX_TIME
 	CMD_DTX_RS      = 0x7,
-	/// Fast command to
+	/// Fast command to Delayed RX w.r.t. RX timestamp + DX_TIME
 	CMD_DRX_RS      = 0x8,
-	/// Fast command to
+	/// Fast command to Delayed TX w.r.t. DREF_TIME + DX_TIME
 	CMD_DTX_REF     = 0x9,
-	/// Fast command to
+	/// Fast command to Delayed RX w.r.t. DREF_TIME + DX_TIME
 	CMD_DRX_REF     = 0xA,
-	/// Fast command to
+	/// Fast command to TX if no preamble detected
 	CMD_CCA_TX      = 0xB,
-	/// Fast command to
+	/// Fast command to Start TX immediately, then when TX is done, enable the receiver
 	CMD_TX_W4R      = 0xC,
-	/// Fast command to
+	/// Fast command to Delayed TX w.r.t. DX_TIME, then enable receiver
 	CMD_DTX_W4R     = 0xD,
-	/// Fast command to
+	/// Fast command to Delayed TX w.r.t. TX timestamp + DX_TIME, then enable receiver
 	CMD_DTX_TS_W4R  = 0xE,
-	/// Fast command to
+	/// Fast command to Delayed TX w.r.t. RX timestamp + DX_TIME, then enable receiver
 	CMD_DTX_RS_W4R  = 0xF,
-	/// Fast command to
-	CMD_DTX_REF_W4R = 0x10,
-	/// Fast command to
+	/// Fast command to Delayed TX w.r.t. DREF_TIME + DX_TIME, then enable receiver
+	CMD_DTX_REF_W4R = 0x10, 
+	/// Fast command to TX packet if no preamble detected, then enable receiver
 	CMD_CCA_TX_W4R  = 0x11,
-	/// Fast command to
+	/// Fast command to Clear all interrupt events
 	CMD_CLR_IRQS    = 0x12,
-	/// Fast command to
+	/// Fast command to Toggle double buffer pointer / notify the device that the host has finished processing the received buffer/data.
 	CMD_DB_TOGGLE   = 0x13,
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// General configuration for TX and RX
 pub struct Config {
 	/// The channel that the DW3000 will transmit at.
@@ -64,6 +65,11 @@ pub struct Config {
 	pub bitrate:                    BitRate,
 	/// Defaults to `true`.
 	pub frame_filtering:            bool,
+	/// Sets the ranging bit in the transmitted frame.
+	/// This has no effect on the capabilities of the DW3000.
+	/// maybe can be degaged
+	pub ranging_enable:             bool,
+
 }
 
 impl Default for Config {
@@ -74,78 +80,8 @@ impl Default for Config {
 			pulse_repetition_frequency: Default::default(),
 			preamble_length:            Default::default(),
 			bitrate:                    Default::default(),
-			frame_filtering:            Default::default(),
-		}
-	}
-}
-
-/// Transmit configuration
-pub struct TxConfig {
-	/// Sets the bitrate of the transmission.
-	pub bitrate:                    BitRate,
-	/// Sets the ranging bit in the transmitted frame.
-	/// This has no effect on the capabilities of the DW1000.
-	/// maybe can be degaged
-	pub ranging_enable:             bool,
-	/// Sets the PRF value of the transmission.
-	pub pulse_repetition_frequency: PulseRepetitionFrequency,
-	/// The length of the preamble.
-	pub preamble_length:            PreambleLength,
-	/// The channel that the DW1000 will transmit at.
-	pub channel:                    UwbChannel,
-	/// The SFD sequence that is used to transmit a frame.
-	pub sfd_sequence:               SfdSequence,
-}
-
-impl Default for TxConfig {
-	fn default() -> Self {
-		TxConfig {
-			bitrate:                    Default::default(),
-			ranging_enable:             false,
-			pulse_repetition_frequency: Default::default(),
-			preamble_length:            Default::default(),
-			channel:                    Default::default(),
-			sfd_sequence:               Default::default(),
-		}
-	}
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-/// Receive configuration
-pub struct RxConfig {
-	/// The bitrate that will be used for reception.
-	pub bitrate:                    BitRate,
-	/// Enable frame filtering
-	///
-	/// If true, only frames directly addressed to this node and broadcasts will
-	/// be received.
-	///
-	/// Defaults to `true`.
-	pub frame_filtering:            bool,
-	/// Sets the PRF value of the reception
-	pub pulse_repetition_frequency: PulseRepetitionFrequency,
-	/// The expected preamble length.
-	///
-	/// This affects the chosen PAC size.
-	/// This should be the same as the preamble length that is used to send the
-	/// messages. It is not a filter, though, so other preamble lengths may
-	/// still be received.
-	pub expected_preamble_length:   PreambleLength,
-	/// The channel that the DW1000 will listen at.
-	pub channel:                    UwbChannel,
-	/// The type of SFD sequence that will be scanned for.
-	pub sfd_sequence:               SfdSequence,
-}
-
-impl Default for RxConfig {
-	fn default() -> Self {
-		Self {
-			bitrate:                    Default::default(),
 			frame_filtering:            false,
-			pulse_repetition_frequency: Default::default(),
-			expected_preamble_length:   Default::default(),
-			channel:                    Default::default(),
-			sfd_sequence:               Default::default(),
+			ranging_enable:				false,
 		}
 	}
 }
@@ -228,7 +164,7 @@ impl Default for PreambleLength {
 impl PreambleLength {
 	/// Gets the recommended PAC size based on the preamble length.
 	pub fn get_recommended_pac_size(&self) -> u8 {
-		// Values are taken from Table 6 of the DW1000 User manual
+		// Values are taken from Table 6 of the DW3000 User manual
 		match self {
 			| PreambleLength::Symbols32 => 3, // 4
 			| PreambleLength::Symbols64 => 0, // 8
@@ -273,7 +209,7 @@ impl Default for SfdSequence {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// All the available UWB channels.
 ///
-/// Note that while a channel may have more bandwidth than ~900 Mhz, the DW1000
+/// Note that while a channel may have more bandwidth than ~900 Mhz, the DW3000
 /// can only send up to ~900 Mhz
 pub enum UwbChannel {
 	/// Channel 5

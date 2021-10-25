@@ -2,9 +2,9 @@
 
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
-use crate::{Error, Ready, Sleeping, DW1000};
+use crate::{Error, Ready, Sleeping, DW3000};
 
-impl<SPI, CS> DW1000<SPI, CS, Sleeping>
+impl<SPI, CS> DW3000<SPI, CS, Sleeping>
 where
 	SPI: spi::Transfer<u8> + spi::Write<u8>,
 	CS: OutputPin,
@@ -14,7 +14,7 @@ where
 	pub fn wake_up<DELAY: embedded_hal::blocking::delay::DelayUs<u16>>(
 		mut self,
 		delay: &mut DELAY,
-	) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
+	) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
 		// Wake up using the spi
 		self.ll.assert_cs_low().map_err(|e| Error::Spi(e))?;
 		delay.delay_us(850 * 2);
@@ -37,7 +37,7 @@ where
 		self.ll.tx_antd().write(|w| w.value(delay.value() as u16))?;
 
 		// All other values should be restored, so return the ready radio.
-		Ok(DW1000 {
+		Ok(DW3000 {
 			ll: self.ll,
 			seq: self.seq,
 			state: Ready,

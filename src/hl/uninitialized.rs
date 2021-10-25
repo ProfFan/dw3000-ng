@@ -2,37 +2,28 @@ use core::num::Wrapping;
 
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
-use crate::{ll, Config, Error, Ready, Uninitialized, DW1000};
+use crate::{ll, Config, Error, Ready, Uninitialized, DW3000};
 //use rtt_target::{rprintln};
 
-impl<SPI, CS> DW1000<SPI, CS, Uninitialized>
+impl<SPI, CS> DW3000<SPI, CS, Uninitialized>
 where
 	SPI: spi::Transfer<u8> + spi::Write<u8>,
 	CS: OutputPin,
 {
-	/// Create a new instance of `DW1000`
+	/// Create a new instance of `DW3000`
 	///
 	/// Requires the SPI peripheral and the chip select pin that are connected
-	/// to the DW1000.
+	/// to the DW3000.
 	pub fn new(spi: SPI, chip_select: CS) -> Self {
-		DW1000 {
-			ll:    ll::DW1000::new(spi, chip_select),
+		DW3000 {
+			ll:    ll::DW3000::new(spi, chip_select),
 			seq:   Wrapping(0),
 			state: Uninitialized,
 		}
 	}
 
-	/// Initialize the DW1000
-	///
-	/// The DW1000's default configuration is somewhat inconsistent, and the
-	/// user manual (section 2.5.5) has a long list of default configuration
-	/// values that should be changed to guarantee everything works correctly.
-	/// This method does just that.
-	///
-	/// Please note that this method assumes that you kept the default
-	/// configuration. It is generally recommended not to change configuration
-	/// before calling this method.
-	pub fn init(mut self) -> Result<DW1000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
+	/// Initialize the DW3000
+	pub fn init(mut self) -> Result<DW3000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
 		// Wait for the IDLE_RC state
 		while self.ll.sys_status().read()?.rcinit() == 0 {}
 
@@ -50,15 +41,16 @@ where
 		// wait for CPLOCK to be set
 		while self.ll.sys_status().read()?.cplock() == 0 {}
 
-		Ok(DW1000 {
+		Ok(DW3000 {
 			ll:    self.ll,
 			seq:   self.seq,
 			state: Uninitialized,
 		})
 	}
 
-	/// DOCUMENTATION
-	pub fn config(mut self, config: Config) -> Result<DW1000<SPI, CS, Ready>, Error<SPI, CS>> {
+	/// Configuration of the DW3000, need to be called after an init.
+	/// THis function need to be improved. TODO
+	pub fn config(mut self, config: Config) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
 		
 			// 1 STEP : CONFIGURATION DEPENDING ON PRF AND CHANNEL
 			// Registre DGC_CFG
@@ -82,6 +74,7 @@ where
 			})?;
 		
 /*
+		// TODO
 		//  FRAME FILTERING CONFIGURATION
 
 		if config.frame_filtering {
@@ -165,7 +158,7 @@ where
 		}
 		self.ll.ldo_ctrl().write(|w| w.value(val))?;
 
-		Ok(DW1000 {
+		Ok(DW3000 {
 			ll:    self.ll,
 			seq:   self.seq,
 			state: Ready,

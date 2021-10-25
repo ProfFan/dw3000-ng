@@ -1,7 +1,9 @@
 #![no_main]
 #![no_std]
 
-// crates de gestion des messages de debug
+// basic tag exemple to be used with basic anchor exemple
+// Values are not very stable on these exemple, could be a good idea to improve the 
+// configuration module (try to use )
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_rt::entry;
@@ -11,14 +13,10 @@ use stm32f1xx_hal::{
 	prelude::*,
 	spi::{Mode, Phase, Polarity, Spi},
 };
-use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
 use dw3000::{
 	hl,
-	time::{Duration, Instant},
 	Config,
-	RxConfig,
-	TxConfig,
 };
 use nb::block;
 
@@ -94,7 +92,7 @@ fn main() -> ! {
 	/****************************************************** */
 
 	rprintln!("On initialise le module : new + init en meme temps");
-	let mut dw3000 = hl::DW1000::new(spi, cs)
+	let mut dw3000 = hl::DW3000::new(spi, cs)
 		.init()
 		.expect("Failed init.")
 		.config(Config::default())
@@ -104,15 +102,14 @@ fn main() -> ! {
 	delay.delay_ms(3000u16);
 	rprintln!("l'état devrait etre en IDLE = {:#x?}", dw3000.state());
 
+	/*
 	dw3000
 		.ll()
 		.aon_dig_cfg()
 		.write(|w| w.onw_pgfcal(1))
 		.expect("Write to onw_pgfcal failed.");
-
+*/
 	// delay.delay_ms(1000u16);
-
-	// let FIXED_DELAY = Duration::from_nanos(5_000_000_u32);
 
 	// on cré un buffer pour stoquer le resultat message du receveur
 	let mut buffer = [0; 1024];
@@ -125,11 +122,11 @@ fn main() -> ! {
 		/********* RECEIVER ********* */
 		/**************************** */
 		let mut receiving = dw3000
-			.receive(RxConfig::default())
+			.receive(Config::default())
 			.expect("Failed configure receiver.");
 
 		// on recupère un message avec une fonction bloquante
-		let t2 = block!(receiving.wait(&mut buffer)).expect("bug pas stp").rx_time.value();
+		let t2 = block!(receiving.r_wait(&mut buffer)).expect("bug pas stp").rx_time.value();
 		let t2_tab = [
 			((t2 >> (8 * 4) ) & 0xFF ) as u8,
 			((t2 >> (8 * 3) ) & 0xFF ) as u8,
@@ -149,13 +146,12 @@ fn main() -> ! {
 		let mut sending = dw3000
 			.send(
 				&t2_tab,
-				mac::Address::broadcast(&mac::AddressMode::Short),
 				hl::SendTime::Now, //Delayed(received_instant + FIXED_DELAY - Instant::new(low_bits as u64).unwrap()),
-				TxConfig::default(),
+				Config::default(),
 			)
 			.expect("Failed configure transmitter");
 			
-		let t3 = block!(sending.wait()).unwrap().value();
+		let t3 = block!(sending.s_wait()).unwrap().value();
 		let t3_tab = [
 			((t3 >> (8 * 4) ) & 0xFF ) as u8,
 			((t3 >> (8 * 3) ) & 0xFF ) as u8,
@@ -175,22 +171,17 @@ fn main() -> ! {
 		let mut sending = dw3000
 			.send(
 				&t3_tab,
-				mac::Address::broadcast(&mac::AddressMode::Short),
 				hl::SendTime::Now, //Delayed(received_instant + FIXED_DELAY - Instant::new(low_bits as u64).unwrap()),
-				TxConfig::default(),
+				Config::default(),
 			)
 			.expect("Failed configure transmitter");
 			
-		let _t5 = block!(sending.wait()).unwrap();
+		let _t5 = block!(sending.s_wait()).unwrap();
 
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
 
 		// on affiche le resultat
 		rprintln!("t2 = {:?}", t2);
 		rprintln!("t3 = {:?}\n", t3);
-		// rprintln!(
-		// 	"erreur DX = {:?}\n",
-		// 	result - received_instant - FIXED_DELAY
-		// );
 	}
 }
