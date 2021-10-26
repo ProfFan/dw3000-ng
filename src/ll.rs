@@ -24,6 +24,7 @@ use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 /// Please consider using [hl::DW3000] instead.
 ///
 /// [hl::DW3000]: ../hl/struct.DW3000.html
+#[derive(Copy, Clone)]
 pub struct DW3000<SPI, CS> {
 	spi:         SPI,
 	chip_select: CS,

@@ -32,6 +32,7 @@ mod state_impls;
 mod uninitialized;
 
 /// Entry point to the DW3000 driver API
+#[derive(Copy, Clone)]
 pub struct DW3000<SPI, CS, State> {
 	ll:    ll::DW3000<SPI, CS>,
 	seq:   Wrapping<u8>,
