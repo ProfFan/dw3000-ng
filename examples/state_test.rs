@@ -13,10 +13,10 @@ use stm32f1xx_hal::{
 	spi::{Mode, Phase, Polarity, Spi},
 };
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use dw3000::{configs::FastCommand, hl, Config, Config};
+use dw3000::{configs::FastCommand, hl, Config};
 
 fn check_states<SPI, CS, State>(
-	dw3000: &mut hl::DW1000<SPI, CS, State>,
+	dw3000: &mut hl::DW3000<SPI, CS, State>,
 ) -> Result<(), hl::Error<SPI, CS>>
 where
 	SPI: spi::Transfer<u8> + spi::Write<u8>,
@@ -142,9 +142,8 @@ fn main() -> ! {
 	let mut sending = dw3000
 		.send(
 			b"ping",
-			mac::Address::broadcast(&mac::AddressMode::Short),
 			hl::SendTime::Delayed(delayed_tx_time),
-			TxConfig::default(),
+			Config::default(),
 		)
 		.expect("Failed configure transmitter");
 	rprintln!("changing to transmitter = {:#x?}", sending.state());

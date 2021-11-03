@@ -23,11 +23,14 @@ where
 	}
 
 	/// Initialize the DW3000
+	/// Basicaly, this is the pll configuration. We want to have a locked pll in order to provide a constant speed clock.
+	/// This is important when using th clock to measure distances.
+	/// At the end of this function, pll is locked and it can be checked by the bit CPLOCK in SYS_STATUS register (see state_test example)
 	pub fn init(mut self) -> Result<DW3000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
 		// Wait for the IDLE_RC state
 		while self.ll.sys_status().read()?.rcinit() == 0 {}
 
-		// CONFIGURATION DE LA PLL POUR PASSER DANS L'ETAT IDLE PLL
+		// PLL CONFIGURATION TO GO TO IDLE PLL STATE
 		// need to change default cal value for pll (page164)
 		self.ll.pll_cal().modify(|_, w| w.pll_cfg_ld(0x81))?;
 		// clear cplock
@@ -49,53 +52,37 @@ where
 	}
 
 	/// Configuration of the DW3000, need to be called after an init.
-	/// THis function need to be improved. TODO
+	/// This function need to be improved. TODO
+	/// There is several steps to do on this function that improve the sending and reception of a message.
+	/// Without doing this, the receiver almost never receive a frame form transmitter 
+	/// FIRST STEP : configuration depending on CONFIG chosen. Lot of register all around the datasheet can be changed in order to improve the signal
+	/// Some register needs to be changed without a lot of explanation so we tried to gather all of them in this function 
 	pub fn config(mut self, config: Config) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
 		
-			// 1 STEP : CONFIGURATION DEPENDING ON PRF AND CHANNEL
-			// Registre DGC_CFG
-			self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
-			self.ll.dgc_lut_1().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
-			self.ll.dgc_lut_2().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
-			self.ll.dgc_lut_3().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_3()))?;
-			self.ll.dgc_lut_4().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_4()))?;
-			self.ll.dgc_lut_5().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_5()))?;
-			self.ll.dgc_lut_6().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
-			self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
-			self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
-			// page 126
-			self.ll.dgc_cfg().modify(|_, w| {
-				w.rx_tune_en(
-					config
-						.pulse_repetition_frequency
-						.get_recommended_rx_tune_en(),
-				)
-				.thr_64(0x32)
-			})?;
-		
-/*
-		// TODO
-		//  FRAME FILTERING CONFIGURATION
+		// CONFIGURATION DEPENDING ON PRF AND CHANNEL
+		// Register DGC_CFG (page 124)
+		self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
+		self.ll.dgc_lut_1().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
+		self.ll.dgc_lut_2().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
+		self.ll.dgc_lut_3().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_3()))?;
+		self.ll.dgc_lut_4().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_4()))?;
+		self.ll.dgc_lut_5().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_5()))?;
+		self.ll.dgc_lut_6().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
+		self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
+		self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
+		// page 126
+		self.ll.dgc_cfg().modify(|_, w| {
+			w.rx_tune_en(
+				config
+					.pulse_repetition_frequency
+					.get_recommended_rx_tune_en(),
+			)
+			.thr_64(0x32)
+		})?;
 
-		if config.frame_filtering {
-			self.ll.sys_cfg().modify(
-				|_, w| w.ffen(0b1), // enable frame filtering
-			)?;
-			self.ll.ff_cfg().modify(
-				|_, w| {
-					w.ffab(0b1) // receive beacon frames
-						.ffad(0b1) // receive data frames
-						.ffaa(0b1) // receive acknowledgement frames
-						.ffam(0b1)
-				}, // receive MAC command frames
-			)?;
-		}
-		else {
-			self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
-		}
-
-		// CHANNEL, SFD et PRF (page 110)
-
+		// Register CHAN_CTRL (page 110) general configuration for channel control
+		// used to select transmit and receive channels, and configure preamble codes and 
+		// some related parameters.
 		self.ll.chan_ctrl().modify(|_, w| {
 			w
 				.rf_chan(config.channel as u8) // 0 if channel5 and 1 if channel9
@@ -113,27 +100,47 @@ where
 		})?;
 		self.ll.rf_tx_ctrl_1().modify(|_, w| w.value(0x0E))?;
 		self.ll
-			.rf_tx_ctrl_2()
-			.modify(|_, w| w.value(config.channel.get_recommended_rf_tx_ctrl_2()))?;
+				.rf_tx_ctrl_2()
+				.modify(|_, w| w.value(config.channel.get_recommended_rf_tx_ctrl_2()))?;
 		self.ll
-			.pll_cfg()
-			.modify(|_, w| w.value(config.channel.get_recommended_pll_conf()))?;
+				.pll_cfg()
+				.modify(|_, w| w.value(config.channel.get_recommended_pll_conf()))?;
 
+		// TRANSMITTER (TX_FCTRL) CONFIG (page 85) define BITRATE
+		// DEFINED IN SEND FUNCTION (READY STATE)
 
-		// 2.2 STEP : TRANSMITTER (TX_FCTRL) CONFIG (page 85) define BITRATE
-		// , PREAMBLE LENGTH (using number of symbol)
-
-		// 2.3 STEP : RECEIVER (DRX_CONF) CONF
+		// RECEIVER (DRX_CONF) CONF
 		self.ll.dtune0().modify(|_, w| {
 			w.pac(config.preamble_length.get_recommended_pac_size())
 				.dt0b4(0)
 		})?;
 		self.ll.dtune3().modify(|_, w| w.value(0xAF5F35CC))?;
 
+		// page 155
 		self.ll.ldo_rload().write(|w| w.value(0x14))?;
+		// page 164
 		self.ll.pll_cal().write(|w| w.pll_cfg_ld(0x1))?;
-*/
 
+
+		//  FRAME FILTERING CONFIGURATION
+		if config.frame_filtering {
+			self.ll.sys_cfg().modify(
+				|_, w| w.ffen(0b1), // enable frame filtering
+			)?;
+			self.ll.ff_cfg().modify(
+				|_, w| {
+					w.ffab(0b1) // receive beacon frames
+						.ffad(0b1) // receive data frames
+						.ffaa(0b1) // receive acknowledgement frames
+						.ffam(0b1) // Allow MAC command frame reception
+						// NEED ADD MORE
+				},
+			)?;
+		}
+		else {
+			self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
+		}
+	
 		// CALIBRATION 
 		// RF_CONF
 		let val = self.ll.ldo_ctrl().read()?.value();

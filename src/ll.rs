@@ -654,10 +654,10 @@ impl_register! {
 		lsadrape,    15,  15, u8; /// Long Source Address Data Request
 	}
 	0x00, 0x18, 1, RO, SPI_RD_CRC(spi_rd_crc) { /// SPI CRC read status
-		value, 0, 7, u8; /// Comment
+		value, 0, 7, u8; /// SPI CRC read status
 	}
 	0x00, 0x1C, 4, RO, SYS_TIME(sys_time) { ///  System Time Counter register
-		value, 0, 31, u32; /// Comment
+		value, 0, 31, u32; /// System Time Counter register
 	}
 	0x00, 0x24, 6, RW, TX_FCTRL(tx_fctrl) { /// TX Frame Control
 		txflen,      0,  9, u16;  /// TX Frame Length
@@ -670,57 +670,56 @@ impl_register! {
 	0x00, 0x2C, 4, RW, DX_TIME(dx_time) { /// Delayed Send or Receive Time
 		value, 0, 31, u32; /// Delayed Send or Receive Time
 	}
-	0x00, 0x30, 4, RW, DREF_TIME(dref_time) { /// commentaires
+	0x00, 0x30, 4, RW, DREF_TIME(dref_time) { ///  Delayed send or receive reference time
 		value, 0, 31, u32; /// Delayed send or receive reference time
 	}
-	0x00, 0x4, 3, RW, RX_FWTO(rx_fwto) { /// commentaires
+	0x00, 0x4, 3, RW, RX_FWTO(rx_fwto) { /// Receive frame wait timeout period
 		value, 0, 23, u32; /// Receive frame wait timeout period
 	}
 	0x00, 0x38, 1, RW, SYS_CTRL(sys_ctrl) { /// System Control Register
 		value, 0, 7, u8; /// System control
 	}
-	0x00, 0x3C, 6, RW, SYS_ENABLE(sys_enable) { /// A TESTER
-		cplock_en,      1,  1, u8; /// C
-		spicrce_en,     2,  2, u8; /// C
-		aat_en,         3,  3, u8; /// C
-		txfrb_en,       4,  4, u8; /// C
-		txprs_en,       5,  5, u8; /// C
-		txphs_en,       6,  6, u8; /// C
-		txfrs_en,       7,  7, u8; /// C
-		rxprd_en,       8,  8, u8; /// C
-		rxsfdd_en,      9,  9, u8; /// C
-		ciadone_en,    10,  10, u8; /// C
-		rxphd_en,      11,  11, u8; /// C
-		rxphe_en,      12,  12, u8; /// C
-		rxfr_en,       13,  13, u8; /// C
-		rxfcg_en,      14,  14, u8; /// C
-		rxfce_en,      15,  15, u8; /// C
-		rxrfsl_en,     16,  16, u8; /// C
-		rxfto_en,      17,  17, u8; /// C
-		ciaerr_en,     18,  18, u8; /// C
-		vwarn_en,      19,  19, u8; /// C
-		rxovrr_en,     20,  20, u8; /// C
-		rxpto_en,      21,  21, u8; /// C
-		spirdy_en,     23,  23, u8; /// C
-		rcinit_en,     24,  24, u8; /// C
-		pll_hilo_en,   25,  25, u8; /// C
-		rxsto_en,      26,  26, u8; /// C
-		hpdwarn_en,    27,  27, u8; /// C
-		cperr_en,      28,  28, u8; /// C
-		arfe_en,       29,  29, u8; /// C
-		rxprej_en,     33,  33, u8; /// C
-		vt_det_en,     36,  36, u8; /// C
-		gpioirq_en,    37,  37, u8; /// C
-		aes_done_en,   38,  38, u8; /// C
-		aes_err_en,    39,  39, u8; /// C
-		cdm_err_en,    40,  40, u8; /// C
-		spi_ovf_en,    41,  41, u8; /// C
-		spi_unf_en,    42,  42, u8; /// C
-		spi_err_en,    43,  43, u8; /// C
-		cca_fail_en,   44,  44, u8; /// C
+	0x00, 0x3C, 6, RW, SYS_ENABLE(sys_enable) { /// System event enable mask register
+		cplock_en,      1,  1, u8; /// Mask clock PLL lock event
+		spicrce_en,     2,  2, u8; /// Mask SPI CRC Error event
+		aat_en,         3,  3, u8; /// Mask automatic acknowledge trigger event
+		txfrb_en,       4,  4, u8; /// Mask transmit frame begins event
+		txprs_en,       5,  5, u8; /// Mask transmit preamble sent event
+		txphs_en,       6,  6, u8; /// Mask transmit PHY Header Sent event
+		txfrs_en,       7,  7, u8; /// Mask transmit frame sent event
+		rxprd_en,       8,  8, u8; /// Mask receiver preamble detected event
+		rxsfdd_en,      9,  9, u8; /// Mask receiver SFD detected event
+		ciadone_en,    10,  10, u8; /// Mask CIA processing done event
+		rxphd_en,      11,  11, u8; /// Mask receiver PHY header detect event
+		rxphe_en,      12,  12, u8; /// Mask receiver PHY header error event
+		rxfr_en,       13,  13, u8; /// Mask receiver data frame ready event
+		rxfcg_en,      14,  14, u8; /// Mask receiver FCS good event
+		rxfce_en,      15,  15, u8; /// Mask receiver FCS error event
+		rxrfsl_en,     16,  16, u8; /// Mask receiver Reed Solomon Frame Sync Loss event
+		rxfto_en,      17,  17, u8; /// Mask Receive Frame Wait Timeout event
+		ciaerr_en,     18,  18, u8; /// Mask leading edge detection processing error event
+		vwarn_en,      19,  19, u8; /// Mask Voltage warning event
+		rxovrr_en,     20,  20, u8; /// Receiver overrun
+		rxpto_en,      21,  21, u8; /// Mask Preamble detection timeout event
+		spirdy_en,     23,  23, u8; /// Mask SPI ready event
+		rcinit_en,     24,  24, u8; /// Mask IDLE RC event
+		pll_hilo_en,   25,  25, u8; /// Mask PLL Losing Lock warning event
+		rxsto_en,      26,  26, u8; /// Mask Receive SFD timeout event
+		hpdwarn_en,    27,  27, u8; /// Mask Half Period Delay Warning event
+		cperr_en,      28,  28, u8; /// Mask Scramble Timestamp Sequence (STS) error event
+		arfe_en,       29,  29, u8; /// Mask Automatic Frame Filtering rejection event
+		rxprej_en,     33,  33, u8; /// Mask Receiver Preamble Rejection event
+		vt_det_en,     36,  36, u8; /// Mask Voltage/Temperature variation dtection interrupt event
+		gpioirq_en,    37,  37, u8; /// Mask GPIO interrupt event
+		aes_done_en,   38,  38, u8; /// Mask AES done interrupt event
+		aes_err_en,    39,  39, u8; /// Mask AES error interrupt event
+		cdm_err_en,    40,  40, u8; /// Mask CMD error interrupt event
+		spi_ovf_en,    41,  41, u8; /// Mask SPI overflow interrupt event
+		spi_unf_en,    42,  42, u8; /// Mask SPI underflow interrupt event
+		spi_err_en,    43,  43, u8; /// Mask SPI error interrupt event
+		cca_fail_en,   44,  44, u8; /// Mask CCA fail interrupt event
 	}
 	0x00, 0x44, 6, RW, SYS_STATUS(sys_status) { /// System Event Status Register
-		// A TESTER
 		irqs,       0,  0, u8; /// Interrupt Request Status
 		cplock,     1,  1, u8; /// Clock PLL Lock
 		spicrce,    2,  2, u8; /// External Sync Clock Reset
@@ -740,29 +739,28 @@ impl_register! {
 		rxfsl,     16, 16, u8; /// RX Reed-Solomon Frame Sync Loss
 		rxfto,     17, 17, u8; /// RX Frame Wait Timeout
 		ciaerr,    18, 18, u8; /// Leading Edge Detection Error
-		vwarn,     19, 19, u8; /// C
+		vwarn,     19, 19, u8; /// Low voltage warning
 		rxovrr,    20, 20, u8; /// RX Overrun
-		rxpto,     21, 21, u8; /// C
-		spirdy,    23, 23, u8; /// C
-		rcinit,    24, 24, u8; /// C
-		pll_hilo,  25, 25, u8; /// C
-		rxsto,     26, 26, u8; /// C
-		hpdwarn,   27, 27, u8; /// C
-		cperr,     28, 28, u8; /// C
-		arfe,      29, 29, u8; /// C
-		rxprej,    29, 29, u8; /// C
-		vt_det,    33, 33, u8; /// C
-		gpioirq,   36, 36, u8; /// C
-		aes_done,  37, 37, u8; /// C
-		aes_err,   38, 38, u8; /// C
-		cmd_err,   39, 39, u8; /// C
-		spi_ovf,   40, 40, u8; /// C
-		spi_unf,   41, 41, u8; /// C
-		spierr,    42, 42, u8; /// C
-		cca_fail,  43, 43, u8; /// C
+		rxpto,     21, 21, u8; /// Preamble detection timeout
+		spirdy,    23, 23, u8; /// SPI ready for host access
+		rcinit,    24, 24, u8; /// RC INIT
+		pll_hilo,  25, 25, u8; /// lock PLL Losing Lock
+		rxsto,     26, 26, u8; /// Receive SFD timeout
+		hpdwarn,   27, 27, u8; /// Half Period Delay Warning
+		cperr,     28, 28, u8; /// Scramble Timestamp Sequence (STS) error
+		arfe,      29, 29, u8; /// Automatic Frame Filtering rejection
+		rxprej,    29, 29, u8; /// Receiver Preamble Rejection
+		vt_det,    33, 33, u8; /// Voltage or temperature variation detected
+		gpioirq,   36, 36, u8; /// GPIO interrupt
+		aes_done,  37, 37, u8; /// AES-DMA operation complete
+		aes_err,   38, 38, u8; /// AES-DMA error
+		cmd_err,   39, 39, u8; /// Command error
+		spi_ovf,   40, 40, u8; /// SPI overflow error
+		spi_unf,   41, 41, u8; /// SPI underflow error
+		spierr,    42, 42, u8; /// SPI collision error
+		cca_fail,  43, 43, u8; /// This event will be set as a result of failure of CMD_CCA_TX to transmit a packet
 	}
 	0x00, 0x4C, 4, RO, RX_FINFO(rx_finfo) { /// RX Frame Information
-		// A TESTER
 		rxflen,  0,  9, u16; /// Receive Frame Length
 		rxnspl, 11, 12, u8; /// Receive Non-Standard Preamble Length
 		rxbr,   13, 13, u8; /// Receive Bit Rate Report
@@ -772,127 +770,101 @@ impl_register! {
 		rxpacc, 20, 31, u16; /// Preamble Accumulation Count
 	}
 	0x00, 0x64, 16, RO, RX_TIME(rx_time) { /// Receive Time Stamp
-		// A TESTER
 		rx_stamp,  0,  39, u64; /// Fully adjusted time stamp
 		rx_rawst, 64, 95, u64; /// Raw time stamp
 	}
 	0x00, 0x74, 5, RO, TX_TIME(tx_time) { /// Transmit Time Stamp
-		// A TESTER
 		tx_stamp,  0, 39, u64; /// Fully adjusted time stamp
 	}
 	0x01, 0x00, 4, RO, TX_RAWST(tx_rawst) { /// Transmit time stamp raw
-		// A TESTER
-		value, 0, 31, u32; /// C
+		value, 0, 31, u32; /// Transmit time stamp raw
 	}
 	0x01, 0x04, 2, RW, TX_ANTD(tx_antd) { /// Transmitter antenna delay
-		// A TESTER
-		value, 0, 15, u16; /// C
+		value, 0, 15, u16; /// Transmitter antenna delay
 	}
 	0x01, 0x08, 4, RW, ACK_RESP(ack_resp) { /// Acknowledgement delay time and response time
-		// A TESTER
-		w4r_tim,  0, 19, u32; /// C
-		ack_tim,  24, 31, u8; /// C
+		w4r_tim,  0, 19, u32; /// Wait-for-Response turn-around Time
+		ack_tim,  24, 31, u8; /// Auto-Acknowledgement turn-around TimeC
 	}
 	0x01, 0x0C, 4, RW, TX_POWER(tx_power) { /// TX Power Control
-		// A TESTER
-		// The TX_POWER register has multiple sets of fields defined, depending
-		// on the smart TX power control setting. I don't know how to model
-		// this, so I've opted to provide just a single `value` field for
-		// maximum flexibility.
 		value, 0, 31, u32; /// TX Power Control value
 	}
 	0x01, 0x14, 2, RW, CHAN_CTRL(chan_ctrl) { /// Channel Control Register
-		// A TESTER
 		rf_chan,   0, 0, u8; /// Selects the receive channel.
 		sfd_type,  1, 2, u8; /// Enables the non-standard Decawave proprietary SFD sequence.
 		tx_pcode,  3, 7, u8; /// This field selects the preamble code used in the transmitter.
 		rx_pcode,  8, 12, u8; /// This field selects the preamble code used in the receiver.
 	}
-	0x01, 0x18, 4, RW, LE_PEND_01(le_pend_01) { /// C
-		// A TESTER
-		le_addr0,  0, 15, u16; /// CC
-		le_addr1, 16, 31, u16; /// CC
+	0x01, 0x18, 4, RW, LE_PEND_01(le_pend_01) { /// Low Energy device address 0 and 1
+		le_addr0,  0, 15, u16; /// Low Energy device 16-bit address
+		le_addr1, 16, 31, u16; /// Low Energy device 16-bit address
 	}
-	0x01, 0x1C, 4, RW, LE_PEND_23(le_pend_23) { /// C
-		// A TESTER
-		le_addr2,  0, 15, u16; /// CC
-		le_addr3, 16, 31, u16; /// CC
+	0x01, 0x1C, 4, RW, LE_PEND_23(le_pend_23) { /// Low Energy device address 2 and 3
+		le_addr2,  0, 15, u16; /// Low Energy device 16-bit address
+		le_addr3, 16, 31, u16; /// Low Energy device 16-bit address
 	}
-	0x01, 0x20, 1, RW, SPI_COLLISION(spi_collision) { /// C
-		// A TESTER
-		value,  0, 7, u8; /// Fully adjusted time stamp
+	0x01, 0x20, 1, RW, SPI_COLLISION(spi_collision) { /// SPI collision status
+		value,  0, 7, u8; /// SPI collision status
 	}
 	0x01, 0x24, 1, RW, RDB_STATUS(rdb_status) { /// RX double buffer status
-		// A TESTER
-		rxfcg0,     0, 0, u8; /// CC
-		rxfr0,      1, 1, u8; /// CC
-		ciadone0,   2, 2, u8; /// CC
-		cp_err0,    3, 3, u8; /// CC
-		rxfcg1,     4, 4, u8; /// CC
-		rxfr1,      5, 5, u8; /// CC
-		ciadone1,   6, 6, u8; /// CC
-		cp_err1,    7, 7, u8; /// CC
+		rxfcg0,     0, 0, u8; /// Receiver FCS Good
+		rxfr0,      1, 1, u8; /// Receiver Data Frame Ready
+		ciadone0,   2, 2, u8; /// CIA processing done on the CIR relating to a message in RX_BUFFER_0 when operating in double buffer mode
+		cp_err0,    3, 3, u8; /// Scramble Timestamp Sequence (STS) error
+		rxfcg1,     4, 4, u8; /// Receiver FCS Good
+		rxfr1,      5, 5, u8; /// Receiver Data Frame Ready
+		ciadone1,   6, 6, u8; /// CIA processing done on the CIR relating to a message in RX_BUFFER_1 when operating in double buffer mode
+		cp_err1,    7, 7, u8; /// Scramble Timestamp Sequence (STS) error
 	}
-	0x01, 0x28, 1, RW, RDB_DIAG(rdb_diag) { /// C
-		// A TESTER
-		rdb_dmode,    0, 2, u8; /// CC
+	0x01, 0x28, 1, RW, RDB_DIAG(rdb_diag) { /// RX double buffer diagnostic configuration
+		rdb_dmode,    0, 2, u8; /// RX double buffer diagnostic mode
 	}
-	0x01, 0x30, 2, RW, AES_CFG(aes_cfg) { /// C
-		// A TESTER
-		mode,        0, 0, u8; /// CC
-		key_size,    1, 2, u8; /// CC
-		key_addr,    3, 5, u8; /// CC
-		key_load,    6, 6, u8; /// CC
-		key_src,     7, 7, u8; /// CC
-		tag_size,    8, 10, u8; /// CC
-		core_sel,    11, 11, u8; /// CC
-		key_otp,     12, 12, u8; /// CC
+	0x01, 0x30, 2, RW, AES_CFG(aes_cfg) { /// AES configuration 
+		mode,        0, 0, u8; /// Mode of operation of AES core
+		key_size,    1, 2, u8; /// AES Key Size
+		key_addr,    3, 5, u8; /// Address offset of AES KEY 
+		key_load,    6, 6, u8; /// Load the AES KEY from AES KEY source
+		key_src,     7, 7, u8; /// AES key source
+		tag_size,    8, 10, u8; /// Size of AES tag field
+		core_sel,    11, 11, u8; /// AES Core select
+		key_otp,     12, 12, u8; /// AES key Memory source
 	}
-	0x01, 0x34, 4, RW, AES_IV0(aes_iv0) { /// C
-		// A TESTER
-		value,  0, 31, u32; /// CC
+	0x01, 0x34, 4, RW, AES_IV0(aes_iv0) { /// AES GCM core mode
+		value,  0, 31, u32; /// AES GCM core mode
 	}
-	0x01, 0x38, 4, RW, AES_IV1(aes_iv1) { /// C
-		// A TESTER
-		value,  0, 31, u32; /// CC
+	0x01, 0x38, 4, RW, AES_IV1(aes_iv1) { /// AES GCM core mode
+		value,  0, 31, u32; /// AES GCM core mode
 	}
-	0x01, 0x3C, 4, RW, AES_IV2(aes_iv2) { /// C
-		// A TESTER
-		value,  0, 31, u32; /// CC
+	0x01, 0x3C, 4, RW, AES_IV2(aes_iv2) { /// AES GCM core mode
+		value,  0, 31, u32; /// AES GCM core mode
 	}
-	0x01, 0x40, 2, RW, AES_IV3(aes_iv3) { /// C
-		// A TESTER
-		value,  0, 15, u16; /// CC
+	0x01, 0x40, 2, RW, AES_IV3(aes_iv3) { /// AES GCM core mode
+		value,  0, 15, u16; /// AES GCM core mode
 	}
-	0x01, 0x42, 2, RW, AES_IV4(aes_iv4) { /// C
-		// A TESTER
-		value,  0, 15, u16; /// CC
+	0x01, 0x42, 2, RW, AES_IV4(aes_iv4) { /// AES GCM core mode
+		value,  0, 15, u16; /// AES GCM core mode
 	}
-	0x01, 0x44, 8, RW, DMA_CFG(dma_cfg) { /// C
-		// A TESTER
-		src_port,   0, 2, u8; /// CC
-		src_addr,   3, 12, u16; /// CC
-		dst_port,   13, 15, u8; /// CC
-		dst_addr,   16, 25, u16; /// CC
-		cp_end_sel, 26, 26, u8; /// CC
-		hdr_size,   32, 38, u8; /// CC
-		pyld_size,  39, 48, u8; /// CC
+	0x01, 0x44, 8, RW, DMA_CFG(dma_cfg) { /// DMA configuration register
+		src_port,   0, 2, u8; /// Source memory port for DMA transfer
+		src_addr,   3, 12, u16; /// Address offset within source memory for DMA transfer
+		dst_port,   13, 15, u8; /// Destination memory port for DMA transfer
+		dst_addr,   16, 25, u16; /// Address offset within destination memory for DMA transfer
+		cp_end_sel, 26, 26, u8; /// Select the endianess of the CP seed port
+		hdr_size,   32, 38, u8; /// Size of header field in the packet to be transferred via the DMA
+		pyld_size,  39, 48, u8; /// Size of payload field in the packet to be transferred via the DMA
 	}
-	0x01, 0x4C, 1, RW, AES_START(aes_start) { /// C
-		// A TESTER
-		value,  0, 0, u8; /// CC
+	0x01, 0x4C, 1, RW, AES_START(aes_start) { /// Start AES operation
+		value,  0, 0, u8; /// Start AES operation
 	}
-	0x01, 0x50, 4, RW, AES_STS(aes_sts) { /// C
-		// A TESTER
-		aes_done,  0, 0, u8; /// CC
-		auth_err,  1, 1, u8; /// CC
-		trans_err,  2, 2, u8; /// CC
-		mem_conf,  3, 3, u8; /// CC
-		ram_empty,  4, 4, u8; /// CC
-		ram_full,  5, 5, u8; /// CC
+	0x01, 0x50, 4, RW, AES_STS(aes_sts) { /// The AES Status 
+		aes_done,  0, 0, u8; /// AES operation complete. Write 1 to clear
+		auth_err,  1, 1, u8; /// AES authentication error. Write 1 to clear.
+		trans_err,  2, 2, u8; /// Indicates error with DMA transfer to memory. Write 1 to clear
+		mem_conf,  3, 3, u8; /// Indicates access conflict between multiple masters (SPI host, CIA engine and AES-DMA engine) trying to access same memory
+		ram_empty,  4, 4, u8; /// Indicates AES scratch RAM is empty
+		ram_full,  5, 5, u8; /// Indicates AES scratch RAM is full
 	}
-	0x01, 0x54, 16, RW, AES_KEY(aes_key) { /// The 128-bit KEY for the AES GCM/CCM core
-		// A TESTER
+	0x01, 0x54, 16, RW, AES_KEY(aes_key) { /// The 128-bit KEY for the AES GCM/CCM* core
 		value,  0x0, 0x7F, u128; /// value
 	}
 
@@ -900,24 +872,19 @@ impl_register! {
 	/**************    STS CONFIG REGISTER   ***************************/
 	/*******************************************************************/
 	0x02, 0x00, 2, RW, STS_CFG(sts_cfg) { /// STS configuration
-		// A TESTER
 		cps_len,  0, 7, u8; /// STS length
 	}
 	0x02, 0x04, 1, RW, STS_CTRL(sts_ctrl) { /// STS control
-		// A TESTER
 		load_iv,  0, 0, u8; /// Load STS_IV bit into the AES-128 block for the generation of STS
 		rst_last, 1, 1, u8; /// Start from last, when it is set to 1 the STS generation starts from the last count that was used by the AES-128 block for the generation of the previous STS.
 	}
 	0x02, 0x08, 2, RW, STS_STS(sts_sts) { /// STS status
-		// A TESTER
 		acc_qual,  0, 11, u16; /// STS accumulation quality
 	}
 	0x02, 0x0C, 16, RW, STS_KEY(sts_key) { /// STS 128-bit KEY
-		// A TESTER
 		value,  0x0, 0x7F, u128; /// value
 	}
 	0x02, 0x1C, 16, RW, STS_IV(sts_iv) { /// STS 128-bit IV
-		// A TESTER
 		value,  0x0, 0x7F, u128; /// value
 	}
 
@@ -925,48 +892,37 @@ impl_register! {
 	/*****************    RX_TUNE REGISTER   ***************************/
 	/*******************************************************************/
 	0x03, 0x18, 2, RW, DGC_CFG(dgc_cfg) { /// RX tuning configuration register
-		// A TESTER
 		rx_tune_en,  0,  0, u8; /// RX tuning enable bit
 		thr_64,      9, 14, u8; /// RX tuning threshold configuration for 64 MHz PRF
 	}
-	0x03, 0x1C, 4, RW, DGC_CFG0(dgc_cfg0) { /// RX tuning configuration register
-		// A TESTER
+	0x03, 0x1C, 4, RW, DGC_CFG0(dgc_cfg0) { /// DGC_CFG0
 		value,  0, 31, u32; /// Value
 	}
-	0x03, 0x20, 4, RW, DGC_CFG1(dgc_cfg1) { /// C
-		// A TESTER
+	0x03, 0x20, 4, RW, DGC_CFG1(dgc_cfg1) { /// DGC_CFG1
 		value,  0, 31, u32; /// Value
 	}
-	0x03, 0x38, 4, RW, DGC_LUT_0(dgc_lut_0) { /// C
-		// A TESTER
+	0x03, 0x38, 4, RW, DGC_LUT_0(dgc_lut_0) { /// DGC_LUT_0
 		value,  0, 31, u32; /// Value
 	}
-	0x03, 0x3C, 4, RW, DGC_LUT_1(dgc_lut_1) { /// C
-		// A TESTER
+	0x03, 0x3C, 4, RW, DGC_LUT_1(dgc_lut_1) { /// DGC_LUT_1
 		value,  0, 31, u32; /// Value
 	}
-	0x03, 0x40, 4, RW, DGC_LUT_2(dgc_lut_2) { /// C
-		// A TESTER
+	0x03, 0x40, 4, RW, DGC_LUT_2(dgc_lut_2) { /// DGC_LUT_2
 		value,  0, 31, u32; /// Value
 	}
-	0x03, 0x44, 4, RW, DGC_LUT_3(dgc_lut_3) { /// C
-		// A TESTER
+	0x03, 0x44, 4, RW, DGC_LUT_3(dgc_lut_3) { /// DGC_LUT_3
 		value,  0, 31, u32; /// Value
 	}
-	0x03, 0x48, 4, RW, DGC_LUT_4(dgc_lut_4) { /// C
-		// A TESTER
+	0x03, 0x48, 4, RW, DGC_LUT_4(dgc_lut_4) { /// DGC_LUT_4
 		value,  0, 31, u32; /// Value
 	}
-	0x03, 0x4C, 4, RW, DGC_LUT_5(dgc_lut_5) { /// C
-		// A TESTER
+	0x03, 0x4C, 4, RW, DGC_LUT_5(dgc_lut_5) { /// DGC_LUT_5
 		value,  0, 31, u32; /// Value
 	}
-	0x03, 0x50, 4, RW, DGC_LUT_6(dgc_lut_6) { /// C
-		// A TESTER
+	0x03, 0x50, 4, RW, DGC_LUT_6(dgc_lut_6) { /// DGC_LUT_6
 		value,  0, 31, u32; /// Value
 	}
 	0x03, 0x60, 4, RW, DGC_DBG(dgc_dbg) { /// Reports DGC information
-		// A TESTER
 		dgc_decision,  28,  30, u8; /// DGC decision index.
 	}
 
@@ -974,26 +930,21 @@ impl_register! {
 	/*****************    EXT_SYNC REGISTER   **************************/
 	/*******************************************************************/
 	0x04, 0x00, 4, RW, EC_CTRL(ec_ctrl) { /// External clock synchronisation counter configuration
-		// A TESTER
 		osts_wait,  3,  10, u8; /// Wait counter used for external timebase reset
 		ostr_mode,  11,  11, u8; /// External timebase reset mode enable bit
 	}
 	0x04, 0x0C, 4, RW, RX_CAL(rx_cal) { /// RX calibration block configuration
-		// A TESTER
 		cal_mode,   0,   1, u8; /// RX calibration mode
 		cal_en,     4,   7, u8; /// RX calibration enable
 		comp_dly,  16,  19, u8; /// RX calibration tuning value
 	}
 	0x04, 0x14, 4, RW, RX_CAL_RESI(rx_cal_resi) { /// RX calibration block result
-		// A TESTER
 		value,  0,  28, u32; /// reports the result once the RX calibration is complete
 	}
 	0x04, 0x1C, 4, RW, RX_CAL_RESQ(rx_cal_resq) { /// RX calibration block result
-		// A TESTER
 		value,  0,  28, u32; /// reports the result once the RX calibration is complete
 	}
 	0x04, 0x20, 1, RW, RX_CAL_STS(rx_cal_sts) { /// RX calibration block status
-		// A TESTER
 		value,  0,  0, u8; ///  reports the status once the RX calibration is complete
 	}
 
@@ -1001,7 +952,6 @@ impl_register! {
 	/*****************    GPIO_CTRL REGISTER   *************************/
 	/*******************************************************************/
 	0x05, 0x00, 4, RW, GPIO_MODE(gpio_mode) { /// GPIO Mode Control Register
-		// A TESTER
 		msgp0,  0,  2, u8; ///  Mode Selection for GPIO0/RXOKLED
 		msgp1,  3,  5, u8; ///  Mode Selection for GPIO1/SFDLED
 		msgp2,  6,  8, u8; ///  Mode Selection for GPIO2/RXLED
@@ -1154,7 +1104,7 @@ impl_register! {
 		value,  0,  31, u32; /// value
 	}
 	0x06, 0x29, 3, RO, DRX_CAR_INT(drx_car_int) { /// Carrier recovery integrator register
-		//  formule de math !! A FINIR
+		//  formule de math !! A FINIR // TODO
 	}
 
 	/*******************************************************************/
@@ -1167,12 +1117,12 @@ impl_register! {
 		value,  0,  31, u32; /// value
 	}
 	0x07, 0x14, 4, RW, RF_SWITCH(rf_switch) { /// RF switch configuration
-		antswnotoggle,  0,  0, u8; /// CC
-		antswpdoaport,  1,  1, u8; /// CC
-		antswen,        8,  8, u8; /// CC
-		antswctrl,     12, 14, u8; /// CC
-		trxswen,       16, 16, u8; /// CC
-		trxswctrl,     24, 29, u8; /// CC
+		antswnotoggle,  0,  0, u8; /// When set to 1, the automatic toggling of the antenna switch is disabled when the device is operating in PDoA modes
+		antswpdoaport,  1,  1, u8; /// Specifies the starting port for reception when the device is operating in PDoA modes
+		antswen,        8,  8, u8; /// Setting this to 1 will enable manual control of the antenna switch 
+		antswctrl,     12, 14, u8; /// Manual control of antenna switch when ANTSWEN is set
+		trxswen,       16, 16, u8; /// Setting this to 1 will enable manual control of the TX RX switch
+		trxswctrl,     24, 29, u8; /// TX/RX switch control when TRXSWEN bit is set
 	}
 	0x07, 0x1A, 1, RW, RF_TX_CTRL_1(rf_tx_ctrl_1) { /// RF transmitter configuration
 		value,  0,  7, u8; /// value

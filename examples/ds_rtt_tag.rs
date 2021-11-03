@@ -1,7 +1,8 @@
 #![no_main]
 #![no_std]
 
-// simple tag exemple to be used with simple anchor exemple to implement RTT communication
+// simple tag exemple to be used with ds_rtt_anchor exemple 
+// to implement double sided RTT communication
 
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
@@ -16,6 +17,7 @@ use embedded_hal::digital::v2::OutputPin;
 use dw3000::{
 	hl,
 	Config,
+	time::{Instant},
 };
 use nb::block;
 
@@ -25,7 +27,7 @@ fn main() -> ! {
 	rprintln!("Coucou copain !");
 
 	/******************************************************* */
-	/************       CONFIGURATION DE BASE     ********** */
+	/************            BASE CONFIG          ********** */
 	/******************************************************* */
 
 	// Get access to the device specific peripherals from the peripheral access
@@ -49,7 +51,7 @@ fn main() -> ! {
 	let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
 
 	/***************************************************** */
-	/************       CONFIGURATION DU SPI       ******* */
+	/************       SPI CONFIGURATION          ******* */
 	/***************************************************** */
 
 	let pins = (
@@ -75,7 +77,7 @@ fn main() -> ! {
 	);
 
 	/****************************************************** */
-	/*****       CONFIGURATION DU RESET du DW3000   ******* */
+	/*****                  DW3000 RESET            ******* */
 	/****************************************************** */
 
 	let mut delay = Delay::new(cp.SYST, clocks);
@@ -87,100 +89,98 @@ fn main() -> ! {
 	rst_n.set_high().unwrap();
 
 	/****************************************************** */
-	/*********       CONFIGURATION du DW3000       ******** */
+	/*********       DW3000 CONFIGURATION          ******** */
 	/****************************************************** */
 
-	rprintln!("On initialise le module : new + init en meme temps");
 	let mut dw3000 = hl::DW3000::new(spi, cs)
 		.init()
 		.expect("Failed init.")
 		.config(Config::default())
 		.expect("Failed config.");
-	rprintln!("dm3000 = {:?}", dw3000);
 
-	delay.delay_ms(3000u16);
-	rprintln!("l'état devrait etre en IDLE = {:#x?}", dw3000.state());
-
-	/*
-	dw3000
-		.ll()
-		.aon_dig_cfg()
-		.write(|w| w.onw_pgfcal(1))
-		.expect("Write to onw_pgfcal failed.");
-*/
-	// delay.delay_ms(1000u16);
-
-	// on cré un buffer pour stoquer le resultat message du receveur
-	let mut buffer = [0; 1024];
-	// let mut received_instant: Instant;
 	dw3000.set_antenna_delay(0,0).unwrap();
+
+	let mut buffer = [0; 1024]; // buffer to store reveived frame
+	let fixed_delay = 0x10000000; // fixed delay for the transmission after a message reception
 
 	loop {
 
 		/**************************** */
-		/********* RECEIVER ********* */
+		/********* RECEIVER T1 ****** */
 		/**************************** */
 		let mut receiving = dw3000
 			.receive(Config::default())
 			.expect("Failed configure receiver.");
 
-		// on recupère un message avec une fonction bloquante
-		let t2 = block!(receiving.r_wait(&mut buffer)).expect("bug pas stp").rx_time.value();
-		let t2_tab = [
-			((t2 >> (8 * 4) ) & 0xFF ) as u8,
-			((t2 >> (8 * 3) ) & 0xFF ) as u8,
-			((t2 >> (8 * 2) ) & 0xFF ) as u8,
-			((t2 >>  8      ) & 0xFF ) as u8,
-			 (t2              & 0xFF ) as u8,
+		// block until receive RX_TIME (40 bits)
+		let t2 = block!(receiving.r_wait(&mut buffer)).expect("failed receiving data").rx_time.value();
+		
+		dw3000 = receiving
+			.finish_receiving()
+			.expect("Failed to finish receiving");
+
+		let y = t2 & 0x1FF; // we store the last 9 bits of T2
+		let t3 = t2 + fixed_delay;
+		let delta_ar = fixed_delay - y;
+		//rprintln!("delta_ar = {:b}", delta_ar);
+		let delta_ar_send = [
+			((delta_ar >> (8 * 3) ) & 0xFF ) as u8,
+			((delta_ar >> (8 * 2) ) & 0xFF ) as u8,
+			((delta_ar >>  8      ) & 0xFF ) as u8,
+			 (delta_ar              & 0xFF ) as u8,
 		];
+
+		//rprintln!("t2 = {:b}", t2);
+		//rprintln!("y = {:b}", y);
+		//rprintln!("t3 = {:b}", t3);
+
+		/**************************** */
+		/*** TRANSMITTER delta_ar *****/
+		/**************************** */
+
+		let mut sending = dw3000
+			.send(
+				&delta_ar_send,
+				hl::SendTime::Delayed(Instant::new(t3).unwrap()),
+				Config::default(),
+			)
+			.expect("Failed configure transmitter");	
+		block!(sending.s_wait());
+
+		dw3000 = sending.finish_sending().expect("Failed to finish sending");
+		
+		/**************************** */
+		/*  RECEIVER delta_tr, delta_tl AND T6    */
+		/**************************** */
+		let mut receiving = dw3000
+			.receive(Config::default())
+			.expect("Failed configure receiver.");
+		
+		// block until receive RX_TIME (40 bits)
+		let result = block!(receiving.r_wait(&mut buffer));
 
 		dw3000 = receiving
 			.finish_receiving()
 			.expect("Failed to finish receiving");
 
-		/**************************** */
-		/******** TRANSMITTER ******* */
-		/**************************** */
+			let result = result.unwrap();
+			let t6:u64 = result.rx_time.value();
+			let x = result.frame.payload;
+			let delta_tl: u64 = ((x[0] as u64) << (8 * 3))
+						+ ((x[1] as u64) << (8 * 2))
+						+ ((x[2] as u64) << (8 * 1))
+						+ (x[3] as u64);
+			let delta_tr: u64 = ((x[4] as u64) << (8 * 3))
+						+ ((x[5] as u64) << (8 * 2))
+						+ ((x[6] as u64) << (8 * 1))
+						+ (x[7] as u64);
+			let delta_al = t6 - t3;
 
-		let mut sending = dw3000
-			.send(
-				&t2_tab,
-				hl::SendTime::Now, //Delayed(received_instant + FIXED_DELAY - Instant::new(low_bits as u64).unwrap()),
-				Config::default(),
-			)
-			.expect("Failed configure transmitter");
-			
-		let t3 = block!(sending.s_wait()).unwrap().value();
-		let t3_tab = [
-			((t3 >> (8 * 4) ) & 0xFF ) as u8,
-			((t3 >> (8 * 3) ) & 0xFF ) as u8,
-			((t3 >> (8 * 2) ) & 0xFF ) as u8,
-			((t3 >>  8      ) & 0xFF ) as u8,
-			 (t3              & 0xFF ) as u8,
-		];
-
-		dw3000 = sending.finish_sending().expect("Failed to finish sending");
-
-		delay.delay_ms(100_u32);
-
-		/**************************** */
-		/******** TRANSMITTER ******* */
-		/**************************** */
-
-		let mut sending = dw3000
-			.send(
-				&t3_tab,
-				hl::SendTime::Now, //Delayed(received_instant + FIXED_DELAY - Instant::new(low_bits as u64).unwrap()),
-				Config::default(),
-			)
-			.expect("Failed configure transmitter");
-			
-		let _t5 = block!(sending.s_wait()).unwrap();
-
-		dw3000 = sending.finish_sending().expect("Failed to finish sending");
-
-		// on affiche le resultat
-		rprintln!("t2 = {:?}", t2);
-		rprintln!("t3 = {:?}\n", t3);
+		let tof =
+			(delta_tl * delta_al) - (delta_ar * delta_al) 
+			/ (delta_tl + delta_tr + delta_al + delta_ar);
+		
+			// print result (Time Of Flight)
+		rprintln!("TOF = {:?}", tof);
 	}
 }
