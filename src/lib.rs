@@ -1,24 +1,24 @@
-//! Driver crate for the DW1000 UWB transceiver
+//! Driver crate for the DW3000 UWB transceiver
 //!
 //! The recommended way to use this driver is the [high-level interface]. If you
 //! require a higher degree of flexibility, you can use the
 //! [register-level interface] instead.
 //!
-//! If you're using the DWM1001 module or DWM1001-Dev board, you probably don't
-//! want to use this crate directly. Consider using the [`dwm1001`] crate
-//! instead. The `dwm1001` crate also contains [usage examples] for this crate's
-//! API.
+//! We used the crate [`dw1000`] developped for the DW1000 module and changed 
+//! the registers access and spi functions, added fast command and implemented 
+//! some high level functions.
+//! 
+//! We tried a first positionning exemple using RTT methode.
+//! Lot of work still need to be added like the use of PDoA or AoA.
+//! 
+//! These examples uses a NUCLEO STM32F103RB
 //!
 //! This driver is built on top of [`embedded-hal`], which means it is portable
-//! and can be used on any platform that implements the `embedded-hal` API. It
-//! is only well-tested on the Nordic nRF52832 microcontroller though (the
-//! microcontroller used on the DWM1001 module), so be aware that you might run
-//! into problems on other devices.
+//! and can be used on any platform that implements the `embedded-hal` API.
 //!
 //! [high-level interface]: hl/index.html
 //! [register-level interface]: ll/index.html
-//! [`dwm1001`]: https://crates.io/crates/dwm1001
-//! [usage examples]: https://github.com/braun-robotics/rust-dwm1001/tree/master/examples
+//! [`dw1000`]: https://crates.io/crates/dw1000
 //! [`embedded-hal`]: https://crates.io/crates/embedded-hal
 
 #![no_std]
@@ -27,15 +27,16 @@
 pub mod configs;
 pub mod hl;
 pub mod ll;
-// pub mod range_bias;
-pub mod ranging;
 pub mod time;
+
+/// Redirection of nb::block
+pub mod block{pub use nb::block;}
 
 #[doc(no_inline)]
 pub use ieee802154::mac;
 
 pub use crate::{
-	configs::{RxConfig, TxConfig},
+	configs::{Config, FastCommand},
 	hl::{
 		AutoDoubleBufferReceiving,
 		Error,
@@ -45,6 +46,7 @@ pub use crate::{
 		SingleBufferReceiving,
 		Sleeping,
 		Uninitialized,
-		DW1000,
+		DW3000,
 	},
+	block::block,
 };

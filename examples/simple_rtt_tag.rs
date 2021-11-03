@@ -1,7 +1,8 @@
 #![no_main]
 #![no_std]
 
-// crates de gestion des messages de debug
+// simple tag exemple to be used with simple anchor exemple to implement RTT communication
+
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_rt::entry;
@@ -11,9 +12,11 @@ use stm32f1xx_hal::{
 	prelude::*,
 	spi::{Mode, Phase, Polarity, Spi},
 };
-use ieee802154::mac;
 use embedded_hal::digital::v2::OutputPin;
-use dw3000::{hl, RxConfig, TxConfig};
+use dw3000::{
+	hl,
+	Config,
+};
 use nb::block;
 
 #[entry]
@@ -87,69 +90,97 @@ fn main() -> ! {
 	/*********       CONFIGURATION du DW3000       ******** */
 	/****************************************************** */
 
-	let mut dw3000 = hl::DW1000::new(spi, cs)
-		.init(&mut delay)
-		.expect("Failed init.");
+	rprintln!("On initialise le module : new + init en meme temps");
+	let mut dw3000 = hl::DW3000::new(spi, cs)
+		.init()
+		.expect("Failed init.")
+		.config(Config::default())
+		.expect("Failed config.");
 	rprintln!("dm3000 = {:?}", dw3000);
 
+	delay.delay_ms(3000u16);
+	rprintln!("l'état devrait etre en IDLE = {:#x?}", dw3000.state());
+
+	/*
+	dw3000
+		.ll()
+		.aon_dig_cfg()
+		.write(|w| w.onw_pgfcal(1))
+		.expect("Write to onw_pgfcal failed.");
+*/
+	// delay.delay_ms(1000u16);
+
+	// on cré un buffer pour stoquer le resultat message du receveur
+	let mut buffer = [0; 1024];
+	// let mut received_instant: Instant;
+	dw3000.set_antenna_delay(0,0).unwrap();
+
 	loop {
-		/**************************** */
-		/******** TRANSMITTER ******* */
-		/**************************** */
-		let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
-
-		let mut sending = dw3000
-			.send(
-				b"ping",
-				mac::Address::broadcast(&mac::AddressMode::Short),
-				hl::SendTime::Delayed(delayed_tx_time),
-				TxConfig::default(),
-			)
-			.expect("Failed configure transmitter");
-
-		rprintln!("transmitter = {:?}", sending);
-		rprintln!("cmd_status = {:#x?}", sending.cmd_status());
-		rprintln!("state = {:#x?}", sending.state());
-		rprintln!("TX state = {:#x?}", sending.tx_state());
-
-		delay.delay_ms(10u8);
-
-		// on recupère un message avec une fonction bloquante
-		rprintln!("on commence une fonction qui bloque !");
-		let result = block!(sending.wait());
-		rprintln!("on est sorti de la fonction qui bloque !");
-
-		// on affiche le resultat
-		rprintln!("result = {:?}", result);
-
-		dw3000 = sending.finish_sending().expect("Failed to finish sending");
 
 		/**************************** */
 		/********* RECEIVER ********* */
 		/**************************** */
 		let mut receiving = dw3000
-			.receive(RxConfig::default())
+			.receive(Config::default())
 			.expect("Failed configure receiver.");
 
-		rprintln!("receiver = {:?}", receiving);
-		rprintln!("cmd_status = {:#x?}", receiving.cmd_status());
-		rprintln!("state = {:#x?}", receiving.state());
-		rprintln!("RX state = {:#x?}", receiving.rx_state());
-
-		// on cré un buffer pour stoquer le resultat message du receveur
-		let mut buffer = [0; 1024];
-		delay.delay_ms(10u8);
-
 		// on recupère un message avec une fonction bloquante
-		rprintln!("on commence une fonction qui bloque !");
-		let result = block!(receiving.wait(&mut buffer));
-		rprintln!("on est sorti de la fonction qui bloque !");
-
-		// on affiche le resultat
-		rprintln!("result = {:?}", result);
+		let t2 = block!(receiving.r_wait(&mut buffer)).expect("bug pas stp").rx_time.value();
+		let t2_tab = [
+			((t2 >> (8 * 4) ) & 0xFF ) as u8,
+			((t2 >> (8 * 3) ) & 0xFF ) as u8,
+			((t2 >> (8 * 2) ) & 0xFF ) as u8,
+			((t2 >>  8      ) & 0xFF ) as u8,
+			 (t2              & 0xFF ) as u8,
+		];
 
 		dw3000 = receiving
 			.finish_receiving()
 			.expect("Failed to finish receiving");
+
+		/**************************** */
+		/******** TRANSMITTER ******* */
+		/**************************** */
+
+		let mut sending = dw3000
+			.send(
+				&t2_tab,
+				hl::SendTime::Now, //Delayed(received_instant + FIXED_DELAY - Instant::new(low_bits as u64).unwrap()),
+				Config::default(),
+			)
+			.expect("Failed configure transmitter");
+			
+		let t3 = block!(sending.s_wait()).unwrap().value();
+		let t3_tab = [
+			((t3 >> (8 * 4) ) & 0xFF ) as u8,
+			((t3 >> (8 * 3) ) & 0xFF ) as u8,
+			((t3 >> (8 * 2) ) & 0xFF ) as u8,
+			((t3 >>  8      ) & 0xFF ) as u8,
+			 (t3              & 0xFF ) as u8,
+		];
+
+		dw3000 = sending.finish_sending().expect("Failed to finish sending");
+
+		delay.delay_ms(100_u32);
+
+		/**************************** */
+		/******** TRANSMITTER ******* */
+		/**************************** */
+
+		let mut sending = dw3000
+			.send(
+				&t3_tab,
+				hl::SendTime::Now, //Delayed(received_instant + FIXED_DELAY - Instant::new(low_bits as u64).unwrap()),
+				Config::default(),
+			)
+			.expect("Failed configure transmitter");
+			
+		let _t5 = block!(sending.s_wait()).unwrap();
+
+		dw3000 = sending.finish_sending().expect("Failed to finish sending");
+
+		// on affiche le resultat
+		rprintln!("t2 = {:?}", t2);
+		rprintln!("t3 = {:?}\n", t3);
 	}
 }

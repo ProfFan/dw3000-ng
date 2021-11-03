@@ -1,6 +1,6 @@
-//! Time-related types based on the DW1000's system time
+//! Time-related types based on the DW3000's system time
 
-use core::ops::Add;
+use core::ops::{Add, Sub};
 
 use serde::{Deserialize, Serialize};
 
@@ -9,11 +9,11 @@ pub const TIME_MAX: u64 = 0xffffffffff;
 
 /// Represents an instant in time
 ///
-/// You can get the current DW1000 system time by calling [`DW1000::sys_time`].
+/// You can get the current DW3000 system time by calling [`DW3000::sys_time`].
 ///
-/// Internally uses the same 40-bit timestamps that the DW1000 uses.
+/// Internally uses the same 40-bit timestamps that the DW3000 uses.
 ///
-/// [`DW1000::sys_time`]: ../hl/struct.DW1000.html#method.sys_time
+/// [`DW3000::sys_time`]: ../hl/struct.DW3000.html#method.sys_time
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[repr(C)]
 pub struct Instant(u64);
@@ -30,7 +30,7 @@ impl Instant {
 	/// # Example
 	///
 	/// ``` rust
-	/// use dw1000::time::{
+	/// use dw3000::time::{
 	///     TIME_MAX,
 	///     Instant,
 	/// };
@@ -60,13 +60,13 @@ impl Instant {
 	///
 	/// Assumes that `&self` represents a later time than the argument
 	/// `earlier`. Please make sure that this is the case, as this method has no
-	/// way of knowing (DW1000 timestamps can overflow, so comparing the
+	/// way of knowing (DW3000 timestamps can overflow, so comparing the
 	/// numerical value of the timestamp doesn't tell anything about order).
 	///
 	/// # Example
 	///
 	/// ``` rust
-	/// use dw1000::time::{
+	/// use dw3000::time::{
 	///     TIME_MAX,
 	///     Instant,
 	/// };
@@ -111,9 +111,49 @@ impl Add<Duration> for Instant {
 	}
 }
 
-/// A duration between two instants in DW1000 system time
+impl Sub<Duration> for Instant {
+	type Output = Instant;
+
+	fn sub(self, rhs: Duration) -> Self::Output {
+		// Both `Instant` and `Duration` are guaranteed to contain 40-bit
+		// numbers, so this addition will never overflow.
+		let value : u64;
+		if (self.value() as i64 - rhs.value() as i64) < 0 {
+			value = TIME_MAX + self.value() - rhs.value();
+		}
+		else {
+			value = self.value() - rhs.value();
+		}
+
+		// We made sure to keep the result of the addition within `TIME_MAX`, so
+		// the following will never panic.
+		Instant::new(value).unwrap()
+	}
+}
+
+impl Sub<Instant> for Instant {
+	type Output = Instant;
+
+	fn sub(self, rhs: Instant) -> Self::Output {
+		// Both `Instant` and `Duration` are guaranteed to contain 40-bit
+		// numbers, so this addition will never overflow.
+		let value : u64;
+		if (self.value() as i64 - rhs.value() as i64) < 0 {
+			value = TIME_MAX + self.value() - rhs.value();
+		}
+		else {
+			value = self.value() - rhs.value();
+		}
+
+		// We made sure to keep the result of the addition within `TIME_MAX`, so
+		// the following will never panic.
+		Instant::new(value).unwrap()
+	}
+}
+
+/// A duration between two instants in DW3000 system time
 ///
-/// Internally uses the same 40-bit timestamps that the DW1000 uses.
+/// Internally uses the same 40-bit timestamps that the DW3000 uses.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, Eq, PartialEq)]
 #[repr(C)]
 pub struct Duration(u64);
@@ -130,7 +170,7 @@ impl Duration {
 	/// # Example
 	///
 	/// ``` rust
-	/// use dw1000::time::{
+	/// use dw3000::time::{
 	///     TIME_MAX,
 	///     Duration,
 	/// };

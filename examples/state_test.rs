@@ -1,7 +1,8 @@
 #![no_main]
 #![no_std]
 
-// crates de gestion des messages de debug
+// Exemple to look at the different module states 
+
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_rt::entry;
@@ -12,10 +13,10 @@ use stm32f1xx_hal::{
 	spi::{Mode, Phase, Polarity, Spi},
 };
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use dw3000::{hl, RxConfig};
+use dw3000::{configs::FastCommand, hl, Config};
 
 fn check_states<SPI, CS, State>(
-	dw3000: &mut hl::DW1000<SPI, CS, State>,
+	dw3000: &mut hl::DW3000<SPI, CS, State>,
 ) -> Result<(), hl::Error<SPI, CS>>
 where
 	SPI: spi::Transfer<u8> + spi::Write<u8>,
@@ -23,16 +24,16 @@ where
 	State: hl::Awake,
 {
 	if dw3000.init_rc_passed()? {
-		rprintln!("Après la fonction new, on est dans l'état INIT_RC (rcinit = 1)");
+		rprintln!("INIT_RC state (rcinit = 1)");
 	}
 	if dw3000.idle_rc_passed()? {
-		rprintln!("Après la fonction new, on est dans l'état IDLE_RC (spirdy = 1)");
+		rprintln!("IDLE_RC state (spirdy = 1)");
 	}
 	if dw3000.idle_pll_passed()? {
-		rprintln!("Après la fonction new, on est dans l'état IDLE_PLL (cpclock = 1)");
+		rprintln!("IDLE_PLL state (cpclock = 1)");
 	}
 	rprintln!(
-		"Après la fonction new, on est dans l'état {:#x?}\n\n",
+		"the state is {:#x?}\n\n",
 		dw3000.state()?
 	);
 	Ok(())
@@ -44,7 +45,7 @@ fn main() -> ! {
 	rprintln!("Coucou copain !\n\n");
 
 	/******************************************************* */
-	/************       CONFIGURATION DE BASE     ********** */
+	/************       BASE CONFIGURATION        ********** */
 	/******************************************************* */
 
 	// Get access to the device specific peripherals from the peripheral access
@@ -68,7 +69,7 @@ fn main() -> ! {
 	let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
 
 	/***************************************************** */
-	/************       CONFIGURATION DU SPI       ******* */
+	/************       SPI CONFIGURATION        ********* */
 	/***************************************************** */
 
 	let pins = (
@@ -94,7 +95,7 @@ fn main() -> ! {
 	);
 
 	/****************************************************** */
-	/*****       CONFIGURATION DU RESET du DW3000   ******* */
+	/*****                 DW3000 RESET             ******* */
 	/****************************************************** */
 
 	// NEW
@@ -107,107 +108,59 @@ fn main() -> ! {
 	rst_n.set_high().unwrap();
 
 	/****************************************************** */
-	/*********       CONFIGURATION du DW3000       ******** */
+	/*********          DW3000 CONFIGURATION       ******** */
 	/****************************************************** */
 
-	let mut dw3000 = hl::DW1000::new(spi, cs);
+	let mut dw3000 = hl::DW3000::new(spi, cs);
 
 	check_states(&mut dw3000).unwrap();
 	delay.delay_ms(1000u16);
 
 	check_states(&mut dw3000).unwrap();
 
-	// activation de la calibration auto
+	// auto calibration activation
 	// dw3000.ll().aon_dig_cfg().write(|w| w.onw_pgfcal(1));
 
 	// INIT
-	let mut dw3000 = dw3000.init(&mut delay).expect("Failed init.");
+	let mut dw3000 = dw3000.init().expect("Failed init.");
 
 	check_states(&mut dw3000).unwrap();
 
-	// CONF DE LA PLL pour passer en mode IDLE_PLL
-
-	// set CAL_EN in PLL_CAL register
-	dw3000
-		.ll()
-		.pll_cal()
-		.write(|w| w.cal_en(1))
-		.expect("Write to PLL_CAL failed");
-	//clear CP_LOCK
-
-	// In CLK_CTRL sub register, the 2 bits of SYS_CLK are set to AUTO
-
-	// set AINIT2IDLE
-	dw3000
-		.ll()
-		.seq_ctrl()
-		.write(|w| w.ainit2idle(1))
-		.expect("Write to AINIT2IDLE failed");
-	// wait for CP_LOCK = 1
-
-	// set PLL_CFG (4 bytes) / PLL_CFG_CH
-	dw3000
-		.ll()
-		.pll_cfg()
-		.write(|w| w.value(0x1F3C))
-		.expect("Write 0x1F3C to PLL_CFG failed");
-	// if channel 9, blabla
-	// setting rf_tx_ctrl_1
-	dw3000
-		.ll()
-		.rf_tx_ctrl_1()
-		.write(|w| w.value(0x0E))
-		.expect("Write 0x0E to rf_tx_ctrl_1 failed");
-	// setting pll_cal
-	dw3000
-		.ll()
-		.pll_cal()
-		.modify(|_, w| w.pll_cfg_ld(0x81))
-		.expect("Write 0x81 to pll_cfg_ld failed");
-	// clearing cp_lock
-	dw3000
-		.ll()
-		.sys_status()
-		.write(|w| w.cplock(1))
-		.expect("Write to cp_lock failed");
-	delay.delay_ms(1000u16);
-
 	rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
-	// PLL
-	// CLK_CTRL, SYS_CLK to auto
-	dw3000
-		.ll()
-		.clk_ctrl()
-		.modify(|_, w| w.sys_clk(0))
-		.expect("Write to SYS_CLK failed");
-	// set ainit2idle
-	dw3000
-		.ll()
-		.seq_ctrl()
-		.modify(|_, w| w.ainit2idle(1))
-		.expect("Write to ainit2idle failed");
-	// check CPLOCK
+	delay.delay_ms(10_000_u16);
+
+	let mut dw3000 = dw3000.config(Config::default()).expect("Failed init.");
+
+	check_states(&mut dw3000).unwrap();
 	rprintln!("la pll est elle lock ? = {:#x?}", dw3000.idle_pll_passed());
 
+	// TRANSMITTER
+
+	let delayed_tx_time = dw3000.sys_time().expect("Failed to get time");
+
+	let mut sending = dw3000
+		.send(
+			b"ping",
+			hl::SendTime::Delayed(delayed_tx_time),
+			Config::default(),
+		)
+		.expect("Failed configure transmitter");
+	rprintln!("changing to transmitter = {:#x?}", sending.state());
+
 	delay.delay_ms(1000u16);
-	//dw3000.ll().fast_command(0);
 
-	// ON PASSE EN MODE RECEVEUR
-	let mut receiving = dw3000
-		.receive(RxConfig {
-			frame_filtering: false,
-			..RxConfig::default()
-		})
-		.expect("Failed configure receiver.");
-	rprintln!("On passe en mode reception = {:#x?}", receiving.state());
+	rprintln!("\nhow is the transmitter ?\n");
+	rprintln!("State ? : {:#x?}", sending.tx_state());
 
-	delay.delay_ms(1000u16);
-
-	rprintln!("\nOn regarde ou en est le receveur\n");
-	rprintln!("Etat ? : {:#x?}", receiving.rx_state());
+	let mut dw3000 = sending.finish_sending().expect("");
 
 	loop {
+		dw3000
+			.ll()
+			.fast_command(FastCommand::CMD_RX as u8)
+			.expect("");
+		dw3000.fast_cmd(FastCommand::CMD_RX).expect("");
 		delay.delay_ms(10000u16);
 	}
 }

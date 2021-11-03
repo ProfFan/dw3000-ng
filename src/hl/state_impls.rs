@@ -1,36 +1,36 @@
-use crate::{time::Duration, RxConfig};
+use crate::{time::Duration, Config};
 
-/// Indicates that the `DW1000` instance is not initialized yet
+/// Indicates that the `DW3000` instance is not initialized yet
 #[derive(Debug)]
 pub struct Uninitialized;
 
-/// Indicates that the `DW1000` instance is ready to be used
+/// Indicates that the `DW3000` instance is ready to be used
 #[derive(Debug)]
 pub struct Ready;
 
-/// Indicates that the `DW1000` instance is currently sending
+/// Indicates that the `DW3000` instance is currently sending
 #[derive(Debug)]
 pub struct Sending {
 	pub(super) finished: bool,
 }
 
-/// Indicates that the `DW1000` instance is currently receiving in single buffer
+/// Indicates that the `DW3000` instance is currently receiving in single buffer
 /// mode (default)
 #[derive(Debug)]
 pub struct SingleBufferReceiving {
 	pub(super) finished: bool,
-	pub(super) config:   RxConfig,
+	pub(super) config:   Config,
 }
 
-/// Indicates that the `DW1000` instance is currently receiving in double buffer
+/// Indicates that the `DW3000` instance is currently receiving in double buffer
 /// mode
 #[derive(Debug)]
 pub struct AutoDoubleBufferReceiving {
 	pub(super) finished: bool,
-	pub(super) config:   RxConfig,
+	pub(super) config:   Config,
 }
 
-/// Indicates that the `DW1000` instance is currently sleeping
+/// Indicates that the `DW3000` instance is currently sleeping
 #[derive(Debug)]
 pub struct Sleeping {
 	/// Tx antenna delay isn't stored in AON, so we'll do it ourselves.
@@ -64,7 +64,7 @@ pub trait Receiving: Awake {
 	/// Return true if the receiving state has been marked as finished
 	fn is_finished(&self) -> bool;
 	/// Get the rx radio config
-	fn get_rx_config(&self) -> &RxConfig;
+	fn get_rx_config(&self) -> &Config;
 }
 impl Receiving for SingleBufferReceiving {
 	const AUTO_RX_REENABLE: bool = false;
@@ -74,7 +74,7 @@ impl Receiving for SingleBufferReceiving {
 
 	fn is_finished(&self) -> bool { self.finished }
 
-	fn get_rx_config(&self) -> &RxConfig { &self.config }
+	fn get_rx_config(&self) -> &Config { &self.config }
 }
 impl Receiving for AutoDoubleBufferReceiving {
 	const AUTO_RX_REENABLE: bool = true;
@@ -84,5 +84,5 @@ impl Receiving for AutoDoubleBufferReceiving {
 
 	fn is_finished(&self) -> bool { self.finished }
 
-	fn get_rx_config(&self) -> &RxConfig { &self.config }
+	fn get_rx_config(&self) -> &Config { &self.config }
 }
