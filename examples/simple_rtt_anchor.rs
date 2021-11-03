@@ -170,7 +170,7 @@ fn main() -> ! {
 		rprintln!("T2 = {:?}", t2);
 		rprintln!("T3 = {:?}", t3);
 		rprintln!("T4 = {:?}", t4);
-		rprintln!("distance = {:?}\n\n", ((t4-t1-t3+t2) / 2) as i64); // speed in ns
+		rprintln!("distance = {:?}\n\n", ((t4-t1-t3+t2) / 128) as i64); // speed in ns
 		// (((result_time - transmit_time - 320_000_000)as f64 * 299.792_458) / 128.0) as u64);
 	}
 }

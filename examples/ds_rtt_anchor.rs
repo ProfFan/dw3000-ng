@@ -98,11 +98,11 @@ fn main() -> ! {
 	dw3000.set_antenna_delay(0,0).expect("Failed set antenna delay.");
 
 	let mut buffer = [0; 1024]; // buffer to store reveived frame
-	let fixed_delay = 0x10000000; // fixed delay for the transmission after a message reception
+	let fixed_delay = 0x800000000; // fixed delay for the transmission after a message reception
 
 	loop {
 
-		delay.delay_ms(2000_u32);
+		delay.delay_ms(500_u32);
 
 		/**************************** */
 		/******** TRANSMITTER T1 **** */
@@ -134,16 +134,15 @@ fn main() -> ! {
 			.expect("Failed to finish receiving");
 		let result = result.unwrap();
 		let t4:u64 = result.rx_time.value();
-		let delta_tl = t4 - t1;/*
+		let delta_tl = t4 - t1;
 		let x = result.frame.payload;
 		let delta_ar: u64 = ((x[0] as u64) << (8 * 3))
 					+ ((x[1] as u64) << (8 * 2))
 					+ ((x[2] as u64) << (8 * 1))
-					+ (x[3] as u64);*/
-		//rprintln!("delta_ar = {:b}", delta_ar);
-
+					+ (x[3] as u64);
+		// rprintln!("delta_ar recu = {:?}", delta_ar); 
 		let y = t4 & 0x1FF; // on prend les 9 derniers bits de T4
-		let t5 = t4 + fixed_delay;
+		let mut t5 = t4 + fixed_delay;
 		let delta_tr = fixed_delay - y;
 		let delta_tr_tl = [
 			((delta_tl >> (8 * 3) ) & 0xFF ) as u8,
@@ -156,6 +155,10 @@ fn main() -> ! {
 			((delta_tr >>  8      ) & 0xFF ) as u8,
 			 (delta_tr              & 0xFF ) as u8,
 		];
+
+		if t5 > 0xFFFFFFFFFF {
+			t5 %= 0xFFFFFFFFFF;
+		}
 
 		/**************************** */
 		/*** TRANSMITTER delta_tr AND delta_tl *** */

@@ -101,8 +101,8 @@ fn main() -> ! {
 	dw3000.set_antenna_delay(0,0).unwrap();
 
 	let mut buffer = [0; 1024]; // buffer to store reveived frame
-	let fixed_delay = 0x10000000; // fixed delay for the transmission after a message reception
-
+	let fixed_delay = 0x800000000; // fixed delay for the transmission after a message reception
+	// divide by 64 to have nanoseconds
 	loop {
 
 		/**************************** */
@@ -120,7 +120,7 @@ fn main() -> ! {
 			.expect("Failed to finish receiving");
 
 		let y = t2 & 0x1FF; // we store the last 9 bits of T2
-		let t3 = t2 + fixed_delay;
+		let mut t3 = t2 + fixed_delay;
 		let delta_ar = fixed_delay - y;
 		//rprintln!("delta_ar = {:b}", delta_ar);
 		let delta_ar_send = [
@@ -130,9 +130,15 @@ fn main() -> ! {
 			 (delta_ar              & 0xFF ) as u8,
 		];
 
+		if t3 > 0xFFFFFFFFFF {
+			t3 %= 0xFFFFFFFFFF;
+		}
 		//rprintln!("t2 = {:b}", t2);
 		//rprintln!("y = {:b}", y);
 		//rprintln!("t3 = {:b}", t3);
+		//rprintln!("t3 - t2 = {:?}", t3 - t2);
+		//rprintln!("delta_ar envoyé = {:?}", delta_ar);
+
 
 		/**************************** */
 		/*** TRANSMITTER delta_ar *****/
@@ -177,10 +183,10 @@ fn main() -> ! {
 			let delta_al = t6 - t3;
 
 		let tof =
-			(delta_tl * delta_al) - (delta_ar * delta_al) 
-			/ (delta_tl + delta_tr + delta_al + delta_ar);
+			(delta_tl * delta_al - delta_ar * delta_al) as f64
+			/ (64*(delta_tl + delta_tr + delta_al + delta_ar)) as f64;
 		
 			// print result (Time Of Flight)
-		rprintln!("TOF = {:?}", tof);
+		rprintln!("TOF = {:?}", tof as u64);
 	}
 }
