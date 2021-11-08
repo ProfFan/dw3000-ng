@@ -29,12 +29,13 @@ dw3000 = "0.1.2"
 ## Documentation
 
 Please refer to the **[API Reference]**.
+Please refer to our github for exemples **[github link]**.
 
 Please also refer to the [DW3000 User Manual] 
 
 [API Reference]: https://docs.rs/dw3000
 [DW3000 User Manual]: https://www.decawave.com/wp-content/uploads/2021/05/DW3000-User-Manual-1.pdf#page=110&zoom=100,68,106
-
+[github link]: https://github.com/SII-Public-Research/dw3000
 
 ## License
 
