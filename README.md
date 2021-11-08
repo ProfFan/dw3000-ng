@@ -22,7 +22,7 @@ This driver is built on top of embedded-hal, which means it is portable and can 
 Include this crate in your Cargo project by adding the following to `Cargo.toml`:
 ```toml
 [dependencies]
-dw3000 = "0.1.1"
+dw3000 = "0.1.2"
 ```
 
 
