@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Rust DW3000 Driver [![crates.io](https://img.shields.io/crates/v/dw3000.svg)](https://crates.io/crates/dw3000) [![Documentation](https://docs.rs/dw3000/badge.svg)](https://docs.rs/dw3000)
 ## Introduction
 
@@ -49,6 +48,3 @@ See [LICENSE.md] for full details.
 
 **Based on [Braun Embedded](https://braun-embedded.com/)** <br />
 **Modified by Clément PENE and Romain SABORET** <br />
-=======
-ta gueule
->>>>>>> 7ed5f4d6efb79f0875dacbf422317fc6307621f7

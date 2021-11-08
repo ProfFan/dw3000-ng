@@ -1,0 +1,52 @@
+[package]
+name    = "dw3000"
+description = "A driver for DW3000 Ultra Wide Band module implementing low and high level"
+version = "0.1.1"
+authors = ["Clement Pene <clement.pene@sii.fr>", "Romain Saboret <romain.saboret@sii.fr>"]
+edition = "2018"
+license = "0BSD"
+
+[dependencies]
+byte         = "0.2.4"
+embedded-hal = "0.2.4"
+ieee802154   = "0.5.0"
+nb           = "1.0.0"
+fixed        = "1.7.0"
+micromath    = "2.0.0"
+rtt-target = { version = "0.3.1", features = ["cortex-m"] }
+
+[dependencies.serde]
+version = "1.0.125"
+default-features = false
+features = ["derive"]
+
+[dependencies.ssmarshal]
+version = "1.0.0"
+default-features = false
+
+[dependencies.num_enum]
+version = "0.5.1"
+default-features = false
+
+[dev-dependencies]
+cortex-m = "0.6.0"
+cortex-m-rt = "0.6.10"
+#cortex-m-semihosting = "0.3.3"
+#panic-semihosting = "0.5.6"
+panic-rtt-target = { version = "0.1.0", features = ["cortex-m"] }
+rtt-target = { version = "0.3.1", features = ["cortex-m"] }
+#panic-halt = "0.2.0"
+#panic-abort = "0.3.2"
+nb = "1.0.0"
+
+[dev-dependencies.stm32f1]
+version = "0.13.0"
+features = ["stm32f103", "rt"]
+
+[dev-dependencies.stm32f1xx-hal]
+features = ["stm32f103", "rt", "medium"]
+version = "^0.6.1"
+
+[features]
+default = []
+std = ["ssmarshal/std", "serde/std", "num_enum/std"]
