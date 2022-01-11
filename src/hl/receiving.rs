@@ -234,12 +234,11 @@ where
 	}
 
 	
-	#[allow(clippy::type_complexity)]
 	/// Finishes receiving and returns to the `Ready` state
 	///
 	/// If the receive operation has finished, as indicated by `wait`, this is a
 	/// no-op. If the receive operation is still ongoing, it will be aborted.
-	pub fn finish_receiving(self) -> Result<DW3000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
+	pub fn finish_receiving(self) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
 
 		Ok(DW3000 {
 			ll:    self.ll,
@@ -247,26 +246,4 @@ where
 			state: Ready,
 		})
 	}
-}
-
-impl<SPI, CS> DW3000<SPI, CS, AutoDoubleBufferReceiving>
-where
-	SPI: spi::Transfer<u8> + spi::Write<u8>,
-	CS: OutputPin,
-{
-	/*
-	/// TODO
-	/// Try to continue receiving
-	pub fn continue_receiving(
-		self,
-	) -> Result<
-		DW3000<SPI, CS, AutoDoubleBufferReceiving>,
-		Result<DW3000<SPI, CS, Ready>, (Self, Error<SPI, CS>)>,
-	> {
-		if !self.state.is_finished() {
-			Err(self.finish_receiving())
-		} else {
-			Ok(self)
-		}
-	}*/
 }
