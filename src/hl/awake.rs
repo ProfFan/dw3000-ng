@@ -7,6 +7,7 @@ use crate::{
 	Error,
 	DW3000,
 	configs,
+	Ready,
 };
 use super::Awake;
 
