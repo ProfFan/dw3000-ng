@@ -7,6 +7,7 @@ use crate::{
 	Error,
 	DW3000,
 	configs,
+	Ready,
 };
 use super::Awake;
 
@@ -91,9 +92,13 @@ where
 	/// Force the DW3000 into IDLE mode
 	///
 	/// Any ongoing RX/TX operations will be aborted.
-	pub(super) fn force_idle(&mut self, _double_buffered: bool) -> Result<(), Error<SPI, CS>> {
+	pub(super) fn force_idle(mut self) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
 		self.ll.fast_command(0)?;
-		Ok(())
+		Ok(DW3000 {
+			ll:    self.ll,
+			seq:   self.seq,
+			state: Ready,
+		})
 	}
 
 	/// Use fast command ll in hl
