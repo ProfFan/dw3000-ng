@@ -92,7 +92,7 @@ where
 	/// Force the DW3000 into IDLE mode
 	///
 	/// Any ongoing RX/TX operations will be aborted.
-	pub(super) fn force_idle(mut self) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
+	pub fn force_idle(mut self) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
 		self.ll.fast_command(0)?;
 		Ok(DW3000 {
 			ll:    self.ll,
