@@ -92,13 +92,13 @@ where
 	/// Force the DW3000 into IDLE mode
 	///
 	/// Any ongoing RX/TX operations will be aborted.
-	pub fn force_idle(mut self) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
+	pub fn force_idle(&mut self) -> Result<(), Error<SPI, CS>> {
+		// our probleme on this function is that we never come back to IDLE_PLL with a locked PLL after usng fast command 0
+		
 		self.ll.fast_command(0)?;
-		Ok(DW3000 {
-			ll:    self.ll,
-			seq:   self.seq,
-			state: Ready,
-		})
+		//while self.ll.sys_status().read()?.rcinit() == 0 {}
+		//while self.ll.sys_status().read()?.cplock() == 0 {}
+		Ok(())
 	}
 
 	/// Use fast command ll in hl
