@@ -97,23 +97,24 @@ where
 	///
 	/// If the send operation has finished, as indicated by `wait`, this is a
 	/// no-op. If the send operation is still ongoing, it will be aborted.
-	pub fn finish_sending(self) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
-		
+	pub fn finish_sending(mut self) -> Result<DW3000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
+		// In order to avoid undetermined states after a sending, we will force the state to idle
+
+		if !self.state.finished{
+			match self.force_idle() {
+                Ok(()) => (),
+                Err(error) => return Err((self, error)),
+            }
+			match self.reset_flags() {
+                Ok(()) => (),
+                Err(error) => return Err((self, error)),
+            }
+		}
+
 		Ok(DW3000 {
 			ll:    self.ll,
 			seq:   self.seq,
 			state: Ready,
 		})
-	}
-
-	fn reset_flags(&mut self) -> Result<(), Error<SPI, CS>> {
-		self.ll.sys_status().write(|w| {
-			w.txfrb(0b1)    // Transmit Frame Begins
-					.txprs(0b1) // Transmit Preamble Sent
-					.txphs(0b1) // Transmit PHY Header Sent
-					.txfrs(0b1) // Transmit Frame Sent
-		})?;
-
-		Ok(())
 	}
 }
