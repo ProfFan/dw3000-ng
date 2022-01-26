@@ -238,7 +238,17 @@ where
 	///
 	/// If the receive operation has finished, as indicated by `wait`, this is a
 	/// no-op. If the receive operation is still ongoing, it will be aborted.
-	pub fn finish_receiving(self) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
+	pub fn finish_receiving(mut self) -> Result<DW3000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
+		// TO DO : if we are not in state 3 (IDLE), we need to have a reset of the module (with a new initialisation)
+		// BECAUSE : using force_idle (fast command 0) is not puting the pll back to stable !!!
+		// let dw3000 = self.force_idle()?;
+
+		if !self.state.is_finished() {
+			match self.force_idle() {
+                Ok(()) => (),
+                Err(error) => return Err((self, error)),
+            }
+		}
 
 		Ok(DW3000 {
 			ll:    self.ll,
