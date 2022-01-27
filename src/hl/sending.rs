@@ -117,4 +117,14 @@ where
 			state: Ready,
 		})
 	}
+	fn reset_flags(&mut self) -> Result<(), Error<SPI, CS>> {
+		self.ll.sys_status().write(|w| {
+			w.txfrb(0b1)    // Transmit Frame Begins
+					.txprs(0b1) // Transmit Preamble Sent
+					.txphs(0b1) // Transmit PHY Header Sent
+					.txfrs(0b1) // Transmit Frame Sent
+		})?;
+
+		Ok(())
+	}
 }
