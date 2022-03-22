@@ -109,7 +109,7 @@ where
 		send_time: SendTime,
 		config: Config,
 	) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
-		/*
+		
 				// Clear event counters
 				self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
 				while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
@@ -123,8 +123,8 @@ where
 				// all subsequent send operations will fail. Let's disable the
 				// transceiver and force the chip into IDLE mode to make sure that
 				// doesn't happen.
-				self.force_idle(false)?;
-		*/
+				//self.force_idle(false)?;
+		
 		let seq = self.seq.0;
 		self.seq += Wrapping(1);
 
