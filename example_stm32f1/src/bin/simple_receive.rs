@@ -14,7 +14,7 @@ use stm32f1xx_hal::{
 	spi::{Mode, Phase, Polarity, Spi},
 };
 
-use dw3000::{hl::{self,ConfigGPIOs}, Config};
+use dw3000::{hl, Config};
 use nb::block;
 
 

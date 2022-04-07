@@ -22,6 +22,7 @@ panic-probe = { version = "0.3.0", features = ["print-defmt"] }
 # TODO(4) enter your HAL here
 stm32f1xx-hal = { version = "0.8.0", features = ["stm32f103", "rt", "medium"] }
 dw3000 = {path = "../"}
+nb           = "1.0.0"
 
 [dev-dependencies]
 defmt-test = "0.3.0"

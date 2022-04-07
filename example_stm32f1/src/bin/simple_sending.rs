@@ -12,7 +12,7 @@ use stm32f1xx_hal::{
 	prelude::*,
 	spi::{Mode, Phase, Polarity, Spi},
 };
-use dw3000::{hl::{self,ConfigGPIOs}, Config};
+use dw3000::{hl, Config};
 
 
 #[cortex_m_rt::entry]
