@@ -1,7 +1,6 @@
 /*
-	A simple example to be used with simple_sending. It will receive a frame on a loop
+	A simple example to be used with simple_sending. It will receive a frame in a loop
 */
-
 #![no_main]
 #![no_std]
 
@@ -22,7 +21,7 @@ use nb::block;
 fn main() -> ! {
 
     /******************************************************* */
-	/************       CONFIGURATION DE BASE     ********** */
+	/************        BASIC CONFIGURATION      ********** */
 	/******************************************************* */
 
 	// Get access to the device specific peripherals from the peripheral access
@@ -46,21 +45,24 @@ fn main() -> ! {
 	let mut gpiob = dp.GPIOB.split();
 
 	/***************************************************** */
-	/************       CONFIGURATION DU SPI       ******* */
+	/************         SPI CONFIGURATION        ******* */
 	/***************************************************** */
 
+	// CLOCK / MISO / MOSI
 	let pins = (
 		gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl),
 		gpioa.pa6.into_floating_input(&mut gpioa.crl),
 		gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl),
 	);
 
+	// Chip Select
 	let cs = gpiob.pb6.into_push_pull_output(&mut gpiob.crl);
 
 	let spi_mode = Mode {
 		polarity: Polarity::IdleLow,
 		phase:    Phase::CaptureOnFirstTransition,
 	};
+
 	let spi = Spi::spi1(
 		dp.SPI1,
 		pins,
@@ -71,19 +73,15 @@ fn main() -> ! {
 	);
 
 	/****************************************************** */
-	/*****       CONFIGURATION DU RESET du DW3000   ******* */
+	/*****                DW3000 RESET              ******* */
 	/****************************************************** */
 
-	let mut delay = Delay::new(cp.SYST, clocks);
-
 	let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
-
-	// UWB module reset
 	rst_n.set_low();
 	rst_n.set_high();
 
 	/****************************************************** */
-	/*********       CONFIGURATION du DW3000       ******** */
+	/*********         DW3000 CONFIGURATION        ******** */
 	/****************************************************** */
 
 	let mut dw3000 = hl::DW3000::new(spi, cs)
@@ -91,27 +89,30 @@ fn main() -> ! {
 		.expect("Failed init.")
 		.config(Config::default())
 		.expect("Failed config.");
-	delay.delay_ms(3000u16);
-    defmt::println!("configuration du DW3000 terminée");
+	
+	let mut delay = Delay::new(cp.SYST, clocks);
+	delay.delay_ms(500u16);
+
+    defmt::println!("Init OK");
 
 	loop {
+		// Initiate Reception
+		let mut buffer = [0; 1024];
         let mut receiving = dw3000
 			.receive(Config::default())
 			.expect("Failed configure receiver.");
-	    let mut buffer = [0; 1024];
+
+		// Waiting for an incomming frame
 	    let result = match block!(receiving.r_wait(&mut buffer)) {
-			Ok(t) => {
-				defmt::println!("Received something at {}", receiving.ll().rx_time().read().unwrap().rx_stamp());
-				t
-			},
-			Err(e) => match e {
-				_ => {
-					defmt::println!("Erreur Receive");
-					dw3000 = receiving.finish_receiving().expect("Failed to finish receiving");
-					continue
-				}
+			Ok(t) => t,
+			Err(_e) => {
+				defmt::println!("Error");
+				dw3000 = receiving.finish_receiving().expect("Failed to finish receiving");
+				continue // Start a new loop iteration
 			}
 		};
+
+		defmt::println!("Received '{}' at {}", result.frame.payload, result.rx_time.value());
 		dw3000 = receiving.finish_receiving().expect("Failed to finish receiving");
 	}
 }

@@ -1,5 +1,5 @@
 /*
-	A simple exemple to be used with simple_receive. It will send a frame on a loop
+	A simple exemple to be used with simple_receive. It will send a frame in a loop
 */
 #![no_main]
 #![no_std]
@@ -12,7 +12,9 @@ use stm32f1xx_hal::{
 	prelude::*,
 	spi::{Mode, Phase, Polarity, Spi},
 };
+
 use dw3000::{hl, Config};
+use nb::block;
 
 
 #[cortex_m_rt::entry]
@@ -71,7 +73,7 @@ fn main() -> ! {
 	);
 
 	/****************************************************** */
-	/*****               RESET DW3000               ******* */
+	/*****                DW3000 RESET              ******* */
 	/****************************************************** */
 
 	let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
@@ -98,11 +100,18 @@ fn main() -> ! {
 		let mut sending = dw3000
 			.send(&[0, 1, 2, 3, 4], hl::SendTime::Now, Config::default())
 			.expect("Failed configure transmitter");
+				
+		// Waiting for the frame to be sent
+		let result = match block!(sending.s_wait()) {
+			Ok(t) => t,
+			Err(_e) => {
+				defmt::println!("Error");
+				dw3000 = sending.finish_sending().expect("Failed to finish sending");
+				continue // Start a new loop iteration
+			}
+		};
 
-		// Waiting 1ms for the frame to be sent (more than needed)
-		delay.delay_ms(1u16);
-		defmt::println!("Last frame sent at {}", sending.ll().tx_time().read().unwrap().tx_stamp());
-		
+		defmt::println!("Last frame sent at {}", result.value());
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
 	}
 }
