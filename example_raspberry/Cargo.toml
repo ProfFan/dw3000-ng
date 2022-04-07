@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 rppal = {version = "0.13.1", features = ["hal"]}
 dw3000 = {path = "../"}
+nb           = "1.0.0"
+embedded-timeout-macros = "0.3.0"
+embedded-hal = "0.2.4"

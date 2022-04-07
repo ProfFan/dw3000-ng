@@ -1,3 +1,15 @@
 [alias]
-rb = "run --bin"
-rrb = "run --release --bin"
+rr = "run -p example_raspberry --bin"
+rb = "build -p example_raspberry --bin"
+rc = "check -p example_raspberry --bin"
+rrr = "run --release -p example_raspberry --bin"
+rrb = "build --release -p example_raspberry --bin"
+rrc = "check --release -p example_raspberry --bin"
+
+
+sr = "run -p example_stm32f1 --bin"
+sb = "build -p example_stm32f1 --bin"
+sc = "check -p example_stm32f1 --bin"
+srb = "build --release -p example_stm32f1 --bin"
+srr = "run --release -p example_stm32f1 --bin"
+src = "check --release -p example_stm32f1 --bin"
