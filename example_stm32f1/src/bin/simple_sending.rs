@@ -19,7 +19,7 @@ use dw3000::{hl, Config};
 fn main() -> ! {
 
     /******************************************************* */
-	/************       CONFIGURATION DE BASE     ********** */
+	/************        BASIC CONFIGURATION      ********** */
 	/******************************************************* */
 
 	// Get access to the device specific peripherals from the peripheral access
@@ -43,21 +43,24 @@ fn main() -> ! {
 	let mut gpiob = dp.GPIOB.split();
 
 	/***************************************************** */
-	/************       CONFIGURATION DU SPI       ******* */
+	/************         SPI CONFIGURATION        ******* */
 	/***************************************************** */
 
+	// CLOCK / MISO / MOSI
 	let pins = (
 		gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl),
 		gpioa.pa6.into_floating_input(&mut gpioa.crl),
 		gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl),
 	);
 
+	// Chip Select
 	let cs = gpiob.pb6.into_push_pull_output(&mut gpiob.crl);
 
 	let spi_mode = Mode {
 		polarity: Polarity::IdleLow,
 		phase:    Phase::CaptureOnFirstTransition,
 	};
+
 	let spi = Spi::spi1(
 		dp.SPI1,
 		pins,
@@ -68,19 +71,15 @@ fn main() -> ! {
 	);
 
 	/****************************************************** */
-	/*****       CONFIGURATION DU RESET du DW3000   ******* */
+	/*****               RESET DW3000               ******* */
 	/****************************************************** */
 
-	let mut delay = Delay::new(cp.SYST, clocks);
-
 	let mut rst_n = gpioa.pa8.into_push_pull_output(&mut gpioa.crh);
-
-	// UWB module reset
 	rst_n.set_low();
 	rst_n.set_high();
 
 	/****************************************************** */
-	/*********       CONFIGURATION du DW3000       ******** */
+	/*********         DW3000 CONFIGURATION        ******** */
 	/****************************************************** */
 
 	let mut dw3000 = hl::DW3000::new(spi, cs)
@@ -88,15 +87,22 @@ fn main() -> ! {
 		.expect("Failed init.")
 		.config(Config::default())
 		.expect("Failed config.");
-	delay.delay_ms(3000u16);
-    defmt::println!("configuration du DW3000 terminée");
+	
+	let mut delay = Delay::new(cp.SYST, clocks);
+	delay.delay_ms(500u16);
+
+    defmt::println!("Init OK");
 
 	loop {
+		// Initiate Sending
 		let mut sending = dw3000
-				.send(&[1, 2, 3, 4, 5], hl::SendTime::Now, Config::default())
-				.expect("Failed configure transmitter");
+			.send(&[0, 1, 2, 3, 4], hl::SendTime::Now, Config::default())
+			.expect("Failed configure transmitter");
 
-		defmt::println!("Sending at {}", sending.ll().tx_time().read().unwrap().tx_stamp());
+		// Waiting 1ms for the frame to be sent (more than needed)
+		delay.delay_ms(1u16);
+		defmt::println!("Last frame sent at {}", sending.ll().tx_time().read().unwrap().tx_stamp());
+		
 		dw3000 = sending.finish_sending().expect("Failed to finish sending");
 	}
 }
