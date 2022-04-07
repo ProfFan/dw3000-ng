@@ -12,7 +12,8 @@ Driver for the Decawave [DW3000] UWB transceiver, written in the [Rust] programm
 
 We tried a first positionning exemple using RTT methode. Lot of work still need to be added like the use of PDoA or AoA.
 
-These examples uses a NUCLEO STM32F103RB
+We tested the driver using 2 different platforms, both platfoms examples are available on dedicated repository (raspberry pi and STM32F103RB)
+Examples availables are basic communication and distance measurement between two modules (simple sided and double sided RTT)
 
 This driver is built on top of embedded-hal, which means it is portable and can be used on any platform that implements the embedded-hal API.
 
@@ -48,4 +49,4 @@ See [LICENSE.md] for full details.
 
 
 **Based on [Braun Embedded](https://braun-embedded.com/)** <br />
-**Modified by Clément PENE and Romain SABORET** <br />
+**Modified by SII** <br />

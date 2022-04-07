@@ -6,7 +6,6 @@ use crate::{
 	time::{Duration, Instant},
 	Error,
 	DW3000,
-	configs,
 	fast_command,
 };
 use super::Awake;

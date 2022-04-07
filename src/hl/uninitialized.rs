@@ -135,7 +135,7 @@ where
 		self.ll.tx_fctrl().modify(|_, w| w.txbr(0x1))?;
 		self.ll.tx_fctrl().modify(|_, w| w.txpsr(0x5))?;
 
-		self.ll.rx_sfd_toc().modify(|_,w| w.value(config.sfd_timeout as u16));
+		self.ll.rx_sfd_toc().modify(|_,w| w.value(config.sfd_timeout as u16))?;
 
 
 			self.ll.rf_tx_ctrl_2().modify(|_,w| w.value(config.channel.get_recommended_rf_tx_ctrl_2()))?;

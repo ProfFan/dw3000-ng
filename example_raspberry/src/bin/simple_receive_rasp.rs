@@ -4,19 +4,14 @@
 
 use rppal::gpio::{Gpio};
 use rppal::spi::{Bus, Mode, SlaveSelect, Spi};
-use rppal::hal::Timer;
-use embedded_hal::timer::CountDown;
 
 use std::thread;
 use std::time::Duration;
-use embedded_timeout_macros::block_timeout;
 
 use dw3000::{
 	self,
 	hl,
 	Config,
-    time::Instant,
-
 };
 use nb::block;
 
