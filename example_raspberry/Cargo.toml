@@ -1,5 +1,5 @@
 [package]
-name = "raspberry"
+name = "example_raspberry"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 rppal = {version = "0.13.1", features = ["hal"]}
-dw3000 = {path= "../"}
+dw3000 = {path = "../"}

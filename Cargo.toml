@@ -32,4 +32,4 @@ default = []
 std = ["ssmarshal/std", "serde/std", "num_enum/std"]
 
 [workspace]
-members = ["stm32f1", "raspberry"]
+members = ["example_stm32f1", "example_raspberry"]

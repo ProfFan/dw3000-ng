@@ -2,7 +2,6 @@
 
 use core::convert::TryInto;
 
-use rtt_target::rprintln;
 use byte::BytesExt as _;
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 use fixed::traits::LossyInto;
