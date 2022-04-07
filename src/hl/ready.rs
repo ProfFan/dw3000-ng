@@ -195,8 +195,7 @@ where
 				self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
 				self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
 			},
-			SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
-			| _ => {},
+			| SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
 		}
 
 		Ok(DW3000 {

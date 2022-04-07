@@ -1,4 +1,4 @@
-use crate::{time::Duration, Config};
+use crate::Config;
 
 /// Indicates that the `DW3000` instance is not initialized yet
 #[derive(Debug)]
@@ -40,8 +40,8 @@ pub struct AutoDoubleBufferReceiving {
 /// Indicates that the `DW3000` instance is currently sleeping
 #[derive(Debug)]
 pub struct Sleeping {
-	/// Tx antenna delay isn't stored in AON, so we'll do it ourselves.
-	pub(super) tx_antenna_delay: Duration,
+	// Tx antenna delay isn't stored in AON, so we'll do it ourselves.
+	//pub(super) tx_antenna_delay: Duration,
 }
 
 /// Any state struct that implements this trait signals that the radio is
