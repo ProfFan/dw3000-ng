@@ -13,6 +13,13 @@ pub struct Ready;
 pub struct Sending {
 	pub(super) finished: bool,
 }
+impl Sending {
+	/// Mark the receiving state as finished
+	pub fn mark_finished(&mut self) { self.finished = true; }
+
+	/// Return true if the receiving state has been marked as finished
+	pub fn is_finished(&self) -> bool { self.finished }
+}
 
 /// Indicates that the `DW3000` instance is currently receiving in single buffer
 /// mode (default)

@@ -7,7 +7,7 @@ use crate::{
 	Error,
 	DW3000,
 	configs,
-	Ready,
+	fast_command,
 };
 use super::Awake;
 
@@ -102,7 +102,7 @@ where
 	}
 
 	/// Use fast command ll in hl
-	pub fn fast_cmd(&mut self, fc: configs::FastCommand) -> Result<(), Error<SPI, CS>> {
+	pub fn fast_cmd(&mut self, fc: fast_command::FastCommand) -> Result<(), Error<SPI, CS>> {
 		self.ll.fast_command(fc as u8)?;
 		Ok(())
 	}

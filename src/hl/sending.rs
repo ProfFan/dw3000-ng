@@ -72,7 +72,7 @@ where
 
 		// Frame sent
 		self.reset_flags().map_err(nb::Error::Other)?;
-		self.state.finished = true;
+		self.state.mark_finished();
 
 		let tx_timestamp = self
 			.ll
@@ -99,8 +99,9 @@ where
 	/// no-op. If the send operation is still ongoing, it will be aborted.
 	pub fn finish_sending(mut self) -> Result<DW3000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
 		// In order to avoid undetermined states after a sending, we will force the state to idle
+		//let dw3000 = self.force_idle()?;
 
-		if !self.state.finished{
+		if !self.state.is_finished() {
 			match self.force_idle() {
                 Ok(()) => (),
                 Err(error) => return Err((self, error)),
@@ -117,6 +118,7 @@ where
 			state: Ready,
 		})
 	}
+
 	fn reset_flags(&mut self) -> Result<(), Error<SPI, CS>> {
 		self.ll.sys_status().write(|w| {
 			w.txfrb(0b1)    // Transmit Frame Begins

@@ -88,7 +88,7 @@ where
 			self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
 		}
 
-		self.ll.fast_command(2)?;
+		self.fast_cmd(FastCommand::CMD_RX)?;
 
 		Ok(())
 	}
@@ -116,18 +116,33 @@ where
 			.map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
 		// Is a frame ready?
-		if sys_status.rxfr() == 0b0 {
+		if sys_status.rxfcg() == 0b0 {
 			// No frame ready. Check for errors.
 			if sys_status.rxfce() == 0b1 {
 				return Err(nb::Error::Other(Error::Fcs))
 			}
-			/*
+	
 			if sys_status.rxphe() == 0b1 {
-				return Err(nb::Error::Other(Error::Phy));
-			}$*/
+				return Err(nb::Error::Other(Error::Phy))
+			}
 			if sys_status.rxfsl() == 0b1 {
 				return Err(nb::Error::Other(Error::ReedSolomon))
 			}
+
+			if sys_status.rxsto() == 0b1 {
+				// self.ll.sys_status().write(|w| w.rxsto(1))
+				// .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
+				return Err(nb::Error::Other(Error::SfdTimeout))
+			}
+
+			if sys_status.arfe() == 0b1 {
+				return Err(nb::Error::Other(Error::ReedSolomon))
+			}
+
+			if sys_status.ciaerr() == 0b1 {
+				return Err(nb::Error::Other(Error::ReedSolomon))
+			}
+
 			if sys_status.rxfto() == 0b1 {
 				return Err(nb::Error::Other(Error::FrameWaitTimeout))
 			}
@@ -137,16 +152,8 @@ where
 			if sys_status.rxpto() == 0b1 {
 				return Err(nb::Error::Other(Error::PreambleDetectionTimeout))
 			}
-			if sys_status.rxsto() == 0b1 {
-				self.ll.sys_status().write(|w| w.rxsto(1))
-				.map_err(|error| nb::Error::Other(Error::Spi(error)))?;
-				return Err(nb::Error::Other(Error::SfdTimeout))
-			}
-			/*
-			if sys_status.affrej() == 0b1 {
-				return Err(nb::Error::Other(Error::FrameFilteringRejection))
-			}
-			*/
+
+
 			// Some error flags that sound like valid errors aren't checked here,
 			// because experience has shown that they seem to occur spuriously
 			// without preventing a good frame from being received. Those are:
@@ -157,14 +164,14 @@ where
 			// yet.
 			return Err(nb::Error::WouldBlock)
 		}
-
+		
 		// Frame is ready. Continue.
 
 		// Wait until LDE processing is done. Before this is finished, the RX
 		// time stamp is not available.
-		if sys_status.ciadone() == 0b0 {
-			return Err(nb::Error::WouldBlock)
-		}
+		// if sys_status.ciadone() == 0b0 {
+		// 	return Err(nb::Error::WouldBlock)
+		// }
 		let rx_time = self
 			.ll()
 			.rx_time()
@@ -177,7 +184,7 @@ where
 		// are buggy, the following should never panic.
 		let rx_time = Instant::new(rx_time).unwrap();
 
-		// Reset status bits. This is not strictly necessary, but it helps, if
+		//  Reset status bits. This is not strictly necessary, but it helps, if
 		// you have to inspect SYS_STATUS manually during debugging.
 		self.ll()
 			.sys_status()
@@ -228,6 +235,8 @@ where
 		let frame = buffer[..len]
 			.read_with(&mut 0, FooterMode::None)
 			.map_err(|error| nb::Error::Other(Error::Frame(error)))?;
+		
+		self.state.mark_finished();
 
 		Ok(Message { rx_time, frame })
 	}
