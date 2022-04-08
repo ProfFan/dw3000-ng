@@ -125,7 +125,7 @@ fn main() -> ! {
 
 		// We need to calculate a time (in ticks) at which we want to send the response
 		let response_delay = t2 + (5000 * 63898) as u64; // T2(ticks) + (chosen_delay(µs) * clock_speed)
-		let t3 = ((response_delay >> 9) << 9) + dw3000.get_tx_antenna_delay();  // T3(ticks) = delay(31 MSB) + sending_antenna_delay 
+		let t3 = ((response_delay >> 9) << 9) + dw3000.get_tx_antenna_delay().unwrap().value();  // T3(ticks) = delay(31 MSB) + sending_antenna_delay 
 
 		let response_tab = [
 			((t2 >> (8 * 4) ) & 0xFF ) as u8,
