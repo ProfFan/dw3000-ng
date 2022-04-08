@@ -73,6 +73,7 @@ pub trait Receiving: Awake {
 	/// Get the rx radio config
 	fn get_rx_config(&self) -> &Config;
 }
+
 impl Receiving for SingleBufferReceiving {
 	const AUTO_RX_REENABLE: bool = false;
 	const DOUBLE_BUFFERED: bool = false;
@@ -83,6 +84,7 @@ impl Receiving for SingleBufferReceiving {
 
 	fn get_rx_config(&self) -> &Config { &self.config }
 }
+
 impl Receiving for AutoDoubleBufferReceiving {
 	const AUTO_RX_REENABLE: bool = true;
 	const DOUBLE_BUFFERED: bool = true;

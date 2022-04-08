@@ -110,13 +110,13 @@ where
 		config: Config,
 	) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
 		
-				// Clear event counters
-				self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
-				while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
+		// Clear event counters
+		self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
+		while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
 
-				// (Re-)Enable event counters
-				self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
-				while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
+		// (Re-)Enable event counters
+		self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
+		while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
 
 		/*		// Sometimes, for unknown reasons, the DW3000 gets stuck in RX mode.
 				// Starting the transmitter won't get it to enter TX mode, which means
@@ -127,7 +127,6 @@ where
 		*/
 
 		self.ll.clk_ctrl().modify(|_,w|w.tx_clk(0b10))?;
-
 
 		let seq = self.seq.0;
 		self.seq += Wrapping(1);
@@ -148,8 +147,6 @@ where
 			payload: data,
 			footer:  [0; 2],
 		};
-
-		
 
 		// Prepare transmitter
 		let mut len = 0;
@@ -271,7 +268,7 @@ where
 		Ok(())
 	}
 	
-
+	/// GPIO SECTION, gpios seems to have a problem with its register.
 	/// Init GPIO WRT Config
 	pub fn gpio_config(&mut self, config: ConfigGPIOs) -> Result<(), Error<SPI, CS>> {
 		

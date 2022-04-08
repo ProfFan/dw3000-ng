@@ -4,7 +4,7 @@
 #![no_main]
 #![no_std]
 
-use dw3000 as _; // global logger + panicking-behavior + memory layout
+use example_stm32f1 as _; // global logger + panicking-behavior + memory layout
 
 use stm32f1xx_hal::{
 	delay::Delay,
