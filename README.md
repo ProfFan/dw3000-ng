@@ -10,12 +10,13 @@ Driver for the Decawave [DW3000] UWB transceiver, written in the [Rust] programm
 
 ## Status
 
-We tried a first positionning exemple using RTT methode. Lot of work still need to be added like the use of PDoA or AoA.
+Both RTT methods (single and double sided) are working and giving good positioning values.
+No implementation of PDoA or AoA.
 
-We tested the driver using 2 different platforms, both platfoms examples are available on dedicated repository (raspberry pi and STM32F103RB)
-Examples availables are basic communication and distance measurement between two modules (simple sided and double sided RTT)
+We tested the crate using two different platforms; both platforms examples are available on dedicated repository (raspberry pi and STM32F103RB)
+Examples available are basic communication and distance measurement between two modules (single and double sided RTT)
 
-This driver is built on top of embedded-hal, which means it is portable and can be used on any platform that implements the embedded-hal API.
+We built the driver on top of embedded-hal, which means it is portable and can be used on any platform that implements the embedded-hal API.
 
 
 ## Usage
@@ -23,8 +24,12 @@ This driver is built on top of embedded-hal, which means it is portable and can 
 Include this crate in your Cargo project by adding the following to `Cargo.toml`:
 ```toml
 [dependencies]
-dw3000 = "0.1.3"
+dw3000 = "0.2.0"
 ```
+
+We also provided workspaces in which you can find some example depending of the target (raspberry pi or stm32f103rb).
+We built stm32f103rb examples using the app-template of the knurling project. 
+Unfortunately, you cannot build your example directly from the main repository, you need to navigate to the examples folder to build and run applications. 
 
 
 ## Documentation
