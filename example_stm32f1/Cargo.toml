@@ -1,9 +1,12 @@
+# cargo-features = ["per-package-target"]
+
 [package]
 # TODO(1) fix `authors` and `name` if you didn't use `cargo-generate`
 authors = ["clement.pene <clement.pene@sii.fr>"]
 name = "example_stm32f1"
 edition = "2021"
 version = "0.1.0"
+# forced-target = "thumbv7m-none-eabi"
 
 [lib]
 harness = false
