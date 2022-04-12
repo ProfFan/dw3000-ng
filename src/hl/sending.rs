@@ -37,25 +37,12 @@ where
 			.read()
 			.map_err(|error| nb::Error::Other(Error::Spi(error)))?
 			.value();
+
 		if evc_hpw != 0 {
 			return Err(nb::Error::Other(Error::DelayedSendTooLate))
 		}
-		/*
-				// Check Transmitter Power-Up Warning Counter. If this is a delayed
-				// transmission, this indicates that the transmitter was still powering
-				// up while sending, and the frame preamble might not have transmit
-				// correctly.
-				let evc_tpw = self
-					.ll
-					.evc_tpw()
-					.read()
-					.map_err(|error| nb::Error::Other(Error::Spi(error)))?
-					.value();
-				if evc_tpw != 0 {
-					return Err(nb::Error::Other(Error::DelayedSendPowerUpWarning));
-				}
-		*/
-		// ATTENTION:
+		
+		// WARNING s:
 		// If you're changing anything about which SYS_STATUS flags are being
 		// checked in this method, also make sure to update `enable_interrupts`.
 		let sys_status = self
@@ -99,7 +86,6 @@ where
 	/// no-op. If the send operation is still ongoing, it will be aborted.
 	pub fn finish_sending(mut self) -> Result<DW3000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
 		// In order to avoid undetermined states after a sending, we will force the state to idle
-		//let dw3000 = self.force_idle()?;
 
 		if !self.state.is_finished() {
 			match self.force_idle() {

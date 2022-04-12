@@ -24,7 +24,7 @@ pub struct Config {
 	/// maybe can be degaged
 	pub ranging_enable:             bool,
 	
-	/// AJOUT THOMAS JULIE CONFIG C	
+	/// AJOUT THOMAS JULIE CONFIG C
 	pub sts_mode:					StsMode,
 
 	/// AJOUT THOMAS JULIE CONFIG C

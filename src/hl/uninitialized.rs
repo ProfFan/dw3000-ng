@@ -27,23 +27,14 @@ where
 	/// This is important when using th clock to measure distances.
 	/// At the end of this function, pll is locked and it can be checked by the bit CPLOCK in SYS_STATUS register (see state_test example)
 	pub fn init(mut self) -> Result<DW3000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
-		// // Wait for the IDLE_RC state
-		 while self.ll.sys_status().read()?.rcinit() == 0 {}
-		// need to change default cal value for pll (page164)
-		//self.ll.pll_cal().modify(|_, w| w.pll_cfg_ld(0x81))?;
-		// clear cplocaa
-		// self.ll.sys_status().write(|w| w.cplock(0))?;
+		// Wait for the IDLE_RC state
+		while self.ll.sys_status().read()?.rcinit() == 0 {}
 		// select PLL mode auto
 		self.ll.clk_ctrl().modify(|_, w| w.sys_clk(0))?;
 		// set ainit2idle
 		self.ll.seq_ctrl().modify(|_, w| w.ainit2idle(1))?;
-		// Set the on wake up switch from idle RC to idle PLL
-		//self.ll.aon_dig_cfg().modify(|_, w| w.onw_go2idle(1))?;
 		// wait for CPLOCK to be set
-
 		while self.ll.sys_status().read()?.cplock() == 0 {}
-
-
 
 		// Configuration du xtal_trim
 		self.ll.otp_cfg().modify(|_, w| w.otp_man(1))?;
@@ -79,55 +70,26 @@ where
 		self.ll.sys_cfg().modify(|_, w| w.pdoa_mode(0))?;
 		self.ll.sys_cfg().modify(|_, w| w.cp_sdc(0))?;
 
-
-		/*if self.ll.sys_cfg().read()?.cp_spc() == 1
-		{
-			self.ll.otp_cfg().modify(|_, w| w.ops_sel(3))?;
-			self.ll.otp_cfg().modify(|_, w| w.ops_kick(1))?;
-
-			self.ll.ip_conf().modify(|_, w| w.ip_ntm(0x6))?;
-			self.ll.ip_conf().modify(|_, w| w.ip_pmult(0x0))?;
-			self.ll.ip_conf().modify(|_, w| w.ip_rtm(0x3))?;
-
-			self.ll.sts_conf_0().modify(|_, w| w.sts_ntm(0xA))?;
-			self.ll.sts_conf_0().modify(|_, w| w.sts_pmult(0x0))?;
-			self.ll.sts_conf_0().modify(|_, w| w.sts_rtm(0xC))?;
-		} */
-
-
-
-
 		self.ll.otp_cfg().modify(|_,w| w.ops_sel(0x2))?;
 		self.ll.otp_cfg().modify(|_,w| w.ops_kick(0b1))?;
 
-
-	
-
-		self.ll.dtune0().modify(|_, w|
-			w.pac(config.preamble_length.get_recommended_pac_size()))?;
+		self.ll.dtune0().modify(|_, w| w.pac(config.preamble_length.get_recommended_pac_size()))?;
 
 		self.ll.sts_cfg().modify(|_,w| w.cps_len(config.sts_len as u8 - 1 ))?;
-		
-
 
 		self.ll.tx_fctrl().modify(|_,w| w.fine_plen(0x0))?;
 
 		self.ll.dtune3().modify(|_,w| w.value(0xAF5F584C))?;
-		
-
 
 		self.ll.chan_ctrl().modify(|_, w| {
-			w
-				.rf_chan(config.channel as u8) // 0 if channel5 and 1 if channel9
+			w.rf_chan(config.channel as u8) // 0 if channel5 and 1 if channel9
 				.sfd_type(config.sfd_sequence as u8)
 				.tx_pcode( // set the PRF for transmitter
-					config
-						.channel
+					config .channel
 						.get_recommended_preamble_code(config.pulse_repetition_frequency),
 				)
 				.rx_pcode( // set the PRF for receiver
-					config
-						.channel
+					config .channel
 						.get_recommended_preamble_code(config.pulse_repetition_frequency),
 				)
 		})?;
@@ -137,11 +99,9 @@ where
 
 		self.ll.rx_sfd_toc().modify(|_,w| w.value(config.sfd_timeout as u16))?;
 
-
-			self.ll.rf_tx_ctrl_2().modify(|_,w| w.value(config.channel.get_recommended_rf_tx_ctrl_2()))?;
-			self.ll.pll_cfg().modify(|_,w| w.value(config.channel.get_recommended_pll_conf()))?;
+		self.ll.rf_tx_ctrl_2().modify(|_,w| w.value(config.channel.get_recommended_rf_tx_ctrl_2()))?;
+		self.ll.pll_cfg().modify(|_,w| w.value(config.channel.get_recommended_pll_conf()))?;
 	
-
 		self.ll.ldo_rload().modify(|_,w| w.value(0x14))?;
 		
 		self.ll.rf_tx_ctrl_1().modify(|_,w| w.value(0x0E))?;
@@ -151,37 +111,17 @@ where
 		self.ll.pll_cal().modify(|_,w| w.pll_cfg_ld(0x8))?;
 		self.ll.pll_cal().modify(|_,w| w.cal_en(0x0))?;	
 		
-		// self.ll.sys_status().modify(|_,w| w.cplock(0b1))?;
-
-		// if self.ll.sys_state().read()?.pmsc_state() == 0x01 {
-		// 	//self.ll.seq_ctrl().modify(|_,w| w.)
-		// }
 		self.ll.seq_ctrl().modify(|_, w| w.ainit2idle(1))?;
 
 		self.ll.clk_ctrl().modify(|_,w| 
 			w.sys_clk(0b00)
-			.rx_clk(0b00)
-			.tx_clk(0b00)
-			.acc_clk_en(0b0)
-			.cia_clk_en(0b0)
-			.sar_clk_en(0b0)
-			.acc_mclk_en(0b0)
+				.rx_clk(0b00)
+				.tx_clk(0b00)
+				.acc_clk_en(0b0)
+				.cia_clk_en(0b0)
+				.sar_clk_en(0b0)
+				.acc_mclk_en(0b0)
 		)?;
-
-		//  while self.ll.sys_status().read()?.cplock() == 0 {}
-
-		// let mut flag = 1;
-		// for _ in 0..6 {
-			
-		// 	if self.ll.sys_status().read()?.cplock() == 0b1 {
-		// 		flag = 0;
-		// 		break;
-		// 	}
-		// }
-
-		// if flag == 1 {
-		// 	return Err(Error::InvalidConfiguration)
-		// }
 
 		if config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency) >= 9 && config.channel.get_recommended_preamble_code(config.pulse_repetition_frequency) <= 24 {
 			self.ll.otp_cfg().modify(|_, w| w.otp_man(1))?;
@@ -189,13 +129,9 @@ where
 			self.ll.otp_cfg().modify(|_, w| w.otp_read(1))?;
 			let dgc_otp = self.ll.otp_rdata().read()?.value();
 
-			
 			if dgc_otp == 0x10000240 {
-					self.ll.otp_cfg().modify(|_, w| w.dgc_kick(1))?;
-					self.ll.otp_cfg().modify(|_, w| w.dgc_sel(0))?;
-
-				
-
+				self.ll.otp_cfg().modify(|_, w| w.dgc_kick(1))?;
+				self.ll.otp_cfg().modify(|_, w| w.dgc_sel(0))?;
 			}
 			else {
 				self.ll.dgc_lut_0().modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
@@ -211,7 +147,6 @@ where
 
 			self.ll.dgc_cfg().modify(|_,w|w.thr_64(0x32))?;
 		}
-			
 		else {
 			self.ll.dgc_cfg().modify(|_,w|w.rx_tune_en(0))?;
 		}
@@ -220,8 +155,7 @@ where
 		self.ll.ldo_ctrl().modify(|_, w| w.value(0x105))?;
 
 		self.ll.rx_cal().modify(|_, w| {
-			w
-				.comp_dly(0x2)
+			w.comp_dly(0x2)
 				.cal_mode(1)
 		})?;
 
@@ -230,8 +164,7 @@ where
 		while self.ll.rx_cal_sts().read()?.value() == 0 {}
 
 		self.ll.rx_cal().modify(|_, w| {
-			w
-				.cal_mode(0)
+			w .cal_mode(0)
 				.cal_en(0)
 		})?;
 		self.ll.rx_cal_sts().modify(|_,w| w.value(1))?;

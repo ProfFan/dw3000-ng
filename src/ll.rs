@@ -71,9 +71,9 @@ where
 		R: Register + Readable,
 	{
 		let mut r = R::read();
-		let mut buffer = R::buffer(&mut r);
+		let buffer = R::buffer(&mut r);
 
-		init_header::<R>(false, &mut buffer);
+		init_header::<R>(false, buffer);
 		self.0.chip_select.set_low().map_err(Error::ChipSelect)?;
 		self.0.spi.transfer(buffer).map_err(Error::Transfer)?;
 		self.0.chip_select.set_high().map_err(Error::ChipSelect)?;

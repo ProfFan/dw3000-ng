@@ -19,12 +19,6 @@ use crate::{
 };
 use super::{AutoDoubleBufferReceiving, Receiving};
 
-// use ll::sys_status;
-// use core::fmt;
-// fn writer<W: fmt::Write>(f: &mut W, s: &str) -> fmt::Result {
-//     f.write_str(s)
-// }
-
 /// An incoming message
 #[derive(Debug)]
 pub struct Message<'l> {
@@ -121,28 +115,18 @@ where
 			if sys_status.rxfce() == 0b1 {
 				return Err(nb::Error::Other(Error::Fcs))
 			}
-	
 			if sys_status.rxphe() == 0b1 {
 				return Err(nb::Error::Other(Error::Phy))
 			}
 			if sys_status.rxfsl() == 0b1 {
 				return Err(nb::Error::Other(Error::ReedSolomon))
 			}
-
 			if sys_status.rxsto() == 0b1 {
-				// self.ll.sys_status().write(|w| w.rxsto(1))
-				// .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 				return Err(nb::Error::Other(Error::SfdTimeout))
 			}
-
 			if sys_status.arfe() == 0b1 {
-				return Err(nb::Error::Other(Error::ReedSolomon))
+				return Err(nb::Error::Other(Error::FrameFilteringRejection))
 			}
-
-			if sys_status.ciaerr() == 0b1 {
-				return Err(nb::Error::Other(Error::ReedSolomon))
-			}
-
 			if sys_status.rxfto() == 0b1 {
 				return Err(nb::Error::Other(Error::FrameWaitTimeout))
 			}
@@ -153,15 +137,13 @@ where
 				return Err(nb::Error::Other(Error::PreambleDetectionTimeout))
 			}
 
-
 			// Some error flags that sound like valid errors aren't checked here,
 			// because experience has shown that they seem to occur spuriously
 			// without preventing a good frame from being received. Those are:
 			// - LDEERR: Leading Edge Detection Processing Error
 			// - RXPREJ: Receiver Preamble Rejection
 
-			// No errors detected. That must mean the frame is just not ready
-			// yet.
+			// No errors detected. That must mean the frame is just not ready yet.
 			return Err(nb::Error::WouldBlock)
 		}
 		
@@ -169,9 +151,6 @@ where
 
 		// Wait until LDE processing is done. Before this is finished, the RX
 		// time stamp is not available.
-		// if sys_status.ciadone() == 0b0 {
-		// 	return Err(nb::Error::WouldBlock)
-		// }
 		let rx_time = self
 			.ll()
 			.rx_time()
@@ -188,25 +167,23 @@ where
 		// you have to inspect SYS_STATUS manually during debugging.
 		self.ll()
 			.sys_status()
-			.write(
-				|w| {
-					w.rxprd(0b1) // Receiver Preamble Detected
-						.rxsfdd(0b1) // Receiver SFD Detected
-						.ciadone(0b1) // LDE Processing Done
-						.rxphd(0b1) // Receiver PHY Header Detected
-						.rxphe(0b1) // Receiver PHY Header Error
-						.rxfr(0b1) // Receiver Data Frame Ready
-						.rxfcg(0b1) // Receiver FCS Good
-						.rxfce(0b1) // Receiver FCS Error
-						.rxfsl(0b1) // Receiver Reed Solomon Frame Sync Loss
-						.rxfto(0b1) // Receiver Frame Wait Timeout
-						.ciaerr(0b1) // Leading Edge Detection Processing Error
-						.rxovrr(0b1) // Receiver Overrun
-						.rxpto(0b1) // Preamble Detection Timeout
-						.rxsto(0b1) // Receiver SFD Timeout
-						//.rxrscs(0b1)  // Receiver Reed-Solomon Correction Status
-						.rxprej(0b1)
-				}, // Receiver Preamble Rejection
+			.write(|w| {
+					w.rxprd(0b1) 		// Receiver Preamble Detected
+						.rxsfdd(0b1)	// Receiver SFD Detected
+						.ciadone(0b1)	// LDE Processing Done
+						.rxphd(0b1) 	// Receiver PHY Header Detected
+						.rxphe(0b1) 	// Receiver PHY Header Error
+						.rxfr(0b1) 		// Receiver Data Frame Ready
+						.rxfcg(0b1) 	// Receiver FCS Good
+						.rxfce(0b1) 	// Receiver FCS Error
+						.rxfsl(0b1) 	// Receiver Reed Solomon Frame Sync Loss
+						.rxfto(0b1) 	// Receiver Frame Wait Timeout
+						.ciaerr(0b1) 	// Leading Edge Detection Processing Error
+						.rxovrr(0b1) 	// Receiver Overrun
+						.rxpto(0b1) 	// Preamble Detection Timeout
+						.rxsto(0b1) 	// Receiver SFD Timeout
+						.rxprej(0b1) 	// Receiver Preamble Rejection
+				}, 
 			)
 			.map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
@@ -241,7 +218,7 @@ where
 		Ok(Message { rx_time, frame })
 	}
 
-	
+	#[allow(clippy::type_complexity)]
 	/// Finishes receiving and returns to the `Ready` state
 	///
 	/// If the receive operation has finished, as indicated by `wait`, this is a
@@ -249,7 +226,6 @@ where
 	pub fn finish_receiving(mut self) -> Result<DW3000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
 		// TO DO : if we are not in state 3 (IDLE), we need to have a reset of the module (with a new initialisation)
 		// BECAUSE : using force_idle (fast command 0) is not puting the pll back to stable !!!
-		// let dw3000 = self.force_idle()?;
 
 		if !self.state.is_finished() {
 			match self.force_idle() {
