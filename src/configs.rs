@@ -24,7 +24,7 @@ pub struct Config {
 	/// maybe can be degaged
 	pub ranging_enable:             bool,
 	
-	/// AJOUT THOMAS JULIE CONFIG C
+	/// AJOUT THOMAS JULIE CONFIG C	
 	pub sts_mode:					StsMode,
 
 	/// AJOUT THOMAS JULIE CONFIG C
@@ -47,7 +47,7 @@ impl Default for Config {
 			ranging_enable:				false,
 			sts_mode:					Default::default(), //mode off
 			sts_len: 					Default::default(),
-			sfd_timeout:				129,
+			sfd_timeout:				121,
 		}
 	}
 }
@@ -136,7 +136,7 @@ impl PreambleLength {
 		match self {
 			| PreambleLength::Symbols32 => 3, // 4
 			| PreambleLength::Symbols64 => 0, // 8
-			| PreambleLength::Symbols128 => 0, // 16   // MODIF JULIE THOMAS -> 1
+			| PreambleLength::Symbols128 => 1, // 16   // MODIF JULIE THOMAS -> 1
 			| PreambleLength::Symbols256 => 1,
 			| PreambleLength::Symbols512 => 1,
 			| PreambleLength::Symbols1024 => 1,
