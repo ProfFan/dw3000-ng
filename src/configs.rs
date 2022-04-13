@@ -23,14 +23,11 @@ pub struct Config {
 	/// This has no effect on the capabilities of the DW3000.
 	/// maybe can be degaged
 	pub ranging_enable:             bool,
-	
-	/// AJOUT THOMAS JULIE CONFIG C	
+	/// Defaults to mode off
 	pub sts_mode:					StsMode,
-
-	/// AJOUT THOMAS JULIE CONFIG C
+	/// Defaults to 64
 	pub sts_len:					StsLen,
-
-	/// AJOUT THOMAS JULIE CONFIG C   : preamble length + 1 + sfdlength - pac size
+	/// SFD_timeout = Preamble length + 1 + sfdlength - pac size
 	pub sfd_timeout:				u32,	
 
 }
