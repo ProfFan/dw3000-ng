@@ -130,7 +130,7 @@ fn main() -> ! {
 		defmt::println!("SECOND STEP : Computing timestamps...");
 
 		// We need to calculate a time (in ticks) at which we want to send the response
-		let delay_to_reply = t2 + (100000 * 63898); // T2(ticks) + (chosen_delay(µs) * clock_speed) % 1_0995_1162_7776
+		let delay_to_reply = t2 + (5000 * 63898); // T2(ticks) + (chosen_delay(µs) * clock_speed) % 1_0995_1162_7776
 		let t3: u64 = ((delay_to_reply >> 9) << 9) + dw3000.get_tx_antenna_delay().unwrap().value();  // T3(ticks) = delay(31 MSB) + sending_antenna_delay 
 
 		let response_tab = [
