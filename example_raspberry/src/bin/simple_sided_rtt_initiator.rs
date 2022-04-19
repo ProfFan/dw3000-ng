@@ -22,8 +22,7 @@ use std::time::Duration;
 use dw3000::{
 	self,
 	hl,
-	Config,
-	time::Instant
+	Config
 };
 use nb::block;
 
@@ -47,7 +46,7 @@ fn main() -> ! {
 	/****************************************************** */
 
     let mut reset = gpio
-        .get(7)
+        .get(4)
         .expect("Failed to set up RESET PIN")
         .into_output();
     reset.set_low();

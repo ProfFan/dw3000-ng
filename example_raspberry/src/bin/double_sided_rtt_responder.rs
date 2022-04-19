@@ -32,7 +32,7 @@ fn main() -> ! {
 	/****************************************************** */
 
     let mut reset = gpio
-        .get(7)
+        .get(4)
         .expect("Failed to set up RESET PIN")
         .into_output();
     reset.set_low();
@@ -75,7 +75,7 @@ fn main() -> ! {
 
 		// The buffer is empty because the initiator does not need timestamps
 		// The final computation is done by the responder
-		let delay_to_reply = t2 + (100000 * 63898); // micros * clock speed
+		let delay_to_reply = t2 + (2000 * 63898); // micros * clock speed
 		let mut sending = dw3000
 			.send(
 				&[0],
