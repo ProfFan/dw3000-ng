@@ -71,9 +71,9 @@ where
 		R: Register + Readable,
 	{
 		let mut r = R::read();
-		let mut buffer = R::buffer(&mut r);
+		let buffer = R::buffer(&mut r);
 
-		init_header::<R>(false, &mut buffer);
+		init_header::<R>(false, buffer);
 		self.0.chip_select.set_low().map_err(Error::ChipSelect)?;
 		self.0.spi.transfer(buffer).map_err(Error::Transfer)?;
 		self.0.chip_select.set_high().map_err(Error::ChipSelect)?;
@@ -1006,7 +1006,7 @@ impl_register! {
 		girqe7,  7,  7, u8; ///   selected as interrupt source
 		girqe8,  8,  8, u8; ///   selected as interrupt source
 	}
-	0x05, 0x14, 4, RW, GPIO_ISTS(gpio_ists) { /// GPIO Interrupt Status
+	0x05, 0x14, 2, RW, GPIO_ISTS(gpio_ists) { /// GPIO Interrupt Status
 		gists0,  0,  0, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
 		gists1,  1,  1, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
 		gists2,  2,  2, u8; ///   Value 1 means GPIO gave rise to the GPIOIRQ SYS_STATUS event
@@ -1072,7 +1072,7 @@ impl_register! {
 		gidbe7,  7,  7, u8; ///   GPIO IRQ de-bounce enable for GPIO
 		gidbe8,  8,  8, u8; ///   GPIO IRQ de-bounce enable for GPIO
 	}
-	0x05, 0x2C, 4, RW, GPIO_RAW(gpio_raw) { /// GPIO Raw State
+	0x05, 0x2C, 2, RO, GPIO_RAW(gpio_raw) { /// GPIO Raw State
 		grawp0,  0,  0, u8; ///   GPIO port raw state
 		grawp1,  1,  1, u8; ///   GPIO port raw state
 		grawp2,  2,  2, u8; ///   GPIO port raw state
@@ -1403,7 +1403,7 @@ impl_register! {
 		sts_ss_en,    30, 30, u8; /// Compare the sampling statistics of the STS reception to those of the earlier reception of the preamble sequence.
 		sts_pgr_en,   31, 31, u8; /// Test the growth rate of the STS based CIR to the earlier growth rate of the preamble based CIR.
 	}
-	0x0E, 0x1A, 2, RO, CIA_ADJUST(cia_adjust) { /// User adjustment to the PDoA
+	0x0E, 0x1A, 2, RW, CIA_ADJUST(cia_adjust) { /// User adjustment to the PDoA
 		value, 0, 13, u8; /// Adjustment value to account for non-balanced antenna circuits.
 	}
 
@@ -1423,7 +1423,7 @@ impl_register! {
 	0x0F, 0x08, 2, RO, EVC_FCG(evc_fcg) { /// Frame check sequence good counter
 		value, 0, 11, u16; /// Frame Check Sequence Good Event Counter.
 	}
-	0x0F, 0x08, 2, RO, EVC_FCE(evc_fce) { /// Frame Check Sequence error counter
+	0x0F, 0x0A, 2, RO, EVC_FCE(evc_fce) { /// Frame Check Sequence error counter
 		value, 0, 11, u16; /// Frame Check Sequence Error Event Counter.
 	}
 	0x0F, 0x0C, 1, RO, EVC_FFR(evc_ffr) { /// Frame filter rejection counter

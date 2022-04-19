@@ -20,11 +20,12 @@
 //! [register-level interface]: ll/index.html
 //! [`dw1000`]: https://crates.io/crates/dw1000
 //! [`embedded-hal`]: https://crates.io/crates/embedded-hal
-
+#![no_main]
 #![no_std]
 #![deny(missing_docs)]
 
 pub mod configs;
+pub mod fast_command;
 pub mod hl;
 pub mod ll;
 pub mod time;
@@ -36,7 +37,8 @@ pub mod block{pub use nb::block;}
 pub use ieee802154::mac;
 
 pub use crate::{
-	configs::{Config, FastCommand},
+	configs::Config,
+	fast_command::FastCommand,
 	hl::{
 		AutoDoubleBufferReceiving,
 		Error,

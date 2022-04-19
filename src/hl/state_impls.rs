@@ -1,4 +1,4 @@
-use crate::{time::Duration, Config};
+use crate::Config;
 
 /// Indicates that the `DW3000` instance is not initialized yet
 #[derive(Debug)]
@@ -12,6 +12,13 @@ pub struct Ready;
 #[derive(Debug)]
 pub struct Sending {
 	pub(super) finished: bool,
+}
+impl Sending {
+	/// Mark the receiving state as finished
+	pub fn mark_finished(&mut self) { self.finished = true; }
+
+	/// Return true if the receiving state has been marked as finished
+	pub fn is_finished(&self) -> bool { self.finished }
 }
 
 /// Indicates that the `DW3000` instance is currently receiving in single buffer
@@ -33,8 +40,8 @@ pub struct AutoDoubleBufferReceiving {
 /// Indicates that the `DW3000` instance is currently sleeping
 #[derive(Debug)]
 pub struct Sleeping {
-	/// Tx antenna delay isn't stored in AON, so we'll do it ourselves.
-	pub(super) tx_antenna_delay: Duration,
+	// Tx antenna delay isn't stored in AON, so we'll do it ourselves.
+	//pub(super) tx_antenna_delay: Duration,
 }
 
 /// Any state struct that implements this trait signals that the radio is
@@ -66,6 +73,7 @@ pub trait Receiving: Awake {
 	/// Get the rx radio config
 	fn get_rx_config(&self) -> &Config;
 }
+
 impl Receiving for SingleBufferReceiving {
 	const AUTO_RX_REENABLE: bool = false;
 	const DOUBLE_BUFFERED: bool = false;
@@ -76,6 +84,7 @@ impl Receiving for SingleBufferReceiving {
 
 	fn get_rx_config(&self) -> &Config { &self.config }
 }
+
 impl Receiving for AutoDoubleBufferReceiving {
 	const AUTO_RX_REENABLE: bool = true;
 	const DOUBLE_BUFFERED: bool = true;

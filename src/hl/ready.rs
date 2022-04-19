@@ -110,21 +110,24 @@ where
 		config: Config,
 	) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
 		
-				// Clear event counters
-				self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
-				while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
+		// Clear event counters
+		self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
+		while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
 
-				// (Re-)Enable event counters
-				self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
-				while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
+		// (Re-)Enable event counters
+		self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
+		while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
 
-				// Sometimes, for unknown reasons, the DW3000 gets stuck in RX mode.
+		/*		// Sometimes, for unknown reasons, the DW3000 gets stuck in RX mode.
 				// Starting the transmitter won't get it to enter TX mode, which means
 				// all subsequent send operations will fail. Let's disable the
 				// transceiver and force the chip into IDLE mode to make sure that
 				// doesn't happen.
-				//self.force_idle(false)?;
-		
+				self.force_idle(false)?;
+		*/
+
+		self.ll.clk_ctrl().modify(|_,w|w.tx_clk(0b10))?;
+
 		let seq = self.seq.0;
 		self.seq += Wrapping(1);
 
@@ -136,7 +139,7 @@ where
 				frame_pending: false,
 				ack_request: false,
 				pan_id_compress: false,
-				destination: mac::Address::broadcast(&mac::AddressMode::Short),
+				destination: mac::Address::broadcast(&mac::AddressMode::Short),////
 				source: Some(self.get_address()?),
 				seq,
 			},
@@ -144,22 +147,6 @@ where
 			payload: data,
 			footer:  [0; 2],
 		};
-
-		match send_time {
-			| SendTime::Delayed(time) => {
-				// Put the time into the delay register
-				// By setting this register, the chip knows to delay before transmitting
-				self.ll
-					.dx_time()
-					.write(|w| // 32-bits value of the most significant bits
-                    w.value( (time.value() >> 8) as u32 ))?;
-			},
-			| SendTime::OnSync => {
-				self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
-				self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
-			},
-			| _ => {},
-		}
 
 		// Prepare transmitter
 		let mut len = 0;
@@ -191,8 +178,21 @@ where
 		})?;
 
 		match send_time {
-			SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
-			_ =>  self.fast_cmd(FastCommand::CMD_DTX)?, // Start TX
+			| SendTime::Delayed(time) => {
+				// Put the time into the delay register
+				// By setting this register, the chip knows to delay before transmitting
+				self.ll
+					.dx_time()
+					.modify(|_, w| // 32-bits value of the most significant bits
+                    w.value( (time.value() >> 8) as u32 ))?;
+				self.fast_cmd(FastCommand::CMD_DTX)?;
+				
+			},
+			| SendTime::OnSync => {
+				self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
+				self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
+			},
+			| SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
 		}
 
 		Ok(DW3000 {
@@ -268,4 +268,336 @@ where
 		Ok(())
 	}
 	
+	/// GPIO SECTION, gpios seems to have a problem with its register.
+	/// Init GPIO WRT Config
+	pub fn gpio_config(&mut self, config: ConfigGPIOs) -> Result<(), Error<SPI, CS>> {
+		
+		self.gpio_config_clocks()?;
+
+		self.ll.gpio_pull_en().modify(|_, w| {
+			w.mgpen0(config.enabled[0])
+				.mgpen1(config.enabled[1])
+				.mgpen2(config.enabled[2])
+				.mgpen3(config.enabled[3])
+				.mgpen4(config.enabled[4])
+				.mgpen5(config.enabled[5])
+				.mgpen6(config.enabled[6])
+				.mgpen7(config.enabled[7])
+				.mgpen8(config.enabled[8])
+		})?;
+
+		self.ll.gpio_mode().modify(|_, w| {
+			w.msgp0(0x0)
+				.msgp1(0x0)
+				.msgp2(0x0)
+				.msgp3(0x0)
+				.msgp4(0x0)
+				.msgp5(0x0)
+				.msgp6(0x0)
+				.msgp7(0x0)
+				.msgp8(0x0)
+		})?;
+		self.ll.gpio_mode().modify(|_, w| {
+			w.msgp0(config.mode[0])
+				.msgp1(config.mode[1])
+				.msgp2(config.mode[2])
+				.msgp3(config.mode[3])
+				.msgp4(config.mode[4])
+				.msgp5(config.mode[5])
+				.msgp6(config.mode[6])
+				.msgp7(config.mode[7])
+				.msgp8(config.mode[8])
+		})?;
+
+		self.ll.gpio_dir().modify(|_, w| {
+			w.gpd0(config.gpio_dir[0])
+				.gpd1(config.gpio_dir[1])
+				.gpd2(config.gpio_dir[2])
+				.gpd3(config.gpio_dir[3])
+				.gpd4(config.gpio_dir[4])
+				.gpd5(config.gpio_dir[5])
+				.gpd6(config.gpio_dir[6])
+				.gpd7(config.gpio_dir[7])
+				.gpd8(config.gpio_dir[8])
+		})?;
+
+		self.ll.gpio_out().modify(|_, w| {
+			w.gop0(config.output[0])
+				.gop1(config.output[1])
+				.gop2(config.output[2])
+				.gop3(config.output[3])
+				.gop4(config.output[4])
+				.gop5(config.output[5])
+				.gop6(config.output[6])
+				.gop7(config.output[7])
+				.gop8(config.output[8])
+		})?;
+
+		Ok(())
+	}
+
+	/// Enable gpios clocks
+	pub fn gpio_config_clocks(&mut self) -> Result<(), Error<SPI, CS>> {
+		self.ll.clk_ctrl().modify(|_, w| {
+			w.gpio_clk_en(0b1)
+				.gpio_dclk_en(0b1)
+				.gpio_drst_n(0b1)
+				.lp_clk_en(0b1)
+		})?;
+
+		self.ll.led_ctrl().modify(|_, w| {
+			w.blink_en(0b1)
+				.blink_tim(0x10)
+				.force_trig(0xf)
+		})?;		
+
+		Ok(())
+	}
+
+	/// Enables single pin
+	pub fn gpio_config_enable(&mut self, pin: u8, enable :u8) -> Result<(), Error<SPI, CS>> {
+		self.ll.gpio_pull_en().modify(|_, w| {
+			match pin {
+				0 => w.mgpen0(enable),
+				1 => w.mgpen1(enable),
+				2 => w.mgpen2(enable),
+				3 => w.mgpen3(enable),
+				4 => w.mgpen4(enable),
+				5 => w.mgpen5(enable),
+				6 => w.mgpen6(enable),
+				7 => w.mgpen7(enable),
+				8 => w.mgpen8(enable),
+				_ => w,
+			}
+		})?;
+		Ok(())
+	}
+
+	/// Configures mode for a single pin
+	pub fn gpio_config_mode(&mut self, pin: u8, mode :u8) -> Result<(), Error<SPI, CS>> {
+		self.ll.gpio_mode().modify(|_, w| {
+			match pin {
+				0 => w.msgp0(mode),
+				1 => w.msgp1(mode),
+				2 => w.msgp2(mode),
+				3 => w.msgp3(mode),
+				4 => w.msgp4(mode),
+				5 => w.msgp5(mode),
+				6 => w.msgp6(mode),
+				7 => w.msgp7(mode),
+				8 => w.msgp8(mode),
+				_ => w,
+			}
+		})?;
+		Ok(())
+	}
+
+	/// Configures direction for a single pin
+	pub fn gpio_config_dir(&mut self, pin: u8, dir :u8) -> Result<(), Error<SPI, CS>> {
+		self.ll.gpio_dir().modify(|_, w| {
+			match pin {
+				0 => w.gpd0(dir),
+				1 => w.gpd1(dir),
+				2 => w.gpd2(dir),
+				3 => w.gpd3(dir),
+				4 => w.gpd4(dir),
+				5 => w.gpd5(dir),
+				6 => w.gpd6(dir),
+				7 => w.gpd7(dir),
+				8 => w.gpd8(dir),
+				_ => w,
+			}
+		})?;
+		Ok(())
+	}
+	
+	/// Configures output for a single pin
+	pub fn gpio_config_out(&mut self, pin: u8, output :u8) -> Result<(), Error<SPI, CS>> {
+		self.ll.gpio_out().modify(|_, w| {
+			match pin {
+				0 => w.gop0(output),
+				1 => w.gop1(output),
+				2 => w.gop2(output),
+				3 => w.gop3(output),
+				4 => w.gop4(output),
+				5 => w.gop5(output),
+				6 => w.gop6(output),
+				7 => w.gop7(output),
+				8 => w.gop8(output),
+				_ => w,
+			}
+		})?;
+		Ok(())
+	}
+
+	/// Returns GPIO config
+	pub fn get_gpio_config(&mut self) -> Result<ConfigGPIOs, Error<SPI, CS>> {
+		
+		let enabled = self.get_gpio_enabled()?;
+		let mode = self.get_gpio_mode()?;
+		let gpio_dir = self.get_gpio_dir()?;
+		let output = self.get_gpio_out()?;
+
+		Ok(ConfigGPIOs{enabled, mode, gpio_dir, output})
+	}
+
+	/// Returns current gpio enable state
+	pub fn get_gpio_enabled(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+		let gpio_pull_en = self.ll.gpio_pull_en().read()?;
+		let enabled: [u8; 9] = [
+			gpio_pull_en.mgpen0(),
+			gpio_pull_en.mgpen1(),
+			gpio_pull_en.mgpen2(),
+			gpio_pull_en.mgpen3(),
+			gpio_pull_en.mgpen4(),
+			gpio_pull_en.mgpen5(),
+			gpio_pull_en.mgpen6(),
+			gpio_pull_en.mgpen7(),
+			gpio_pull_en.mgpen8(),
+		];
+
+		Ok(enabled)
+	}
+
+	/// Returns current gpio pin mode
+	pub fn get_gpio_mode(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+		let gpio_mode = self.ll.gpio_mode().read()?;
+		let mode: [u8; 9] = [
+			gpio_mode.msgp0(),
+			gpio_mode.msgp1(),
+			gpio_mode.msgp2(),
+			gpio_mode.msgp3(),
+			gpio_mode.msgp4(),
+			gpio_mode.msgp5(),
+			gpio_mode.msgp6(),
+			gpio_mode.msgp7(),
+			gpio_mode.msgp8(),
+		];
+
+		Ok(mode)
+	}
+
+	/// Returns current gpio dir
+	pub fn get_gpio_dir(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+		let gpio_direction = self.ll.gpio_dir().read()?;
+		let gpio_dir = [
+			gpio_direction.gpd0(),
+			gpio_direction.gpd1(),
+			gpio_direction.gpd2(),
+			gpio_direction.gpd3(),
+			gpio_direction.gpd4(),
+			gpio_direction.gpd5(),
+			gpio_direction.gpd6(),
+			gpio_direction.gpd7(),
+			gpio_direction.gpd8(),
+		];
+
+		Ok(gpio_dir)
+	}
+
+	/// Returns current output
+	pub fn get_gpio_out(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+		let gpio_out = self.ll.gpio_out().read()?;
+		let output = [
+			gpio_out.gop0(),
+			gpio_out.gop1(),
+			gpio_out.gop2(),
+			gpio_out.gop3(),
+			gpio_out.gop4(),
+			gpio_out.gop5(),
+			gpio_out.gop6(),
+			gpio_out.gop7(),
+			gpio_out.gop8(),
+		];
+
+		Ok(output)
+	}
+
+	/// Returns current raw state / input
+	pub fn get_gpio_raw_state(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+		let gpio_raw = self.ll.gpio_raw().read()?;
+		let raw = [
+			gpio_raw.grawp0(),
+			gpio_raw.grawp1(),
+			gpio_raw.grawp2(),
+			gpio_raw.grawp3(),
+			gpio_raw.grawp4(),
+			gpio_raw.grawp5(),
+			gpio_raw.grawp6(),
+			gpio_raw.grawp7(),
+			gpio_raw.grawp8(),
+		];
+
+		Ok(raw)
+	}
+}
+
+/// General confirugation for GPIO
+pub struct ConfigGPIOs {
+	/// Enables (1) or disables (0) pins
+	pub enabled: [u8; 9],
+	/// Pin mode 
+	pub mode: [u8; 9],
+	/// Set GPIO pins as input (1) or output (0)
+	pub gpio_dir: [u8; 9],
+	/// Set GPIO high (1) or low (0)
+	pub output: [u8; 9],
+}
+impl Default for ConfigGPIOs {
+	fn default() -> Self {
+		ConfigGPIOs {
+			enabled: 		[1, 1, 1, 1, 1, 1, 1, 1, 1],
+			mode: 			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			gpio_dir: 		[1, 1, 1, 1, 1, 1, 1, 1, 1],
+			output: 		[0, 0, 0, 0, 0, 0, 0, 0, 0],
+		}
+	}
+}
+impl ConfigGPIOs {
+	/// Disables all 4 leds
+	pub fn disable_led() -> Self {
+		ConfigGPIOs {
+			enabled: 		[1, 1, 0, 0, 1, 1, 1, 1, 1],
+			mode: 			[0, 0, 1, 1, 0, 0, 0, 0, 0],
+			gpio_dir: 		[1, 1, 1, 1, 1, 1, 1, 1, 1],
+			output: 		[0, 0, 0, 0, 0, 0, 0, 0, 0],
+		}
+	}
+	/// Enables only RX and TX led
+	pub fn enable_led() -> Self {
+		ConfigGPIOs {
+			enabled: 		[1, 1, 1, 1, 1, 1, 1, 1, 1],
+			mode: 			[0, 0, 1, 1, 0, 0, 0, 0, 0],
+			gpio_dir: 		[1, 1, 1, 1, 1, 1, 1, 1, 1],
+			output: 		[0, 0, 0, 0, 0, 0, 0, 0, 0],
+		}
+	}
+	/// Set everything to 0
+	pub fn all_0() -> Self {
+		ConfigGPIOs {
+			enabled: 		[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			mode: 			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			gpio_dir: 		[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			output: 		[0, 0, 0, 0, 0, 0, 0, 0, 0],
+		}
+	}
+	/// Set everything to 1
+	pub fn all_1() -> Self {
+		ConfigGPIOs {
+			enabled: 		[1, 1, 1, 1, 1, 1, 1, 1, 1],
+			mode: 			[1, 1, 1, 1, 1, 1, 1, 1, 1],
+			gpio_dir: 		[1, 1, 1, 1, 1, 1, 1, 1, 1],
+			output: 		[1, 1, 1, 1, 1, 1, 1, 1, 1],
+		}
+	}
+	/// Custom config for debug
+	pub fn custom() -> Self {
+		ConfigGPIOs {
+			enabled: 		[1, 1, 1, 1, 0, 0, 0, 0, 0],
+			mode: 			[0, 0, 0, 0, 0, 0, 0, 0, 0],
+			gpio_dir: 		[1, 1, 0, 0, 0, 0, 0, 0, 0],
+			output: 		[0, 0, 0, 0, 0, 0, 0, 0, 0],
+		}
+	}
+
 }

@@ -4,52 +4,6 @@
 //! transmitted and received. The configs are passed to the send and receive
 //! functions.
 
-#[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-/// Fast command enumeration to easily control the module
-pub enum FastCommand {
-	/// Fast command to go to IDLE state and clears any events
-	CMD_TXRXOFF     = 0x0,
-	/// Fast command to Immediate start of transmission
-	CMD_TX          = 0x1,
-	/// Fast command to Enable RX immediately
-	CMD_RX          = 0x2,
-	/// Fast command to Delayed TX w.r.t. DX_TIME
-	CMD_DTX         = 0x3,
-	/// Fast command to Delayed RX w.r.t. DX_TIME
-	CMD_DRX         = 0x4,
-	/// Fast command to Delayed TX w.r.t. TX timestamp + DX_TIME
-	CMD_DTX_TS      = 0x5,
-	/// Fast command to Delayed RX w.r.t. TX timestamp + DX_TIME
-	CMD_DRX_TS      = 0x6,
-	/// Fast command to Delayed TX w.r.t. RX timestamp + DX_TIME
-	CMD_DTX_RS      = 0x7,
-	/// Fast command to Delayed RX w.r.t. RX timestamp + DX_TIME
-	CMD_DRX_RS      = 0x8,
-	/// Fast command to Delayed TX w.r.t. DREF_TIME + DX_TIME
-	CMD_DTX_REF     = 0x9,
-	/// Fast command to Delayed RX w.r.t. DREF_TIME + DX_TIME
-	CMD_DRX_REF     = 0xA,
-	/// Fast command to TX if no preamble detected
-	CMD_CCA_TX      = 0xB,
-	/// Fast command to Start TX immediately, then when TX is done, enable the receiver
-	CMD_TX_W4R      = 0xC,
-	/// Fast command to Delayed TX w.r.t. DX_TIME, then enable receiver
-	CMD_DTX_W4R     = 0xD,
-	/// Fast command to Delayed TX w.r.t. TX timestamp + DX_TIME, then enable receiver
-	CMD_DTX_TS_W4R  = 0xE,
-	/// Fast command to Delayed TX w.r.t. RX timestamp + DX_TIME, then enable receiver
-	CMD_DTX_RS_W4R  = 0xF,
-	/// Fast command to Delayed TX w.r.t. DREF_TIME + DX_TIME, then enable receiver
-	CMD_DTX_REF_W4R = 0x10, 
-	/// Fast command to TX packet if no preamble detected, then enable receiver
-	CMD_CCA_TX_W4R  = 0x11,
-	/// Fast command to Clear all interrupt events
-	CMD_CLR_IRQS    = 0x12,
-	/// Fast command to Toggle double buffer pointer / notify the device that the host has finished processing the received buffer/data.
-	CMD_DB_TOGGLE   = 0x13,
-}
-
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 /// General configuration for TX and RX
 pub struct Config {
@@ -69,6 +23,12 @@ pub struct Config {
 	/// This has no effect on the capabilities of the DW3000.
 	/// maybe can be degaged
 	pub ranging_enable:             bool,
+	/// Defaults to mode off
+	pub sts_mode:					StsMode,
+	/// Defaults to 64
+	pub sts_len:					StsLen,
+	/// SFD_timeout = Preamble length + 1 + sfdlength - pac size
+	pub sfd_timeout:				u32,	
 
 }
 
@@ -82,6 +42,9 @@ impl Default for Config {
 			bitrate:                    Default::default(),
 			frame_filtering:            false,
 			ranging_enable:				false,
+			sts_mode:					Default::default(), //mode off
+			sts_len: 					Default::default(),
+			sfd_timeout:				121,
 		}
 	}
 }
@@ -155,10 +118,12 @@ pub enum PreambleLength {
 	Symbols2048 = 0b1010,
 	/// 512 symbols of preamble.
 	Symbols512  = 0b1101,
+	/// 72 symbols of preamble.
+	Symbols72 = 0b0111,
 }
 
 impl Default for PreambleLength {
-	fn default() -> Self { PreambleLength::Symbols64 }
+	fn default() -> Self { PreambleLength::Symbols128 }  // MODIF JULIE THOMAS -> 64
 }
 
 impl PreambleLength {
@@ -168,13 +133,14 @@ impl PreambleLength {
 		match self {
 			| PreambleLength::Symbols32 => 3, // 4
 			| PreambleLength::Symbols64 => 0, // 8
-			| PreambleLength::Symbols128 => 1, // 16
+			| PreambleLength::Symbols128 => 1, // 16   // MODIF JULIE THOMAS -> 1
 			| PreambleLength::Symbols256 => 1,
 			| PreambleLength::Symbols512 => 1,
 			| PreambleLength::Symbols1024 => 1,
 			| PreambleLength::Symbols1536 => 1,
 			| PreambleLength::Symbols2048 => 1,
 			| PreambleLength::Symbols4096 => 1,
+			| PreambleLength::Symbols72 => 1,			// AJOUT ULIE THOMAS
 		}
 	}
 }
@@ -315,3 +281,81 @@ impl UwbChannel {
 		}
 	}
 }
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+/// An enum that allows the selection of StsMode
+///
+pub enum StsMode {
+
+	/// Sts disabled
+	StsModeOff = 0,
+
+	/// Sts activated : STS follows SFD with PHR and PHY Payload
+	StsMode1 = 1,
+
+	/// Sts activated : STS is after PHY Payload
+	StsMode2 = 2,
+
+	/// Sts activated : STS with no PHR or PHY Payload
+	StsModeND = 3,
+}
+
+impl Default for StsMode {
+	fn default() -> Self { StsMode::StsModeOff }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+/// An enum that allows the selection of Sts length
+///
+pub enum StsLen {
+
+	/// STS length = 32 bits
+	StsLen32 = 0,
+
+	/// STS length = 64 bits
+	StsLen64 = 1,
+
+	/// STS length = 128 bits
+	StsLen128 = 2,
+
+	/// STS length = 256 bits
+	StsLen256 = 3,
+
+	/// STS length = 512 bits
+	StsLen512 = 4,
+
+	/// STS length = 1024 bits
+	StsLen1024 = 5,
+
+	/// STS length = 2048 bits
+	StsLn2048 = 6,
+	
+}
+
+impl Default for StsLen {
+	fn default() -> Self { StsLen::StsLen64 }
+}
+
+
+// #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+// /// parameters for tx emission
+// pub struct TxParameters {
+// 	/// voir doc
+// 	pub pgdelay: u8,
+// 	/// tx_power
+// 	pub power: u32,
+// 	/// voir doc
+// 	pub pgcount: u16,
+// }
+
+// impl Default for TxParameters {
+// 	fn default() -> Self {
+// 		TxParameters {
+// 			pgdelay: 0x34,
+// 			power: 0xfdfdfdfd,
+// 			pgcount: 0x0,
+// 		}
+// 	}
+// }
+
+
