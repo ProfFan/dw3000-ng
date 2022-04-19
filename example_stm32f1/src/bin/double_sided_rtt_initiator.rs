@@ -104,7 +104,7 @@ fn main() -> ! {
 
 		let mut sending = dw3000
 				.send(
-					&[1, 2, 3, 4, 5],
+					&[0],
 					hl::SendTime::Now,
 					Config::default(),
 				)

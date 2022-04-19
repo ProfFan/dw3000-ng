@@ -120,11 +120,10 @@ fn main() -> ! {
 
 		// The buffer is empty because the initiator does not need timestamps
 		// The final computation is done by the responder
-		let buff: [u8;10] = [0;10];
 		let delay_to_reply = t2 + (100000 * 63898); // micros * clock speed
 		let mut sending = dw3000
 			.send(
-				&buff,
+				&[0],
 				hl::SendTime::Delayed(Instant::new(delay_to_reply).unwrap()),
 				Config::default())
 			.expect("Failed configure transmitter");
