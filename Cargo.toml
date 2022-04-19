@@ -1,8 +1,8 @@
 [package]
 name    = "dw3000"
 description = "A driver for DW3000 Ultra Wide Band module implementing low and high level"
-version = "0.1.3"
-authors = ["Clement Pene <clement.pene@sii.fr>", "Romain Saboret <romain.saboret@sii.fr>"]
+version = "0.2.0"
+authors = ["Clement Pene <clement.pene@sii.fr>", "Romain Saboret <romain.saboret@sii.fr>", "BERTON Thomas <thomas.berton@sii.fr>", "RAIMBAULT Thomas <thomas.raimbault@sii.fr>"]
 edition = "2021"
 license = "0BSD"
 

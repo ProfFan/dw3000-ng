@@ -5,7 +5,7 @@
 authors = ["clement.pene <clement.pene@sii.fr>"]
 name = "example_stm32f1"
 edition = "2021"
-version = "0.1.0"
+version = "0.2.0"
 # forced-target = "thumbv7m-none-eabi"
 
 [lib]
