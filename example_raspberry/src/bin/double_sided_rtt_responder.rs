@@ -75,7 +75,7 @@ fn main() -> ! {
 
 		// The buffer is empty because the initiator does not need timestamps
 		// The final computation is done by the responder
-		let delay_to_reply = t2 + (2000 * 63898); // micros * clock speed
+		let delay_to_reply = t2 + (5000 * 63898); // micros * clock speed
 		let mut sending = dw3000
 			.send(
 				&[0],

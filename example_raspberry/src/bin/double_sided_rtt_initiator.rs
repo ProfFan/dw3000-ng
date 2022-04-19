@@ -90,7 +90,7 @@ fn main() -> ! {
 		println!("THIRD STEP : Computing timestamps");
 
 		// We need to calculate the time T5 (in ticks) at which we want to send the response
-		let reply_delay = t4 + (2000 * 63898) as u64; // T4(ticks) + (chosen_delay(µs) * clock_speed)
+		let reply_delay = t4 + (5000 * 63898) as u64; // T4(ticks) + (chosen_delay(µs) * clock_speed)
 		let t5 = ((reply_delay >> 9) << 9) + dw3000.get_tx_antenna_delay().unwrap().value();  // T3(ticks) = delay(31 MSB) + sending_antenna_delay 
 
 		let response_tab = [
