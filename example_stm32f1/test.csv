@@ -1,0 +1,948 @@
+────────────────────────────────────────────────────────────────────────────────
+Init OK
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:96
+0;T1; T2; T3; T4; Tround; Treply; TOFtick; TOF; Distance;
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:97
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 34520025621 
+T2 = 522373251700 
+T3 = 528763067925 
+T4 = 40909844467
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818846.0 
+treply= 6389816225.0 
+tof tick = 1310.5 
+tof = 2.050937750400641e-8
+dist = 6.148556693975987
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;34520025621;522373251700;528763067925;40909844467;6389818846.0;6389816225.0;1310.5;2.050937750400641e-8;6.148556693975987;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 6.148556693975987 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 74382729749 
+T2 = 562235944055 
+T3 = 568625760277 
+T4 = 80772548512
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818763.0 
+treply= 6389816222.0 
+tof tick = 1270.5 
+tof = 1.9883375901442308e-8
+dist = 5.960886134831355
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;74382729749;562235944055;568625760277;80772548512;6389818763.0;6389816222.0;1270.5;1.9883375901442308e-8;5.960886134831355;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.960886134831355 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 114245448725 
+T2 = 602098651787 
+T3 = 608488467989 
+T4 = 120635267392
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818667.0 
+treply= 6389816202.0 
+tof tick = 1232.5 
+tof = 1.928867437900641e-8
+dist = 5.782599103643956
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;114245448725;602098651787;608488467989;120635267392;6389818667.0;6389816202.0;1232.5;1.928867437900641e-8;5.782599103643956;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.782599103643956 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 154108150293 
+T2 = 641961342495 
+T3 = 648351158805 
+T4 = 160497969046
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818753.0 
+treply= 6389816310.0 
+tof tick = 1221.5 
+tof = 1.9116523938301282e-8
+dist = 5.730989699879181
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;154108150293;641961342495;648351158805;160497969046;6389818753.0;6389816310.0;1221.5;1.9116523938301282e-8;5.730989699879181;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.730989699879181 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 193970883093 
+T2 = 681824064761 
+T3 = 688213880853 
+T4 = 200360701579
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818486.0 
+treply= 6389816092.0 
+tof tick = 1197.0 
+tof = 1.873309795673077e-8
+dist = 5.616041482403095
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;193970883093;681824064761;688213880853;200360701579;6389818486.0;6389816092.0;1197.0;1.873309795673077e-8;5.616041482403095;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.616041482403095 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 233833598997 
+T2 = 721686770332 
+T3 = 728076586517 
+T4 = 240223417515
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818518.0 
+treply= 6389816185.0 
+tof tick = 1166.5 
+tof = 1.8255771734775642e-8
+dist = 5.472942681055314
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;233833598997;721686770332;728076586517;240223417515;6389818518.0;6389816185.0;1166.5;1.8255771734775642e-8;5.472942681055314;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.472942681055314 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 273695866389 
+T2 = 761549027693 
+T3 = 767938843669 
+T4 = 280085684727
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818338.0 
+treply= 6389815976.0 
+tof tick = 1181.0 
+tof = 1.8482697315705128e-8
+dist = 5.540973258745242
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;273695866389;761549027693;767938843669;280085684727;6389818338.0;6389815976.0;1181.0;1.8482697315705128e-8;5.540973258745242;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.540973258745242 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 313558580757 
+T2 = 801411732149 
+T3 = 807801548309 
+T4 = 319948399162
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818405.0 
+treply= 6389816160.0 
+tof tick = 1122.5 
+tof = 1.756716997195513e-8
+dist = 5.266505065996219
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;313558580757;801411732149;807801548309;319948399162;6389818405.0;6389816160.0;1122.5;1.756716997195513e-8;5.266505065996219;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.266505065996219 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 353420437013 
+T2 = 841273578683 
+T3 = 847663394837 
+T4 = 359810255420
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818407.0 
+treply= 6389816154.0 
+tof tick = 1126.5 
+tof = 1.762977013221154e-8
+dist = 5.285272121910682
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;353420437013;841273578683;847663394837;359810255420;6389818407.0;6389816154.0;1126.5;1.762977013221154e-8;5.285272121910682;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.285272121910682 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 393283165717 
+T2 = 881136297783 
+T3 = 887526113813 
+T4 = 399672983973
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818256.0 
+treply= 6389816030.0 
+tof tick = 1113.0 
+tof = 1.7418494591346155e-8
+dist = 5.221933308199369
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;393283165717;881136297783;887526113813;399672983973;6389818256.0;6389816030.0;1113.0;1.7418494591346155e-8;5.221933308199369;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.221933308199369 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 433144996885 
+T2 = 920998119475 
+T3 = 927387935765 
+T4 = 439534815371
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818486.0 
+treply= 6389816290.0 
+tof tick = 1098.0 
+tof = 1.7183743990384616e-8
+dist = 5.151556848520133
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;433144996885;920998119475;927387935765;439534815371;6389818486.0;6389816290.0;1098.0;1.7183743990384616e-8;5.151556848520133;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.151556848520133 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 473007723541 
+T2 = 960860836791 
+T3 = 967250652693 
+T4 = 479397541624
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818083.0 
+treply= 6389815902.0 
+tof tick = 1090.5 
+tof = 1.7066368689903846e-8
+dist = 5.1163686186805135
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;473007723541;960860836791;967250652693;479397541624;6389818083.0;6389815902.0;1090.5;1.7066368689903846e-8;5.1163686186805135;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.1163686186805135 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 512869810709 
+T2 = 1000722914684 
+T3 = 1007112730645 
+T4 = 519259628869
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818160.0 
+treply= 6389815961.0 
+tof tick = 1099.5 
+tof = 1.7207219050480768e-8
+dist = 5.158594494488056
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;512869810709;1000722914684;1007112730645;519259628869;6389818160.0;6389815961.0;1099.5;1.7207219050480768e-8;5.158594494488056;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.158594494488056 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 552731916309 
+T2 = 1040585011098 
+T3 = 1046974827029 
+T4 = 559121734460
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818151.0 
+treply= 6389815931.0 
+tof tick = 1110.0 
+tof = 1.7371544471153847e-8
+dist = 5.207858016263522
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;552731916309;1040585011098;1046974827029;559121734460;6389818151.0;6389815931.0;1110.0;1.7371544471153847e-8;5.207858016263522;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.207858016263522 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 592594624533 
+T2 = 1080447710143 
+T3 = 1086837526037 
+T4 = 598984442570
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818037.0 
+treply= 6389815894.0 
+tof tick = 1071.5 
+tof = 1.67690179286859e-8
+dist = 5.027225103086814
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;592594624533;1080447710143;1086837526037;598984442570;6389818037.0;6389815894.0;1071.5;1.67690179286859e-8;5.027225103086814;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.027225103086814 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 632457348117 
+T2 = 20798796882 
+T3 = 27188613141 
+T4 = 638847166498
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818381.0 
+treply= 6389816259.0 
+tof tick = 1061.0 
+tof = 1.660469250801282e-8
+dist = 4.977961581311348
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;632457348117;20798796882;27188613141;638847166498;6389818381.0;6389816259.0;1061.0;1.660469250801282e-8;4.977961581311348;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.977961581311348 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 672320086549 
+T2 = 60661526310 
+T3 = 67051342357 
+T4 = 678709904717
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818168.0 
+treply= 6389816047.0 
+tof tick = 1060.5 
+tof = 1.659686748798077e-8
+dist = 4.975615699322041
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;672320086549;60661526310;67051342357;678709904717;6389818168.0;6389816047.0;1060.5;1.659686748798077e-8;4.975615699322041;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.975615699322041 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 712182792213 
+T2 = 100524223030 
+T3 = 106914039317 
+T4 = 718572610613
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818400.0 
+treply= 6389816287.0 
+tof tick = 1056.5 
+tof = 1.653426732772436e-8
+dist = 4.956848643407577
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;712182792213;100524223030;106914039317;718572610613;6389818400.0;6389816287.0;1056.5;1.653426732772436e-8;4.956848643407577;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.956848643407577 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 752043395605 
+T2 = 140384817573 
+T3 = 146774633493 
+T4 = 758433213614
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818009.0 
+treply= 6389815920.0 
+tof tick = 1044.5 
+tof = 1.634646684695513e-8
+dist = 4.900547475664188
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;752043395605;140384817573;146774633493;758433213614;6389818009.0;6389815920.0;1044.5;1.634646684695513e-8;4.900547475664188;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.900547475664188 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 791905242645 
+T2 = 180246655867 
+T3 = 186636471829 
+T4 = 798295060693
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818048.0 
+treply= 6389815962.0 
+tof tick = 1043.0 
+tof = 1.6322991786858976e-8
+dist = 4.8935098296962645
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;791905242645;180246655867;186636471829;798295060693;6389818048.0;6389815962.0;1043.0;1.6322991786858976e-8;4.8935098296962645;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.8935098296962645 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 831767342613 
+T2 = 220108747220 
+T3 = 226498563605 
+T4 = 838157161211
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818598.0 
+treply= 6389816385.0 
+tof tick = 1106.5 
+tof = 1.7316769330929487e-8
+dist = 5.1914368423383666
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;831767342613;220108747220;226498563605;838157161211;6389818598.0;6389816385.0;1106.5;1.7316769330929487e-8;5.1914368423383666;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 5.1914368423383666 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 871630060565 
+T2 = 259971456447 
+T3 = 266361272341 
+T4 = 878019878575
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818010.0 
+treply= 6389815894.0 
+tof tick = 1058.0 
+tof = 1.6557742387820512e-8
+dist = 4.963886289375501
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;871630060565;259971456447;266361272341;878019878575;6389818010.0;6389815894.0;1058.0;1.6557742387820512e-8;4.963886289375501;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.963886289375501 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 911492777493 
+T2 = 299834164737 
+T3 = 306223981077 
+T4 = 917882595932
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818439.0 
+treply= 6389816340.0 
+tof tick = 1049.5 
+tof = 1.642471704727564e-8
+dist = 4.924006295557267
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;911492777493;299834164737;306223981077;917882595932;6389818439.0;6389816340.0;1049.5;1.642471704727564e-8;4.924006295557267;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.924006295557267 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 951355493909 
+T2 = 339696872582 
+T3 = 346086688789 
+T4 = 957745312212
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818303.0 
+treply= 6389816207.0 
+tof tick = 1048.0 
+tof = 1.6401241987179488e-8
+dist = 4.916968649589343
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;951355493909;339696872582;346086688789;957745312212;6389818303.0;6389816207.0;1048.0;1.6401241987179488e-8;4.916968649589343;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.916968649589343 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 991217093141 
+T2 = 379558463284 
+T3 = 385948279317 
+T4 = 997606911247
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818106.0 
+treply= 6389816033.0 
+tof tick = 1036.5 
+tof = 1.6221266526442308e-8
+dist = 4.863013363835262
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;991217093141;379558463284;385948279317;997606911247;6389818106.0;6389816033.0;1036.5;1.6221266526442308e-8;4.863013363835262;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.863013363835262 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 1031079807509 
+T2 = 419421169199 
+T3 = 425810985493 
+T4 = 1037469625890
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818381.0 
+treply= 6389816294.0 
+tof tick = 1043.5 
+tof = 1.6330816806891027e-8
+dist = 4.895855711685572
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;1031079807509;419421169199;425810985493;1037469625890;6389818381.0;6389816294.0;1043.5;1.6330816806891027e-8;4.895855711685572;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.895855711685572 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 1070942521365 
+T2 = 459283874678 
+T3 = 465673690645 
+T4 = 1077332339372
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818007.0 
+treply= 6389815967.0 
+tof tick = 1020.0 
+tof = 1.5963040865384616e-8
+dist = 4.7855992581881015
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;1070942521365;459283874678;465673690645;1077332339372;6389818007.0;6389815967.0;1020.0;1.5963040865384616e-8;4.7855992581881015;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.7855992581881015 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 11293605397 
+T2 = 499146578196 
+T3 = 505536394261 
+T4 = 17683423495
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818098.0 
+treply= 6389816065.0 
+tof tick = 1016.5 
+tof = 1.5908265725160256e-8
+dist = 4.769178084262946
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;11293605397;499146578196;505536394261;17683423495;6389818098.0;6389816065.0;1016.5;1.5908265725160256e-8;4.769178084262946;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.769178084262946 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 51156327957 
+T2 = 539009292524 
+T3 = 545399108629 
+T4 = 57546146104
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818147.0 
+treply= 6389816105.0 
+tof tick = 1021.0 
+tof = 1.5978690905448718e-8
+dist = 4.790291022166716
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;51156327957;539009292524;545399108629;57546146104;6389818147.0;6389816105.0;1021.0;1.5978690905448718e-8;4.790291022166716;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.790291022166716 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 91019063317 
+T2 = 578872019673 
+T3 = 585261835797 
+T4 = 97408881481
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818164.0 
+treply= 6389816124.0 
+tof tick = 1020.0 
+tof = 1.5963040865384616e-8
+dist = 4.7855992581881015
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;91019063317;578872019673;585261835797;97408881481;6389818164.0;6389816124.0;1020.0;1.5963040865384616e-8;4.7855992581881015;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.7855992581881015 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 130880344085 
+T2 = 618733292228 
+T3 = 625123108373 
+T4 = 137270162237
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818152.0 
+treply= 6389816145.0 
+tof tick = 1003.5 
+tof = 1.5704815204326924e-8
+dist = 4.708185152540941
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;130880344085;618733292228;625123108373;137270162237;6389818152.0;6389816145.0;1003.5;1.5704815204326924e-8;4.708185152540941;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.708185152540941 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 170743045653 
+T2 = 658595985599 
+T3 = 664985801749 
+T4 = 177132863827
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818174.0 
+treply= 6389816150.0 
+tof tick = 1012.0 
+tof = 1.5837840544871795e-8
+dist = 4.748065146359175
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;170743045653;658595985599;664985801749;177132863827;6389818174.0;6389816150.0;1012.0;1.5837840544871795e-8;4.748065146359175;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.748065146359175 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 210605764629 
+T2 = 698458696363 
+T3 = 704848512533 
+T4 = 216995582844
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818215.0 
+treply= 6389816170.0 
+tof tick = 1022.5 
+tof = 1.6002165965544873e-8
+dist = 4.797328668134641
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;210605764629;698458696363;704848512533;216995582844;6389818215.0;6389816170.0;1022.5;1.6002165965544873e-8;4.797328668134641;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.797328668134641 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 250468464661 
+T2 = 738321388165 
+T3 = 744711204373 
+T4 = 256858282897
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818236.0 
+treply= 6389816208.0 
+tof tick = 1014.0 
+tof = 1.5869140625000002e-8
+dist = 4.757448674316406
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;250468464661;738321388165;744711204373;256858282897;6389818236.0;6389816208.0;1014.0;1.5869140625000002e-8;4.757448674316406;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.757448674316406 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 290330568725 
+T2 = 778183483982 
+T3 = 784573300245 
+T4 = 296720387042
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818317.0 
+treply= 6389816263.0 
+tof tick = 1027.0 
+tof = 1.6072591145833335e-8
+dist = 4.818441606038411
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;290330568725;778183483982;784573300245;296720387042;6389818317.0;6389816263.0;1027.0;1.6072591145833335e-8;4.818441606038411;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.818441606038411 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 330193013781 
+T2 = 818045920767 
+T3 = 824435737109 
+T4 = 336582832161
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818380.0 
+treply= 6389816342.0 
+tof tick = 1019.0 
+tof = 1.5947390825320514e-8
+dist = 4.780907494209486
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;330193013781;818045920767;824435737109;336582832161;6389818380.0;6389816342.0;1019.0;1.5947390825320514e-8;4.780907494209486;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.780907494209486 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 370054001685 
+T2 = 857906900428 
+T3 = 864296716821 
+T4 = 376443820125
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818440.0 
+treply= 6389816393.0 
+tof tick = 1023.5 
+tof = 1.6017816005608975e-8
+dist = 4.802020432113257
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;370054001685;857906900428;864296716821;376443820125;6389818440.0;6389816393.0;1023.5;1.6017816005608975e-8;4.802020432113257;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.802020432113257 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 409916698645 
+T2 = 897769589164 
+T3 = 904159405077 
+T4 = 416306516602
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389817957.0 
+treply= 6389815913.0 
+tof tick = 1022.0 
+tof = 1.5994340945512823e-8
+dist = 4.794982786145333
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;409916698645;897769589164;904159405077;416306516602;6389817957.0;6389815913.0;1022.0;1.5994340945512823e-8;4.794982786145333;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.794982786145333 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 449779409941 
+T2 = 937632292263 
+T3 = 944022108181 
+T4 = 456169227907
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389817966.0 
+treply= 6389815918.0 
+tof tick = 1024.0 
+tof = 1.6025641025641026e-8
+dist = 4.804366314102564
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;449779409941;937632292263;944022108181;456169227907;6389817966.0;6389815918.0;1024.0;1.6025641025641026e-8;4.804366314102564;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.804366314102564 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 489641500181 
+T2 = 977494374297 
+T3 = 983884190229 
+T4 = 496031318139
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389817958.0 
+treply= 6389815932.0 
+tof tick = 1013.0 
+tof = 1.5853490584935897e-8
+dist = 4.752756910337791
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;489641500181;977494374297;983884190229;496031318139;6389817958.0;6389815932.0;1013.0;1.5853490584935897e-8;4.752756910337791;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.752756910337791 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 529503590933 
+T2 = 1017356456890 
+T3 = 1023746272789 
+T4 = 535893408865
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389817932.0 
+treply= 6389815899.0 
+tof tick = 1016.5 
+tof = 1.5908265725160256e-8
+dist = 4.769178084262946
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;529503590933;1017356456890;1023746272789;535893408865;6389817932.0;6389815899.0;1016.5;1.5908265725160256e-8;4.769178084262946;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.769178084262946 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+T1 = 569366300181 
+T2 = 1057219158000 
+T3 = 1063608974357 
+T4 = 575756118566
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:152
+tround = 6389818385.0 
+treply= 6389816357.0 
+tof tick = 1014.0 
+tof = 1.5869140625000002e-8
+dist = 4.757448674316406
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:164
+0;569366300181;1057219158000;1063608974357;575756118566;6389818385.0;6389816357.0;1014.0;1.5869140625000002e-8;4.757448674316406;
+└─ simple_sided_rtt_initiator::calc_distance_simple @ src/bin/simple_sided_rtt_initiator.rs:165
+Distance = 4.757448674316406 m
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:145
+--- RTT FINISHED ---
+
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:146
+FIRST STEP : Requesting new measurement...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:104
+SECOND STEP : Wainting answer...
+└─ simple_sided_rtt_initiator::__cortex_m_rt_main @ src/bin/simple_sided_rtt_initiator.rs:120
+────────────────────────────────────────────────────────────────────────────────
+stack backtrace:
+   0: <stm32f1xx_hal::spi::Spi<SPI,REMAP,PINS,FrameSize> as embedded_hal::spi::FullDuplex<FrameSize>>::read
+        at /home/rustsii/.cargo/registry/src/github.com-1ecc6299db9ec823/stm32f1xx-hal-0.8.0/src/spi.rs:450:19
+   1: embedded_hal::blocking::spi::transfer::<impl embedded_hal::blocking::spi::Transfer<W> for S>::transfer
+        at /home/rustsii/.cargo/registry/src/github.com-1ecc6299db9ec823/embedded-hal-0.2.7/src/blocking/spi.rs:49:32
+   2: dw3000::ll::RegAccessor<R,SPI,CS>::read
+        at /home/rustsii/Documents/Repo/dw3000_github/dw3000/src/ll.rs:78:3
+   3: dw3000::hl::receiving::<impl dw3000::hl::DW3000<SPI,CS,RECEIVING>>::r_wait
+        at /home/rustsii/Documents/Repo/dw3000_github/dw3000/src/hl/receiving.rs:106:20
+   4: simple_sided_rtt_initiator::__cortex_m_rt_main
+        at src/bin/simple_sided_rtt_initiator.rs:126:26
+   5: main
+        at src/bin/simple_sided_rtt_initiator.rs:20:1
+   6: Reset
