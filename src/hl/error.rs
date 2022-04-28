@@ -1,7 +1,6 @@
 use core::fmt;
 
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use ssmarshal;
 
 use crate::ll;
 
@@ -65,8 +64,6 @@ where
 	/// were likely corrupted.
 	DelayedSendPowerUpWarning,
 
-	/// An error occured while serializing or deserializing data
-	Ssmarshal(ssmarshal::Error),
 
 	/// The configuration was not valid. Some combinations of settings are not
 	/// allowed.
@@ -94,13 +91,7 @@ where
 	fn from(error: ll::Error<SPI, CS>) -> Self { Error::Spi(error) }
 }
 
-impl<SPI, CS> From<ssmarshal::Error> for Error<SPI, CS>
-where
-	SPI: spi::Transfer<u8> + spi::Write<u8>,
-	CS: OutputPin,
-{
-	fn from(error: ssmarshal::Error) -> Self { Error::Ssmarshal(error) }
-}
+
 
 // We can't derive this implementation, as `Debug` is only implemented
 // conditionally for `ll::Debug`.
@@ -129,7 +120,6 @@ where
 			| Error::Frame(error) => write!(f, "Frame({:?})", error),
 			| Error::DelayedSendTooLate => write!(f, "DelayedSendTooLate"),
 			| Error::DelayedSendPowerUpWarning => write!(f, "DelayedSendPowerUpWarning"),
-			| Error::Ssmarshal(error) => write!(f, "Ssmarshal({:?})", error),
 			| Error::InvalidConfiguration => write!(f, "InvalidConfiguration"),
 			| Error::RxNotFinished => write!(f, "RxNotFinished"),
 			| Error::StillAsleep => write!(f, "StillAsleep"),

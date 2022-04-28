@@ -19,17 +19,10 @@ version = "1.0.125"
 default-features = false
 features = ["derive"]
 
-[dependencies.ssmarshal]
-version = "1.0.0"
-default-features = false
-
-[dependencies.num_enum]
-version = "0.5.1"
-default-features = false
 
 [features]
 default = []
-std = ["ssmarshal/std", "serde/std", "num_enum/std"]
+std = ["serde/std"]
 
 [workspace]
 members = ["example_stm32f1", "example_raspberry"]
