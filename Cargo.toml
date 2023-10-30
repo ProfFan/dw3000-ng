@@ -7,24 +7,24 @@ edition = "2021"
 license = "0BSD"
 
 [dependencies]
-byte         = "0.2.4"
-embedded-hal = "0.2.4"
-ieee802154   = "0.5.0"
-nb           = "1.0.0"
-fixed        = "1.7.0"
-#micromath    = "2.0.0"
+byte         = "0.2"
+embedded-hal = "0.2"
+ieee802154   = "0.5"
+nb           = "1.0"
+fixed        = "1.7"
+#micromath    = "2.0"
 
 [dependencies.serde]
-version = "1.0.125"
+version = "1"
 default-features = false
 features = ["derive"]
 
 [dependencies.ssmarshal]
-version = "1.0.0"
+version = "1"
 default-features = false
 
 [dependencies.num_enum]
-version = "0.5.1"
+version = "0.5"
 default-features = false
 
 [features]
@@ -72,6 +72,6 @@ debug = 2
 debug-assertions = false # <-
 incremental = false
 # see comment in the profile.release section
-lto = 'false'
+lto = false
 opt-level = 3 # <-
 overflow-checks = false # <-

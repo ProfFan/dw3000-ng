@@ -346,7 +346,6 @@ macro_rules! impl_register {
                                 // actually encounter that at runtime, due to
                                 // the if condition above.
                                 let mut i = 1;
-                                #[allow(exceeding_bitshifts)]
                                 #[allow(arithmetic_overflow)]
                                 while i < LEN {
                                     bytes[i - 1] |=
@@ -373,7 +372,6 @@ macro_rules! impl_register {
                                 // compiler happy. They're never actually
                                 // encountered at runtime, due to the if
                                 // condition.
-                                #[allow(exceeding_bitshifts)]
                                 #[allow(arithmetic_overflow)]
                                 {
                                     bytes[LAST_INDEX] <<= BITS_ABOVE_FIELD;
