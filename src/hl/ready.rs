@@ -533,6 +533,7 @@ where
 }
 
 /// General confirugation for GPIO
+#[derive(Debug)]
 pub struct ConfigGPIOs {
 	/// Enables (1) or disables (0) pins
 	pub enabled: [u8; 9],
