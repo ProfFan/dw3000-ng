@@ -32,7 +32,7 @@ default = []
 std = ["ssmarshal/std", "serde/std", "num_enum/std"]
 
 [workspace]
-members = ["example_stm32f1", "example_raspberry"]
+members = ["example_stm32f1"]
 
 # cargo build/run
 [profile.dev]
