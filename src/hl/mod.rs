@@ -34,21 +34,21 @@ mod uninitialized;
 /// Entry point to the DW3000 driver API
 #[derive(Copy, Clone)]
 pub struct DW3000<SPI, CS, State> {
-	ll:    ll::DW3000<SPI, CS>,
-	seq:   Wrapping<u8>,
-	state: State,
+    ll: ll::DW3000<SPI, CS>,
+    seq: Wrapping<u8>,
+    state: State,
 }
 
 // Can't be derived without putting requirements on `SPI` and `CS`.
 impl<SPI, CS, State> fmt::Debug for DW3000<SPI, CS, State>
 where
-	State: fmt::Debug,
+    State: fmt::Debug,
 {
-	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-		write!(f, "DW3000 {{ state: ")?;
-		self.state.fmt(f)?;
-		write!(f, ", .. }}")?;
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "DW3000 {{ state: ")?;
+        self.state.fmt(f)?;
+        write!(f, ", .. }}")?;
 
-		Ok(())
-	}
+        Ok(())
+    }
 }

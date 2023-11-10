@@ -109,14 +109,6 @@ where
         self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
         while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
 
-        /*		// Sometimes, for unknown reasons, the DW3000 gets stuck in RX mode.
-                // Starting the transmitter won't get it to enter TX mode, which means
-                // all subsequent send operations will fail. Let's disable the
-                // transceiver and force the chip into IDLE mode to make sure that
-                // doesn't happen.
-                self.force_idle(false)?;
-        */
-
         self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
 
         let seq = self.seq.0;

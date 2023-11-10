@@ -4,13 +4,13 @@
 //! require a higher degree of flexibility, you can use the
 //! [register-level interface] instead.
 //!
-//! We used the crate [`dw1000`] developped for the DW1000 module and changed 
-//! the registers access and spi functions, added fast command and implemented 
+//! We used the crate [`dw1000`] developped for the DW1000 module and changed
+//! the registers access and spi functions, added fast command and implemented
 //! some high level functions.
-//! 
+//!
 //! We tried a first positionning exemple using RTT methode.
 //! Lot of work still need to be added like the use of PDoA or AoA.
-//! 
+//!
 //! These examples uses a NUCLEO STM32F103RB
 //!
 //! This driver is built on top of [`embedded-hal`], which means it is portable
@@ -31,24 +31,19 @@ pub mod ll;
 pub mod time;
 
 /// Redirection of nb::block
-pub mod block{pub use nb::block;}
+pub mod block {
+    pub use nb::block;
+}
 
 #[doc(no_inline)]
 pub use ieee802154::mac;
 
 pub use crate::{
-	configs::Config,
-	fast_command::FastCommand,
-	hl::{
-		AutoDoubleBufferReceiving,
-		Error,
-		Message,
-		Ready,
-		Sending,
-		SingleBufferReceiving,
-		Sleeping,
-		Uninitialized,
-		DW3000,
-	},
-	block::block,
+    block::block,
+    configs::Config,
+    fast_command::FastCommand,
+    hl::{
+        AutoDoubleBufferReceiving, Error, Message, Ready, Sending, SingleBufferReceiving, Sleeping,
+        Uninitialized, DW3000,
+    },
 };
