@@ -77,6 +77,179 @@ where
         Ok(())
     }
 
+    /// Send an raw UWB PHY frame
+    ///
+    /// The `data` argument is wrapped into an raw UWB PHY frame.
+    ///
+    /// This operation can be delayed to aid in distance measurement, by setting
+    /// `delayed_time` to `Some(instant)`. If you want to send the frame as soon
+    /// as possible, just pass `None` instead.
+    ///
+    /// The config parameter struct allows for setting the channel, bitrate, and
+    /// more. This configuration needs to be the same as the configuration used
+    /// by the receiver, or the message may not be received.
+    /// The defaults are a sane starting point.
+    ///
+    /// This method starts the transmission and returns immediately thereafter.
+    /// It consumes this instance of `DW3000` and returns another instance which
+    /// is in the `Sending` state, and can be used to wait for the transmission
+    /// to finish and check its result.
+    pub fn send_raw(
+        mut self,
+        data: &[u8],
+        send_time: SendTime,
+        config: Config,
+    ) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
+        // Clear event counters
+        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
+        while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
+
+        // (Re-)Enable event counters
+        self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
+        while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
+
+        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
+
+        // Prepare transmitter
+        let mut len: usize = 0;
+        self.ll.tx_buffer().write(|w| {
+            let result = w.data().write(&mut len, data);
+
+            if let Err(err) = result {
+                panic!("Failed to write frame: {:?}", err);
+            }
+
+            w
+        })?;
+
+        let txb_offset = 0; // no offset in TX_BUFFER
+        let mut txb_offset_errata = txb_offset;
+        if txb_offset > 127 {
+            // Errata in DW3000, see page 86
+            txb_offset_errata += 128;
+        }
+
+        self.ll.tx_fctrl().modify(|_, w| {
+            let txflen = len as u16 + 2;
+            w.txflen(txflen) // data length + two-octet CRC
+                .txbr(config.bitrate as u8) // configured bitrate
+                .tr(config.ranging_enable as u8) // configured ranging bit
+                .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
+                .txpsr(config.preamble_length as u8) // configure preamble length
+                .fine_plen(0) // Not implemented, replacing txpsr
+        })?;
+
+        match send_time {
+            SendTime::Delayed(time) => {
+                // Put the time into the delay register
+                // By setting this register, the chip knows to delay before transmitting
+                self.ll
+                    .dx_time()
+                    .modify(|_, w| // 32-bits value of the most significant bits
+                    w.value( (time.value() >> 8) as u32 ))?;
+                self.fast_cmd(FastCommand::CMD_DTX)?;
+            }
+            SendTime::OnSync => {
+                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
+                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
+            }
+            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
+        }
+
+        Ok(DW3000 {
+            ll: self.ll,
+            seq: self.seq,
+            state: Sending { finished: false },
+        })
+    }
+
+    /// Send an IEEE 802.15.4 MAC frame
+    ///
+    /// The `frame` argument is an IEEE 802.15.4 MAC frame and sent to `destination`.
+    ///
+    /// This operation can be delayed to aid in distance measurement, by setting
+    /// `delayed_time` to `Some(instant)`. If you want to send the frame as soon
+    /// as possible, just pass `None` instead.
+    ///
+    /// The config parameter struct allows for setting the channel, bitrate, and
+    /// more. This configuration needs to be the same as the configuration used
+    /// by the receiver, or the message may not be received.
+    /// The defaults are a sane starting point.
+    ///
+    /// This method starts the transmission and returns immediately thereafter.
+    /// It consumes this instance of `DW3000` and returns another instance which
+    /// is in the `Sending` state, and can be used to wait for the transmission
+    /// to finish and check its result.
+    #[inline]
+    pub fn send_frame(
+        mut self,
+        frame: mac::Frame,
+        send_time: SendTime,
+        config: Config,
+    ) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
+        // Clear event counters
+        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
+        while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
+
+        // (Re-)Enable event counters
+        self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
+        while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
+
+        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
+
+        // Prepare transmitter
+        let mut len = 0;
+        self.ll.tx_buffer().write(|w| {
+            let result = w.data().write_with(&mut len, frame, FooterMode::None);
+
+            if let Err(err) = result {
+                panic!("Failed to write frame: {:?}", err);
+            }
+
+            w
+        })?;
+
+        let txb_offset = 0; // no offset in TX_BUFFER
+        let mut txb_offset_errata = txb_offset;
+        if txb_offset > 127 {
+            // Errata in DW3000, see page 86
+            txb_offset_errata += 128;
+        }
+
+        self.ll.tx_fctrl().modify(|_, w| {
+            let txflen = len as u16 + 2;
+            w.txflen(txflen) // data length + two-octet CRC
+                .txbr(config.bitrate as u8) // configured bitrate
+                .tr(config.ranging_enable as u8) // configured ranging bit
+                .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
+                .txpsr(config.preamble_length as u8) // configure preamble length
+                .fine_plen(0) // Not implemented, replacing txpsr
+        })?;
+
+        match send_time {
+            SendTime::Delayed(time) => {
+                // Put the time into the delay register
+                // By setting this register, the chip knows to delay before transmitting
+                self.ll
+                    .dx_time()
+                    .modify(|_, w| // 32-bits value of the most significant bits
+                    w.value( (time.value() >> 8) as u32 ))?;
+                self.fast_cmd(FastCommand::CMD_DTX)?;
+            }
+            SendTime::OnSync => {
+                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
+                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
+            }
+            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
+        }
+
+        Ok(DW3000 {
+            ll: self.ll,
+            seq: self.seq,
+            state: Sending { finished: false },
+        })
+    }
+
     /// Send an IEEE 802.15.4 MAC frame
     ///
     /// The `data` argument is wrapped into an IEEE 802.15.4 MAC frame and sent
