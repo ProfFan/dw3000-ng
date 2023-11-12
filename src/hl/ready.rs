@@ -108,7 +108,7 @@ where
         self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
         // while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
 
-        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
+        // self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
 
         // Prepare transmitter
         let mut len: usize = 0;
