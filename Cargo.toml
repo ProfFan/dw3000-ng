@@ -28,8 +28,9 @@ version = "0.5"
 default-features = false
 
 [features]
-default = []
+default = ["async"]
 std = ["ssmarshal/std", "serde/std", "num_enum/std"]
+async = []
 
 [workspace]
 members = ["example_stm32f1"]
