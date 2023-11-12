@@ -268,6 +268,7 @@ where
     /// It consumes this instance of `DW3000` and returns another instance which
     /// is in the `Sending` state, and can be used to wait for the transmission
     /// to finish and check its result.
+    #[inline(always)]
     pub fn send(
         mut self,
         data: &[u8],
