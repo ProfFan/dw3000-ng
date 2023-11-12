@@ -46,14 +46,14 @@ where
         // WARNING s:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
-        let sys_status = self
+        let fint_stat = self
             .ll
-            .sys_status()
+            .fint_stat()
             .read()
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
         // Has the frame been sent?
-        if sys_status.txfrs() == 0b0 {
+        if fint_stat.txok() == 0b0 {
             // Frame has not been sent
             return Err(nb::Error::WouldBlock);
         }
