@@ -3,9 +3,13 @@ use core::fmt;
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 use ssmarshal;
 
+#[cfg(feature = "defmt")]
+use defmt::Format;
+
 use crate::ll;
 
 /// An error that can occur when sending or receiving data
+#[cfg_attr(feature = "defmt", derive(Format))]
 pub enum Error<SPI, CS>
 where
     SPI: spi::Transfer<u8> + spi::Write<u8>,

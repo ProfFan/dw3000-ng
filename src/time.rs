@@ -4,6 +4,9 @@ use core::ops::{Add, Sub};
 
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "defmt")]
+use defmt::Format;
+
 /// The maximum value of 40-bit system time stamps.
 pub const TIME_MAX: u64 = 0xffffffffff;
 
@@ -15,6 +18,7 @@ pub const TIME_MAX: u64 = 0xffffffffff;
 ///
 /// [`DW3000::sys_time`]: ../hl/struct.DW3000.html#method.sys_time
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "defmt", derive(Format))]
 #[repr(C)]
 pub struct Instant(u64);
 

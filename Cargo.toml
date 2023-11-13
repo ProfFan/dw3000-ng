@@ -12,7 +12,7 @@ embedded-hal = "0.2"
 ieee802154   = "0.5"
 nb           = "1.0"
 fixed        = "1.7"
-#micromath    = "2.0"
+defmt        = "0.3"
 
 [dependencies.serde]
 version = "1"
@@ -31,6 +31,7 @@ default-features = false
 default = ["async"]
 std = ["ssmarshal/std", "serde/std", "num_enum/std"]
 async = []
+defmt = []
 
 [workspace]
 members = ["example_stm32f1"]

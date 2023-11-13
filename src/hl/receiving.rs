@@ -7,6 +7,9 @@ use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 use fixed::traits::LossyInto;
 use ieee802154::mac::FooterMode;
 
+#[cfg(feature = "defmt")]
+use defmt::Format;
+
 use super::{AutoDoubleBufferReceiving, Receiving};
 use crate::{
     configs::{BitRate, SfdSequence},
@@ -17,6 +20,7 @@ use crate::{
 
 /// An incoming message
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(Format))]
 pub struct Message<'l> {
     /// The time the message was received
     ///

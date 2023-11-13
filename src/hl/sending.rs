@@ -68,6 +68,7 @@ where
             .read()
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?
             .tx_stamp();
+        
         // This is safe because the value read from the device will never be higher than
         // the allowed value.
         let tx_timestamp = Instant::new(tx_timestamp);
