@@ -19,6 +19,9 @@ use core::{fmt, marker::PhantomData};
 
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
+#[cfg(feature = "defmt")]
+use defmt::Format;
+
 /// Entry point to the DW3000 driver's low-level API
 ///
 /// Please consider using [hl::DW3000] instead.
@@ -157,6 +160,21 @@ where
             Error::Transfer(error) => write!(f, "Transfer({:?})", error),
             Error::Write(error) => write!(f, "Write({:?})", error),
             Error::ChipSelect(error) => write!(f, "ChipSelect({:?})", error),
+        }
+    }
+}
+
+#[cfg(feature = "defmt")]
+impl<SPI, CS> defmt::Format for Error<SPI, CS>
+where
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    CS: OutputPin,
+{
+    fn format(&self, f: defmt::Formatter) {
+        match self {
+            Error::Transfer(error) => defmt::write!(f, "Transfer()"),
+            Error::Write(error) => defmt::write!(f, "Write()"),
+            Error::ChipSelect(error) => defmt::write!(f, "ChipSelect()"),
         }
     }
 }

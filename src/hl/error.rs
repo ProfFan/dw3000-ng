@@ -54,7 +54,7 @@ where
     FrameFilteringRejection,
 
     /// Frame could not be decoded
-    Frame(byte::Error),
+    Frame(#[defmt(Debug2Format)] byte::Error),
 
     /// A delayed frame could not be sent in time
     ///
@@ -70,7 +70,7 @@ where
     DelayedSendPowerUpWarning,
 
     /// An error occured while serializing or deserializing data
-    Ssmarshal(ssmarshal::Error),
+    Ssmarshal(#[defmt(Debug2Format)] ssmarshal::Error),
 
     /// The configuration was not valid. Some combinations of settings are not
     /// allowed.

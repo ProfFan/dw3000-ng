@@ -4,7 +4,7 @@ use core::num::Wrapping;
 
 use byte::BytesExt as _;
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use ieee802154::mac::{self, FooterMode};
+use ieee802154::mac::{self, FooterMode, FrameSerDesContext};
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
@@ -200,7 +200,11 @@ where
         // Prepare transmitter
         let mut len = 0;
         self.ll.tx_buffer().write(|w| {
-            let result = w.data().write_with(&mut len, frame, FooterMode::None);
+            let result = w.data().write_with(
+                &mut len,
+                frame,
+                &mut FrameSerDesContext::no_security(FooterMode::None),
+            );
 
             if let Err(err) = result {
                 panic!("Failed to write frame: {:?}", err);
@@ -292,7 +296,9 @@ where
             header: mac::Header {
                 frame_type: mac::FrameType::Data,
                 version: mac::FrameVersion::Ieee802154_2006,
-                security: mac::Security::None,
+                auxiliary_security_header: None,
+                seq_no_suppress: true,
+                ie_present: false,
                 frame_pending: false,
                 ack_request: false,
                 pan_id_compress: false,
@@ -308,7 +314,7 @@ where
         // Prepare transmitter
         let mut len = 0;
         self.ll.tx_buffer().write(|w| {
-            let result = w.data().write_with(&mut len, frame, FooterMode::None);
+            let result = w.data().write_with(&mut len, frame, &mut FrameSerDesContext::no_security(FooterMode::None));
 
             if let Err(err) = result {
                 panic!("Failed to write frame: {:?}", err);
