@@ -57,6 +57,11 @@ impl<SPI, CS> DW3000<SPI, CS> {
 
         Ok(())
     }
+
+    /// Allow access to the SPI bus
+    pub fn bus(&mut self) -> &mut SPI {
+        &mut self.spi
+    }
 }
 
 /// Provides access to a register
