@@ -190,6 +190,7 @@ where
 ///
 /// TODO: Here we always use the full address, but we should also support the
 /// short address mode and masked write mode.
+#[inline(always)]
 fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
     // bool write defines if we are in read or write mode (first bit)
     // sub_id is a bool that defines if we are in full or short command
@@ -314,6 +315,7 @@ macro_rules! impl_register {
                 impl R {
                     $(
                         #[$field_doc]
+                        #[inline(always)]
                         pub fn $field(&self) -> $ty {
                             use core::mem::size_of;
                             use crate::ll::FromBytes;
@@ -427,6 +429,7 @@ macro_rules! impl_register {
                 impl W {
                     $(
                         #[$field_doc]
+                        #[inline(always)]
                         pub fn $field(&mut self, value: $ty) -> &mut Self {
                             use crate::ll::ToBytes;
 
