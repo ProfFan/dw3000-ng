@@ -35,9 +35,6 @@ pub mod block {
     pub use nb::block;
 }
 
-#[doc(no_inline)]
-pub use ieee802154::mac;
-
 pub use crate::{
     block::block,
     configs::Config,

@@ -13,7 +13,7 @@ use stm32f1xx_hal::{
     spi::{Mode, Phase, Polarity, Spi},
 };
 
-use dw3000::{hl, Config};
+use dw3000_ng::{hl, Config};
 use nb::block;
 
 #[cortex_m_rt::entry]
@@ -107,7 +107,7 @@ fn main() -> ! {
 
         defmt::println!(
             "Received '{}' at {}",
-            result.frame.payload,
+            result.frame,
             result.rx_time.value()
         );
         dw3000 = receiving

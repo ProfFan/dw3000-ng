@@ -2,10 +2,12 @@ use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
 use super::Awake;
 use crate::{
-    fast_command, ll, mac,
+    fast_command, ll,
     time::{Duration, Instant},
     Error, DW3000,
 };
+
+use smoltcp::wire::{Ieee802154Address, Ieee802154Pan};
 
 impl<SPI, CS, State> DW3000<SPI, CS, State>
 where
@@ -34,12 +36,12 @@ where
     }
 
     /// Returns the network id and address used for sending and receiving
-    pub fn get_address(&mut self) -> Result<mac::Address, Error<SPI, CS>> {
+    pub fn get_address(&mut self) -> Result<(Ieee802154Pan, Ieee802154Address), Error<SPI, CS>> {
         let panadr = self.ll.panadr().read()?;
 
-        Ok(mac::Address::Short(
-            mac::PanId(panadr.pan_id()),
-            mac::ShortAddress(panadr.short_addr()),
+        Ok((
+            smoltcp::wire::Ieee802154Pan(panadr.pan_id()),
+            Ieee802154Address::Short(panadr.short_addr().to_be_bytes()),
         ))
     }
 

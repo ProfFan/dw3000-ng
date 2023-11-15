@@ -4,13 +4,14 @@ use core::num::Wrapping;
 
 use byte::BytesExt as _;
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use ieee802154::mac::{self, FooterMode, FrameSerDesContext};
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
     configs::SfdSequence, time::Instant, Config, Error, FastCommand, Ready, Sending,
     SingleBufferReceiving, Sleeping, DW3000,
 };
+
+use smoltcp::wire::{Ieee802154Address, Ieee802154Frame, Ieee802154Pan, Ieee802154Repr};
 
 /// The behaviour of the sync pin
 pub enum SyncBehaviour {
@@ -67,12 +68,17 @@ where
     /// Sets the network id and address used for sending and receiving
     pub fn set_address(
         &mut self,
-        pan_id: mac::PanId,
-        addr: mac::ShortAddress,
+        pan_id: Ieee802154Pan,
+        addr: Ieee802154Address,
     ) -> Result<(), Error<SPI, CS>> {
-        self.ll
-            .panadr()
-            .write(|w| w.pan_id(pan_id.0).short_addr(addr.0))?;
+        let Ieee802154Address::Short(short_addr) = addr else {
+            return Err(Error::InvalidConfiguration);
+        };
+
+        self.ll.panadr().write(|w| {
+            w.pan_id(pan_id.0)
+                .short_addr(u16::from_be_bytes(short_addr))
+        })?;
 
         Ok(())
     }
@@ -181,12 +187,15 @@ where
     /// is in the `Sending` state, and can be used to wait for the transmission
     /// to finish and check its result.
     #[inline]
-    pub fn send_frame(
+    pub fn send_frame<T>(
         mut self,
-        frame: mac::Frame,
+        frame: Ieee802154Frame<T>,
         send_time: SendTime,
         config: Config,
-    ) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
+    ) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>>
+    where
+        T: AsRef<[u8]>,
+    {
         // Clear event counters
         self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
         while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
@@ -198,17 +207,12 @@ where
         self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
 
         // Prepare transmitter
+        let buf = frame.into_inner();
         let mut len = 0;
         self.ll.tx_buffer().write(|w| {
-            let result = w.data().write_with(
-                &mut len,
-                frame,
-                &mut FrameSerDesContext::no_security(FooterMode::None),
-            );
-
-            if let Err(err) = result {
-                panic!("Failed to write frame: {:?}", err);
-            }
+            let result = w.data();
+            len = buf.as_ref().len();
+            result[0..len].copy_from_slice(buf.as_ref());
 
             w
         })?;
@@ -292,33 +296,36 @@ where
         let seq = self.seq.0;
         self.seq += Wrapping(1);
 
-        let frame = mac::Frame {
-            header: mac::Header {
-                frame_type: mac::FrameType::Data,
-                version: mac::FrameVersion::Ieee802154_2006,
-                auxiliary_security_header: None,
-                seq_no_suppress: true,
-                ie_present: false,
-                frame_pending: false,
-                ack_request: false,
-                pan_id_compress: false,
-                destination: mac::Address::broadcast(&mac::AddressMode::Short), ////
-                source: Some(self.get_address()?),
-                seq,
-            },
-            content: mac::FrameContent::Data,
-            payload: data,
-            footer: [0; 2],
+        let frame_repr = Ieee802154Repr {
+            frame_type: smoltcp::wire::Ieee802154FrameType::Data,
+            frame_version: smoltcp::wire::Ieee802154FrameVersion::Ieee802154_2006,
+            security_enabled: false,
+            sequence_number: Some(seq),
+            frame_pending: false,
+            ack_request: false,
+            pan_id_compression: true,
+            dst_addr: Some(Ieee802154Address::BROADCAST),
+            src_addr: Some(self.get_address()?.1),
+            src_pan_id: Some(self.get_address()?.0),
+            dst_pan_id: None,
         };
 
         // Prepare transmitter
         let mut len = 0;
         self.ll.tx_buffer().write(|w| {
-            let result = w.data().write_with(&mut len, frame, &mut FrameSerDesContext::no_security(FooterMode::None));
+            let result = w.data();
 
-            if let Err(err) = result {
-                panic!("Failed to write frame: {:?}", err);
-            }
+            let mut frame = Ieee802154Frame::new_unchecked(&mut result[0..]);
+            frame_repr.emit(&mut frame);
+
+            // copy data
+            result[frame_repr.buffer_len()..frame_repr.buffer_len() + data.len()]
+                .copy_from_slice(data);
+
+            // footer
+            result[frame_repr.buffer_len() + data.len()] = 0x00;
+
+            len = frame_repr.buffer_len() + data.len() + 2;
 
             w
         })?;

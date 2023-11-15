@@ -24,7 +24,7 @@ defmt-rtt = "0.3.0"
 panic-probe = { version = "0.3.0", features = ["print-defmt"] }
 # TODO(4) enter your HAL here
 stm32f1xx-hal = { version = "0.8.0", features = ["stm32f103", "rt", "medium"] }
-dw3000 = {path = "../"}
+dw3000-ng = { name = "dw3000", path = "../"}
 nb           = "1.0.0"
 embedded-timeout-macros = "0.3.0"
 embedded-hal = "0.2.4"

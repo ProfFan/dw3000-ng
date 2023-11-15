@@ -5,7 +5,6 @@ use core::convert::TryInto;
 use byte::BytesExt as _;
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 use fixed::traits::LossyInto;
-use ieee802154::mac::FooterMode;
 
 #[cfg(feature = "defmt")]
 use defmt::Format;
@@ -13,10 +12,11 @@ use defmt::Format;
 use super::{AutoDoubleBufferReceiving, Receiving};
 use crate::{
     configs::{BitRate, SfdSequence},
-    mac,
     time::Instant,
     Config, Error, FastCommand, Ready, DW3000,
 };
+
+use smoltcp::wire::Ieee802154Frame;
 
 /// An incoming message
 #[derive(Debug)]
@@ -27,9 +27,9 @@ pub struct Message<'l> {
     /// This time is based on the local system time, as defined in the SYS_TIME
     /// register.
     pub rx_time: Instant,
-
+    
     /// The MAC frame
-    pub frame: mac::Frame<'l>,
+    pub frame: Ieee802154Frame<&'l [u8]>,
 }
 
 /// A struct representing the quality of the received message.
@@ -206,11 +206,11 @@ where
 
         buffer[..len].copy_from_slice(&rx_buffer.data()[..len]);
 
-        let frame = buffer[..len]
-            .read_with(&mut 0, FooterMode::None)
-            .map_err(|error| nb::Error::Other(Error::Frame(error)))?;
+        let buffer = &buffer[..len];
 
         self.state.mark_finished();
+
+        let frame = Ieee802154Frame::new_checked(buffer).unwrap();
 
         Ok(Message { rx_time, frame })
     }
