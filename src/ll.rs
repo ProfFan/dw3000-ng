@@ -76,7 +76,7 @@ where
     CS: OutputPin,
 {
     /// Read from the register
-    #[inline(always)]
+    #[inline]
     pub fn read(&mut self) -> Result<R::Read, Error<SPI, CS>>
     where
         R: Register + Readable,
@@ -93,7 +93,7 @@ where
     }
 
     /// Write to the register
-    #[inline(always)]
+    #[inline]
     pub fn write<F>(&mut self, f: F) -> Result<(), Error<SPI, CS>>
     where
         R: Register + Writable,
@@ -113,7 +113,7 @@ where
     }
 
     /// Modify the register
-    #[inline(always)]
+    #[inline]
     pub fn modify<F>(&mut self, f: F) -> Result<(), Error<SPI, CS>>
     where
         R: Register + Readable + Writable,
