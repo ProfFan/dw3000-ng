@@ -1,7 +1,7 @@
-# Rust DW3000 Driver [![crates.io](https://img.shields.io/crates/v/dw3000.svg)](https://crates.io/crates/dw3000) [![Documentation](https://docs.rs/dw3000/badge.svg)](https://docs.rs/dw3000)
+# Rust DW3000 Driver [![crates.io](https://img.shields.io/crates/v/dw3000-ng.svg)](https://crates.io/crates/dw3000-ng) [![Documentation](https://docs.rs/dw3000-ng/badge.svg)](https://docs.rs/dw3000-ng)
 ## Introduction
 
-Driver for the Decawave [DW3000] UWB transceiver, written in the [Rust] programming language. We used the crate dw1000 developped for the [DW1000] module and changed the registers access and spi functions, added fast command and implemented some high level functions.
+A modernized driver for the Decawave [DW3000] UWB transceiver, written in the [Rust] programming language. We used the crate dw1000 developped for the [DW1000] module and changed the registers access and spi functions, added fast command and implemented some high level functions.
 
 [DW3000]: https://www.decawave.com/product/decawave-dw3000-ic/
 [Rust]: https://www.rust-lang.org/
@@ -13,24 +13,17 @@ Driver for the Decawave [DW3000] UWB transceiver, written in the [Rust] programm
 Both RTT methods (single and double sided) are working and giving good positioning values.
 No implementation of PDoA or AoA.
 
-We tested the crate using two different platforms; both platforms examples are available on dedicated repository (raspberry pi and STM32F103RB)
-Examples available are basic communication and distance measurement between two modules (single and double sided RTT)
+Compared to the old dw3000 crate we fixed the GPIOs and LEDs, also got rid of the old unmaintained ieee802154 crate and replaced it with smoltcp.
 
-We built the driver on top of embedded-hal, which means it is portable and can be used on any platform that implements the embedded-hal API.
-
+Examples are still from the old dw3000 crate and need to be updated. I mainly test on the ESP32 platform.
 
 ## Usage
 
 Include this crate in your Cargo project by adding the following to `Cargo.toml`:
 ```toml
 [dependencies]
-dw3000 = "0.2.0"
+dw3000-ng = "0.3.1"
 ```
-
-We also provided workspaces in which you can find some example depending of the target (raspberry pi or stm32f103rb).
-We built stm32f103rb examples using the app-template of the knurling project. 
-Unfortunately, you cannot build your example directly from the main repository, you need to navigate to the examples folder to build and run applications. 
-
 
 ## Documentation
 
@@ -39,9 +32,8 @@ Please refer to our github for exemples **[github link]**.
 
 Please also refer to the [DW3000 User Manual] 
 
-[API Reference]: https://docs.rs/dw3000
+[API Reference]: https://docs.rs/dw3000-ng
 [DW3000 User Manual]: https://www.decawave.com/wp-content/uploads/2021/05/DW3000-User-Manual-1.pdf#page=110&zoom=100,68,106
-[github link]: https://github.com/SII-Public-Research/dw3000
 
 ## License
 
