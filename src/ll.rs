@@ -1712,7 +1712,7 @@ impl<SPI, CS> DW3000<SPI, CS> {
 pub mod rx_buffer_0 {
     use core::fmt;
 
-    const HEADER_LEN: usize = 1;
+    const HEADER_LEN: usize = 2;
     const LEN: usize = 127;
 
     /// Used to read from the register
@@ -1773,7 +1773,7 @@ impl<SPI, CS> DW3000<SPI, CS> {
 pub mod rx_buffer_1 {
     use core::fmt;
 
-    const HEADER_LEN: usize = 1;
+    const HEADER_LEN: usize = 2;
     const LEN: usize = 127;
 
     /// Used to read from the register
