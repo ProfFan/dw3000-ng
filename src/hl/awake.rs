@@ -45,13 +45,11 @@ where
         ))
     }
 
-    /// Returns the current system time
-    pub fn sys_time(&mut self) -> Result<Instant, Error<SPI, CS>> {
+    /// Returns the current system time (32-bit)
+    pub fn sys_time(&mut self) -> Result<u32, Error<SPI, CS>> {
         let sys_time = self.ll.sys_time().read()?.value();
 
-        // Since hardware timestamps fit within 40 bits, the following should
-        // never panic.
-        Ok(Instant::new(sys_time.into()).unwrap())
+        Ok(sys_time)
     }
 
     /// Returns the state of the DW3000
