@@ -227,7 +227,7 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
-    pub fn r_wait_buf<'b>(&mut self, buffer: &'b mut [u8]) -> nb::Result<Instant, Error<SPI, CS>> {
+    pub fn r_wait_buf<'b>(&mut self, buffer: &'b mut [u8]) -> nb::Result<(usize, Instant), Error<SPI, CS>> {
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
@@ -338,7 +338,7 @@ where
         
         self.state.mark_finished();
 
-        Ok(rx_time)
+        Ok((len, rx_time))
     }
 
 
