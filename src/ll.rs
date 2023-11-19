@@ -1693,7 +1693,7 @@ impl Readable for RX_BUFFER_0 {
     type Read = rx_buffer_0::R;
 
     fn read() -> Self::Read {
-        rx_buffer_0::R([0; 127 + 1])
+        rx_buffer_0::R([0; 127 + 2])
     }
 
     fn buffer(w: &mut Self::Read) -> &mut [u8] {
@@ -1754,7 +1754,7 @@ impl Readable for RX_BUFFER_1 {
     type Read = rx_buffer_1::R;
 
     fn read() -> Self::Read {
-        rx_buffer_1::R([0; 127 + 1])
+        rx_buffer_1::R([0; 127 + 2])
     }
 
     fn buffer(w: &mut Self::Read) -> &mut [u8] {
