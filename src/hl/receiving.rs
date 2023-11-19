@@ -27,7 +27,7 @@ pub struct Message<'l> {
     /// This time is based on the local system time, as defined in the SYS_TIME
     /// register.
     pub rx_time: Instant,
-    
+
     /// The MAC frame
     pub frame: Ieee802154Frame<&'l [u8]>,
 }
@@ -227,7 +227,10 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
-    pub fn r_wait_buf<'b>(&mut self, buffer: &'b mut [u8]) -> nb::Result<(usize, Instant), Error<SPI, CS>> {
+    pub fn r_wait_buf<'b>(
+        &mut self,
+        buffer: &'b mut [u8],
+    ) -> nb::Result<(usize, Instant), Error<SPI, CS>> {
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
@@ -335,12 +338,11 @@ where
         }
 
         buffer[..len].copy_from_slice(&rx_buffer.data()[..len]);
-        
+
         self.state.mark_finished();
 
         Ok((len, rx_time))
     }
-
 
     #[allow(clippy::type_complexity)]
     /// Finishes receiving and returns to the `Ready` state

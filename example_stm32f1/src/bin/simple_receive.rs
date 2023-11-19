@@ -105,11 +105,7 @@ fn main() -> ! {
             }
         };
 
-        defmt::println!(
-            "Received '{}' at {}",
-            result.frame,
-            result.rx_time.value()
-        );
+        defmt::println!("Received '{}' at {}", result.frame, result.rx_time.value());
         dw3000 = receiving
             .finish_receiving()
             .expect("Failed to finish receiving");
