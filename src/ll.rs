@@ -180,9 +180,9 @@ where
 {
     fn format(&self, f: defmt::Formatter) {
         match self {
-            Error::Transfer(error) => defmt::write!(f, "Transfer()"),
-            Error::Write(error) => defmt::write!(f, "Write()"),
-            Error::ChipSelect(error) => defmt::write!(f, "ChipSelect()"),
+            Error::Transfer(_) => defmt::write!(f, "Transfer()"),
+            Error::Write(_) => defmt::write!(f, "Write()"),
+            Error::ChipSelect(_) => defmt::write!(f, "ChipSelect()"),
         }
     }
 }
@@ -1648,7 +1648,7 @@ impl Writable for TX_BUFFER {
     type Write = tx_buffer::W;
 
     fn write() -> Self::Write {
-        tx_buffer::W([0; 127 + 1])
+        tx_buffer::W([0; 127 + 2])
     }
 
     fn buffer(w: &mut Self::Write) -> &mut [u8] {
@@ -1665,13 +1665,17 @@ impl<SPI, CS> DW3000<SPI, CS> {
 
 /// Transmit Data Buffer
 pub mod tx_buffer {
+
+    const HEADER_LEN: usize = 2;
+    const LEN: usize = 127;
+
     /// Used to write to the register
-    pub struct W(pub(crate) [u8; 127 + 1]);
+    pub struct W(pub(crate) [u8; LEN + HEADER_LEN]);
 
     impl W {
         /// Provides write access to the buffer contents
         pub fn data(&mut self) -> &mut [u8] {
-            &mut self.0[1..]
+            &mut self.0[HEADER_LEN..]
         }
     }
 }
