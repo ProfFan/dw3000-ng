@@ -25,6 +25,9 @@ nb = "1.0"
 fixed = "1.7"
 defmt = "0.3"
 
+[dev-dependencies]
+embedded-hal-mock = "0.10.0-rc.1"
+
 [dependencies.serde]
 version = "1"
 default-features = false

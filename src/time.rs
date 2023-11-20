@@ -34,7 +34,7 @@ impl Instant {
     /// # Example
     ///
     /// ``` rust
-    /// use dw3000::time::{
+    /// use dw3000_ng::time::{
     ///     TIME_MAX,
     ///     Instant,
     /// };
@@ -71,7 +71,7 @@ impl Instant {
     /// # Example
     ///
     /// ``` rust
-    /// use dw3000::time::{
+    /// use dw3000_ng::time::{
     ///     TIME_MAX,
     ///     Instant,
     /// };
@@ -170,7 +170,7 @@ impl Duration {
     /// # Example
     ///
     /// ``` rust
-    /// use dw3000::time::{
+    /// use dw3000_ng::time::{
     ///     TIME_MAX,
     ///     Duration,
     /// };

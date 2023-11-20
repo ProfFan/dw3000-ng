@@ -20,8 +20,8 @@
 //! [register-level interface]: ll/index.html
 //! [`dw1000`]: https://crates.io/crates/dw1000
 //! [`embedded-hal`]: https://crates.io/crates/embedded-hal
-#![no_main]
-#![no_std]
+#![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(test), no_std)]
 #![deny(missing_docs)]
 
 pub mod configs;

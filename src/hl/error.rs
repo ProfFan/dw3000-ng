@@ -148,3 +148,19 @@ where
         }
     }
 }
+
+// Tests
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use embedded_hal_mock::eh0::spi::{Mock as SpiMock, Transaction as SpiTrans};
+    use embedded_hal_mock::eh0::pin::Mock as PinMock;
+
+    #[test]
+    fn test_defmt() {
+        let error = Error::<SpiMock, PinMock>::BufferTooSmall { required_len: 42 };
+
+        defmt::info!("error: {:?}", error);
+    }
+}
