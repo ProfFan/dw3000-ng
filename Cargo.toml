@@ -33,17 +33,13 @@ version = "1"
 default-features = false
 features = ["derive"]
 
-[dependencies.ssmarshal]
-version = "1"
-default-features = false
-
 [dependencies.num_enum]
 version = "0.5"
 default-features = false
 
 [features]
 default = ["async", "defmt"]
-std = ["ssmarshal/std", "serde/std", "num_enum/std"]
+std = ["serde/std", "num_enum/std"]
 async = []
 defmt = []
 

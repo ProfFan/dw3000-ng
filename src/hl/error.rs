@@ -1,7 +1,6 @@
 use core::fmt;
 
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-use ssmarshal;
 
 #[cfg(feature = "defmt")]
 use defmt::Format;
@@ -9,7 +8,6 @@ use defmt::Format;
 use crate::ll;
 
 /// An error that can occur when sending or receiving data
-#[cfg_attr(feature = "defmt", derive(Format))]
 pub enum Error<SPI, CS>
 where
     SPI: spi::Transfer<u8> + spi::Write<u8>,
@@ -54,7 +52,7 @@ where
     FrameFilteringRejection,
 
     /// Frame could not be decoded
-    Frame(#[cfg_attr(feature = "defmt", defmt(Debug2Format))] byte::Error),
+    Frame(byte::Error),
 
     /// A delayed frame could not be sent in time
     ///
@@ -68,9 +66,6 @@ where
     /// The frame was still transmitted, but the first bytes of the preamble
     /// were likely corrupted.
     DelayedSendPowerUpWarning,
-
-    /// An error occured while serializing or deserializing data
-    Ssmarshal(#[cfg_attr(feature = "defmt", defmt(Debug2Format))] ssmarshal::Error),
 
     /// The configuration was not valid. Some combinations of settings are not
     /// allowed.
@@ -97,16 +92,6 @@ where
 {
     fn from(error: ll::Error<SPI, CS>) -> Self {
         Error::Spi(error)
-    }
-}
-
-impl<SPI, CS> From<ssmarshal::Error> for Error<SPI, CS>
-where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
-{
-    fn from(error: ssmarshal::Error) -> Self {
-        Error::Ssmarshal(error)
     }
 }
 
@@ -137,7 +122,6 @@ where
             Error::Frame(error) => write!(f, "Frame({:?})", error),
             Error::DelayedSendTooLate => write!(f, "DelayedSendTooLate"),
             Error::DelayedSendPowerUpWarning => write!(f, "DelayedSendPowerUpWarning"),
-            Error::Ssmarshal(error) => write!(f, "Ssmarshal({:?})", error),
             Error::InvalidConfiguration => write!(f, "InvalidConfiguration"),
             Error::RxNotFinished => write!(f, "RxNotFinished"),
             Error::StillAsleep => write!(f, "StillAsleep"),
@@ -149,13 +133,53 @@ where
     }
 }
 
+#[cfg(feature = "defmt")]
+
+// We can't derive this implementation, as `Debug` is only implemented
+// conditionally for `ll::Debug`.
+impl<SPI, CS> Format for Error<SPI, CS>
+where
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    <SPI as spi::Transfer<u8>>::Error: defmt::Format,
+    <SPI as spi::Write<u8>>::Error: defmt::Format,
+    CS: OutputPin,
+    <CS as OutputPin>::Error: defmt::Format,
+{
+    fn format(&self, f: defmt::Formatter) {
+        match self {
+            Error::Spi(error) => defmt::write!(f, "Spi({:?})", error),
+            Error::Fcs => defmt::write!(f, "Fcs"),
+            Error::Phy => defmt::write!(f, "Phy"),
+            Error::BufferTooSmall { required_len } => {
+                defmt::write!(f, "BufferTooSmall {{ required_len: {:?} }}", required_len,)
+            }
+            Error::ReedSolomon => defmt::write!(f, "ReedSolomon"),
+            Error::FrameWaitTimeout => defmt::write!(f, "FrameWaitTimeout"),
+            Error::Overrun => defmt::write!(f, "Overrun"),
+            Error::PreambleDetectionTimeout => defmt::write!(f, "PreambleDetectionTimeout"),
+            Error::SfdTimeout => defmt::write!(f, "SfdTimeout"),
+            Error::FrameFilteringRejection => defmt::write!(f, "FrameFilteringRejection"),
+            Error::Frame(error) => defmt::write!(f, "Frame({:?})", defmt::Debug2Format(error)),
+            Error::DelayedSendTooLate => defmt::write!(f, "DelayedSendTooLate"),
+            Error::DelayedSendPowerUpWarning => defmt::write!(f, "DelayedSendPowerUpWarning"),
+            Error::InvalidConfiguration => defmt::write!(f, "InvalidConfiguration"),
+            Error::RxNotFinished => defmt::write!(f, "RxNotFinished"),
+            Error::StillAsleep => defmt::write!(f, "StillAsleep"),
+            Error::BadRssiCalculation => defmt::write!(f, "BadRssiCalculation"),
+            Error::RxConfigFrameFilteringUnsupported => {
+                defmt::write!(f, "RxConfigFrameFilteringUnsupported")
+            }
+        }
+    }
+}
+
 // Tests
 #[cfg(test)]
 mod test {
     use super::*;
 
-    use embedded_hal_mock::eh0::spi::{Mock as SpiMock, Transaction as SpiTrans};
     use embedded_hal_mock::eh0::pin::Mock as PinMock;
+    use embedded_hal_mock::eh0::spi::{Mock as SpiMock, Transaction as SpiTrans};
 
     #[test]
     fn test_defmt() {
