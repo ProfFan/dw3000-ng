@@ -420,12 +420,13 @@ where
     /// Overwrites any interrupt flags that were previously set.
     pub fn enable_rx_interrupts(&mut self) -> Result<(), Error<SPI, CS>> {
         self.ll().sys_enable().modify(|_, w| {
-            w.rxprd_en(0b1)
-                .rxsfdd_en(0b1)
-                .rxphd_en(0b1)
+            w
+                // .rxprd_en(0b1)
+                //     .rxsfdd_en(0b1)
+                //     .rxphd_en(0b1)
                 .rxphe_en(0b1)
                 .rxfr_en(0b1)
-                .rxfcg_en(0b1)
+                // .rxfcg_en(0b1)
                 .rxfce_en(0b1)
                 .rxrfsl_en(0b1)
                 .rxfto_en(0b1)

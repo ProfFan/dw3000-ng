@@ -275,7 +275,6 @@ where
             // - RXPREJ: Receiver Preamble Rejection
 
             // No errors detected. That must mean the frame is just not ready yet.
-            defmt::debug!("sys_status: {:#?}", defmt::Debug2Format(&sys_status));
             return Err(nb::Error::WouldBlock);
         }
 
