@@ -179,7 +179,7 @@ mod test {
     use super::*;
 
     use embedded_hal_mock::eh0::pin::Mock as PinMock;
-    use embedded_hal_mock::eh0::spi::{Mock as SpiMock, Transaction as SpiTrans};
+    use embedded_hal_mock::eh0::spi::Mock as SpiMock;
 
     #[test]
     fn test_defmt() {

@@ -104,7 +104,7 @@ where
         mut self,
         data: &[u8],
         send_time: SendTime,
-        config: Config,
+        config: &Config,
     ) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
         // Clear event counters
         self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
