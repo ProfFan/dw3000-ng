@@ -189,12 +189,19 @@ impl Duration {
         }
     }
 
-    /// Creates an instance of `Duration` from a number of nanoseconds
+    /// Creates an instance of `Duration` from a number of nanoseconds, rounding to the nearest
+    ///
+    /// On the DW3000, the TX_TIME/RX_TIME registers have a resolution of 40-bits
+    /// and a unit of 1/(128*499.2*10^6) seconds. This means that 1 nanosecond
+    /// is 63.8976 DW3000 time units.
+    ///
+    /// We do this with fixed point arithmetic, where
+    /// (dividend + (divisor / 2)) / divisor
     pub fn from_nanos(nanos: u32) -> Self {
         // `nanos` takes up at most 32 bits before it is cast to `u64`. That
         // means the result of the multiplication fits within 38 bits, so the
         // following should never panic.
-        Duration::new(nanos as u64 * 64).unwrap()
+        Duration::new((nanos as u64 * 638976 + 5000) / 10000).unwrap()
     }
 
     /// Returns the raw 40-bit timestamp
@@ -203,5 +210,61 @@ impl Duration {
     /// 0 <= `value` <= 2^40 - 1
     pub fn value(&self) -> u64 {
         self.0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn instant_add_duration() {
+        let instant = Instant::new(0).unwrap();
+        let duration = Duration::new(1).unwrap();
+
+        let result = instant + duration;
+
+        assert_eq!(result.value(), 1);
+    }
+
+    #[test]
+    fn instant_sub_duration() {
+        let instant = Instant::new(1).unwrap();
+        let duration = Duration::new(1).unwrap();
+
+        let result = instant - duration;
+
+        assert_eq!(result.value(), 0);
+    }
+
+    #[test]
+    fn instant_sub_instant() {
+        let instant_1 = Instant::new(1).unwrap();
+        let instant_2 = Instant::new(0).unwrap();
+
+        let result = instant_1 - instant_2;
+
+        assert_eq!(result.value(), 1);
+    }
+
+    #[test]
+    fn instant_duration_since() {
+        let instant_1 = Instant::new(1).unwrap();
+        let instant_2 = Instant::new(0).unwrap();
+
+        let result = instant_1.duration_since(instant_2);
+
+        assert_eq!(result.value(), 1);
+    }
+
+    #[test]
+    fn duration_from_nanos() {
+        let duration = Duration::from_nanos(1);
+
+        assert_eq!(duration.value(), 64);
+
+        let duration = Duration::from_nanos(6);
+
+        assert_eq!(duration.value(), 383);
     }
 }

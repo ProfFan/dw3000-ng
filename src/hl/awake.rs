@@ -1,11 +1,7 @@
 use embedded_hal::{blocking::spi, digital::v2::OutputPin};
 
 use super::Awake;
-use crate::{
-    fast_command, ll,
-    time::Duration,
-    Error, DW3000,
-};
+use crate::{fast_command, ll, time::Duration, Error, DW3000};
 
 use smoltcp::wire::{Ieee802154Address, Ieee802154Pan};
 
