@@ -427,6 +427,15 @@ macro_rules! impl_register {
                     }
                 }
 
+                #[cfg(feature = "defmt")]
+                impl defmt::Format for R {
+                    fn format(&self, f: defmt::Formatter) {
+                        defmt::write!(f, "0x");
+                        for i in (0 .. $len).rev() {
+                            defmt::write!(f, "{:02x}", self.0[HEADER_LEN + i]);
+                        }
+                    }
+                }
 
                 /// Used to write to the register
                 pub struct W(pub(crate) [u8; HEADER_LEN + $len]);
