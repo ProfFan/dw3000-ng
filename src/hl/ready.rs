@@ -433,7 +433,7 @@ where
                 .rxovrr_en(0b1)
                 .rxpto_en(0b1)
                 .rxsto_en(0b1)
-                .rxprej_en(0b1)
+                // .rxprej_en(0b1)
         })?;
         Ok(())
     }
