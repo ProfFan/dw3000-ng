@@ -147,6 +147,11 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
+                // Panic if the time is not rounded to top 32 bits
+                if time.value() % (1 << 8) != 0 {
+                    panic!("Time must be rounded to top 32 bits");
+                }
+
                 // Put the time into the delay register
                 // By setting this register, the chip knows to delay before transmitting
                 self.ll
@@ -236,6 +241,11 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
+                // Panic if the time is not rounded to top 32 bits
+                if time.value() % (1 << 8) != 0 {
+                    panic!("Time must be rounded to top 32 bits");
+                }
+
                 // Put the time into the delay register
                 // By setting this register, the chip knows to delay before transmitting
                 self.ll
@@ -349,6 +359,11 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
+                // Panic if the time is not rounded to top 32 bits
+                if time.value() % (1 << 8) != 0 {
+                    panic!("Time must be rounded to top 32 bits");
+                }
+
                 // Put the time into the delay register
                 // By setting this register, the chip knows to delay before transmitting
                 self.ll
