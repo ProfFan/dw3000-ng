@@ -100,6 +100,8 @@ where
     /// It consumes this instance of `DW3000` and returns another instance which
     /// is in the `Sending` state, and can be used to wait for the transmission
     /// to finish and check its result.
+    /// 
+    /// Will panic if the delayed TX time is not rounded to top 31 bits.
     pub fn send_raw(
         mut self,
         data: &[u8],
@@ -147,9 +149,12 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
-                // Panic if the time is not rounded to top 32 bits
-                if time.value() % (1 << 8) != 0 {
-                    panic!("Time must be rounded to top 32 bits");
+                // Panic if the time is not rounded to top 31 bits
+                //
+                // NOTE: DW3000's DX_TIME register is 32 bits wide, but only the top 31 bits are used.
+                // The last bit is ignored per the user manual!!!
+                if time.value() % (1 << 9) != 0 {
+                    panic!("Time must be rounded to top 31 bits!");
                 }
 
                 // Put the time into the delay register
@@ -241,9 +246,9 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
-                // Panic if the time is not rounded to top 32 bits
-                if time.value() % (1 << 8) != 0 {
-                    panic!("Time must be rounded to top 32 bits");
+                // Panic if the time is not rounded to top 31 bits
+                if time.value() % (1 << 9) != 0 {
+                    panic!("Time must be rounded to top 31 bits!");
                 }
 
                 // Put the time into the delay register
@@ -359,9 +364,9 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
-                // Panic if the time is not rounded to top 32 bits
-                if time.value() % (1 << 8) != 0 {
-                    panic!("Time must be rounded to top 32 bits");
+                // Panic if the time is not rounded to top 31 bits
+                if time.value() % (1 << 9) != 0 {
+                    panic!("Time must be rounded to top 31 bits!");
                 }
 
                 // Put the time into the delay register
@@ -448,7 +453,7 @@ where
                 .rxovrr_en(0b1)
                 .rxpto_en(0b1)
                 .rxsto_en(0b1)
-                // .rxprej_en(0b1)
+            // .rxprej_en(0b1)
         })?;
         Ok(())
     }
