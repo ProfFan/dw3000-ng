@@ -100,7 +100,7 @@ where
     /// It consumes this instance of `DW3000` and returns another instance which
     /// is in the `Sending` state, and can be used to wait for the transmission
     /// to finish and check its result.
-    /// 
+    ///
     /// Will panic if the delayed TX time is not rounded to top 31 bits.
     pub fn send_raw(
         mut self,
