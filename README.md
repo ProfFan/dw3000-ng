@@ -22,7 +22,7 @@ We mainly test on the ESP32 platform with `embassy` async framework.
 Include this crate in your Cargo project by adding the following to `Cargo.toml`:
 ```toml
 [dependencies]
-dw3000-ng = "0.3.2"
+dw3000-ng = "0.4.0"
 ```
 
 ## Documentation
