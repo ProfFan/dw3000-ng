@@ -10,7 +10,7 @@ authors = [
     "RAIMBAULT Thomas <thomas.raimbault@sii.fr>",
 ]
 edition = "2021"
-license = "0BSD"
+license = "BSD-3-Clause"
 repository = "https://github.com/ProfFan/dw3000-ng"
 
 [dependencies]
