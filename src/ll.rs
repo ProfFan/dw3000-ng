@@ -62,6 +62,11 @@ impl<SPI, CS> DW3000<SPI, CS> {
     pub fn bus(&mut self) -> &mut SPI {
         &mut self.spi
     }
+
+    /// Allow access to the chip select pin
+    pub fn chip_select(&mut self) -> &mut CS {
+        &mut self.chip_select
+    }
 }
 
 /// Provides access to a register
