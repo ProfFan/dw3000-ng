@@ -1,20 +1,19 @@
 #![allow(unused_imports)]
 
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+use embedded_hal::spi;
 
 use crate::{Error, Ready, Sleeping, DW3000};
 
-impl<SPI, CS> DW3000<SPI, CS, Sleeping>
+impl<SPI> DW3000<SPI, Sleeping>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
 {
     /*
     /// Wakes the radio up.
     pub fn wake_up<DELAY: embedded_hal::blocking::delay::DelayUs<u16>>(
         mut self,
         delay: &mut DELAY,
-    ) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
+    ) -> Result<DW3000<SPI, Ready>, Error<SPI>> {
         // Wake up using the spi
         self.ll.assert_cs_low().map_err(|e| Error::Spi(e))?;
         delay.delay_us(850 * 2);

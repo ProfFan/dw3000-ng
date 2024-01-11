@@ -3,7 +3,7 @@
 use core::convert::TryInto;
 
 use byte::BytesExt as _;
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+use embedded_hal::spi;
 use fixed::traits::LossyInto;
 
 #[cfg(feature = "defmt")]
@@ -52,18 +52,17 @@ pub struct RxQuality {
     pub rssi: f32,
 }
 
-impl<SPI, CS, RECEIVING> DW3000<SPI, CS, RECEIVING>
+impl<SPI, RECEIVING> DW3000<SPI, RECEIVING>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
     RECEIVING: Receiving,
 {
     /// Returns the RX state of the DW3000
-    pub fn rx_state(&mut self) -> Result<u8, Error<SPI, CS>> {
+    pub fn rx_state(&mut self) -> Result<u8, Error<SPI>> {
         Ok(self.ll.sys_state().read()?.rx_state())
     }
 
-    pub(super) fn start_receiving(&mut self, config: Config) -> Result<(), Error<SPI, CS>> {
+    pub(super) fn start_receiving(&mut self, config: Config) -> Result<(), Error<SPI>> {
         if config.frame_filtering {
             self.ll.sys_cfg().modify(
                 |_, w| w.ffen(0b1), // enable frame filtering
@@ -97,7 +96,7 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
-    pub fn r_wait<'b>(&mut self, buffer: &'b mut [u8]) -> nb::Result<Message<'b>, Error<SPI, CS>> {
+    pub fn r_wait<'b>(&mut self, buffer: &'b mut [u8]) -> nb::Result<Message<'b>, Error<SPI>> {
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
@@ -227,10 +226,7 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
-    pub fn r_wait_buf<'b>(
-        &mut self,
-        buffer: &'b mut [u8],
-    ) -> nb::Result<(usize, Instant), Error<SPI, CS>> {
+    pub fn r_wait_buf(&mut self, buffer: &mut [u8]) -> nb::Result<(usize, Instant), Error<SPI>> {
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
@@ -349,7 +345,7 @@ where
     ///
     /// If the receive operation has finished, as indicated by `wait`, this is a
     /// no-op. If the receive operation is still ongoing, it will be aborted.
-    pub fn finish_receiving(mut self) -> Result<DW3000<SPI, CS, Ready>, (Self, Error<SPI, CS>)> {
+    pub fn finish_receiving(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
         // TO DO : if we are not in state 3 (IDLE), we need to have a reset of the module (with a new initialisation)
         // BECAUSE : using force_idle (fast command 0) is not puting the pll back to stable !!!
 

@@ -11,13 +11,18 @@
 
 use core::{fmt, num::Wrapping};
 
+#[allow(unused_imports)]
 pub use awake::*;
 pub use error::*;
 pub use ready::*;
+#[allow(unused_imports)]
 pub use receiving::*;
+#[allow(unused_imports)]
 pub use sending::*;
+#[allow(unused_imports)]
 pub use sleeping::*;
 pub use state_impls::*;
+#[allow(unused_imports)]
 pub use uninitialized::*;
 
 use crate::ll;
@@ -33,14 +38,14 @@ mod uninitialized;
 
 /// Entry point to the DW3000 driver API
 #[derive(Copy, Clone)]
-pub struct DW3000<SPI, CS, State> {
-    ll: ll::DW3000<SPI, CS>,
+pub struct DW3000<SPI, State> {
+    ll: ll::DW3000<SPI>,
     seq: Wrapping<u8>,
     state: State,
 }
 
 // Can't be derived without putting requirements on `SPI` and `CS`.
-impl<SPI, CS, State> fmt::Debug for DW3000<SPI, CS, State>
+impl<SPI, State> fmt::Debug for DW3000<SPI, State>
 where
     State: fmt::Debug,
 {
