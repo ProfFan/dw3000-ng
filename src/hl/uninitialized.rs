@@ -1,22 +1,21 @@
 use core::num::Wrapping;
 
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+use embedded_hal::spi;
 
 use crate::{ll, Config, Error, Ready, Uninitialized, DW3000};
 //use rtt_target::{rprintln};
 
-impl<SPI, CS> DW3000<SPI, CS, Uninitialized>
+impl<SPI> DW3000<SPI, Uninitialized>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
 {
     /// Create a new instance of `DW3000`
     ///
     /// Requires the SPI peripheral and the chip select pin that are connected
     /// to the DW3000.
-    pub fn new(spi: SPI, chip_select: CS) -> Self {
+    pub fn new(spi: SPI) -> Self {
         DW3000 {
-            ll: ll::DW3000::new(spi, chip_select),
+            ll: ll::DW3000::new(spi),
             seq: Wrapping(0),
             state: Uninitialized,
         }
@@ -26,7 +25,7 @@ where
     /// Basicaly, this is the pll configuration. We want to have a locked pll in order to provide a constant speed clock.
     /// This is important when using th clock to measure distances.
     /// At the end of this function, pll is locked and it can be checked by the bit CPLOCK in SYS_STATUS register (see state_test example)
-    pub fn init(mut self) -> Result<DW3000<SPI, CS, Uninitialized>, Error<SPI, CS>> {
+    pub fn init(mut self) -> Result<DW3000<SPI, Uninitialized>, Error<SPI>> {
         // Wait for the IDLE_RC state
         while self.ll.sys_status().read()?.rcinit() == 0 {}
         // select PLL mode auto
@@ -61,7 +60,7 @@ where
     /// Without doing this, the receiver almost never receive a frame form transmitter
     /// FIRST STEP : configuration depending on CONFIG chosen. Lot of register all around the datasheet can be changed in order to improve the signal
     /// Some register needs to be changed without a lot of explanation so we tried to gather all of them in this function
-    pub fn config(mut self, config: Config) -> Result<DW3000<SPI, CS, Ready>, Error<SPI, CS>> {
+    pub fn config(mut self, config: Config) -> Result<DW3000<SPI, Ready>, Error<SPI>> {
         //Configuration du sys_cfg
         self.ll.sys_cfg().modify(|_, w| w.phr_mode(0))?;
         self.ll.sys_cfg().modify(|_, w| w.phr_6m8(0))?;

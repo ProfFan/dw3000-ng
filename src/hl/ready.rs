@@ -3,7 +3,7 @@
 use core::num::Wrapping;
 
 use byte::BytesExt as _;
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+use embedded_hal::spi;
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
@@ -48,17 +48,12 @@ pub enum IrqPolarity {
     ActiveLow = 0,
 }
 
-impl<SPI, CS> DW3000<SPI, CS, Ready>
+impl<SPI> DW3000<SPI, Ready>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
 {
     /// Sets the RX and TX antenna delays
-    pub fn set_antenna_delay(
-        &mut self,
-        rx_delay: u16,
-        tx_delay: u16,
-    ) -> Result<(), Error<SPI, CS>> {
+    pub fn set_antenna_delay(&mut self, rx_delay: u16, tx_delay: u16) -> Result<(), Error<SPI>> {
         self.ll.cia_conf().modify(|_, w| w.rxantd(rx_delay))?;
         self.ll.tx_antd().write(|w| w.value(tx_delay))?;
 
@@ -70,7 +65,7 @@ where
         &mut self,
         pan_id: Ieee802154Pan,
         addr: Ieee802154Address,
-    ) -> Result<(), Error<SPI, CS>> {
+    ) -> Result<(), Error<SPI>> {
         let Ieee802154Address::Short(short_addr) = addr else {
             return Err(Error::InvalidConfiguration);
         };
@@ -107,7 +102,7 @@ where
         data: &[u8],
         send_time: SendTime,
         config: &Config,
-    ) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
+    ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         // Clear event counters
         self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
         // while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
@@ -202,7 +197,7 @@ where
         frame: Ieee802154Frame<T>,
         send_time: SendTime,
         config: Config,
-    ) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>>
+    ) -> Result<DW3000<SPI, Sending>, Error<SPI>>
     where
         T: AsRef<[u8]>,
     {
@@ -297,7 +292,7 @@ where
         data: &[u8],
         send_time: SendTime,
         config: Config,
-    ) -> Result<DW3000<SPI, CS, Sending>, Error<SPI, CS>> {
+    ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         // Clear event counters
         self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
         while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
@@ -401,10 +396,7 @@ where
     /// and more. Make sure that the values used are the same as of the frames
     /// that are transmitted. The default works with the TxConfig's default and
     /// is a sane starting point.
-    pub fn receive(
-        self,
-        config: Config,
-    ) -> Result<DW3000<SPI, CS, SingleBufferReceiving>, Error<SPI, CS>> {
+    pub fn receive(self, config: Config) -> Result<DW3000<SPI, SingleBufferReceiving>, Error<SPI>> {
         let mut rx_radio = DW3000 {
             ll: self.ll,
             seq: self.seq,
@@ -422,7 +414,7 @@ where
     }
 
     /// Disable the SPIRDY interrupt flag
-    pub fn disable_spirdy_interrupt(&mut self) -> Result<(), Error<SPI, CS>> {
+    pub fn disable_spirdy_interrupt(&mut self) -> Result<(), Error<SPI>> {
         self.ll.sys_enable().modify(|_, w| w.spirdy_en(0b0))?;
         Ok(())
     }
@@ -430,7 +422,7 @@ where
     /// Enables transmit interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
-    pub fn enable_tx_interrupts(&mut self) -> Result<(), Error<SPI, CS>> {
+    pub fn enable_tx_interrupts(&mut self) -> Result<(), Error<SPI>> {
         self.ll.sys_enable().modify(|_, w| w.txfrs_en(0b1))?;
         Ok(())
     }
@@ -438,7 +430,7 @@ where
     /// Enables receive interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
-    pub fn enable_rx_interrupts(&mut self) -> Result<(), Error<SPI, CS>> {
+    pub fn enable_rx_interrupts(&mut self) -> Result<(), Error<SPI>> {
         self.ll().sys_enable().modify(|_, w| {
             w
                 // .rxprd_en(0b1)
@@ -459,14 +451,14 @@ where
     }
 
     /// Disables all interrupts
-    pub fn disable_interrupts(&mut self) -> Result<(), Error<SPI, CS>> {
+    pub fn disable_interrupts(&mut self) -> Result<(), Error<SPI>> {
         self.ll.sys_enable().write(|w| w)?;
         Ok(())
     }
 
     /// GPIO SECTION, gpios seems to have a problem with its register.
     /// Init GPIO WRT Config
-    pub fn gpio_config(&mut self, config: ConfigGPIOs) -> Result<(), Error<SPI, CS>> {
+    pub fn gpio_config(&mut self, config: ConfigGPIOs) -> Result<(), Error<SPI>> {
         self.gpio_config_clocks()?;
 
         self.ll.gpio_pull_en().modify(|_, w| {
@@ -532,7 +524,7 @@ where
     }
 
     /// Enable gpios clocks
-    pub fn gpio_config_clocks(&mut self) -> Result<(), Error<SPI, CS>> {
+    pub fn gpio_config_clocks(&mut self) -> Result<(), Error<SPI>> {
         self.ll.clk_ctrl().modify(|_, w| {
             w.gpio_clk_en(0b1)
                 .gpio_dclk_en(0b1)
@@ -548,7 +540,7 @@ where
     }
 
     /// Enables single pin
-    pub fn gpio_config_enable(&mut self, pin: u8, enable: u8) -> Result<(), Error<SPI, CS>> {
+    pub fn gpio_config_enable(&mut self, pin: u8, enable: u8) -> Result<(), Error<SPI>> {
         self.ll.gpio_pull_en().modify(|_, w| match pin {
             0 => w.mgpen0(enable),
             1 => w.mgpen1(enable),
@@ -565,7 +557,7 @@ where
     }
 
     /// Configures mode for a single pin
-    pub fn gpio_config_mode(&mut self, pin: u8, mode: u8) -> Result<(), Error<SPI, CS>> {
+    pub fn gpio_config_mode(&mut self, pin: u8, mode: u8) -> Result<(), Error<SPI>> {
         self.ll.gpio_mode().modify(|_, w| match pin {
             0 => w.msgp0(mode),
             1 => w.msgp1(mode),
@@ -582,7 +574,7 @@ where
     }
 
     /// Configures direction for a single pin
-    pub fn gpio_config_dir(&mut self, pin: u8, dir: u8) -> Result<(), Error<SPI, CS>> {
+    pub fn gpio_config_dir(&mut self, pin: u8, dir: u8) -> Result<(), Error<SPI>> {
         self.ll.gpio_dir().modify(|_, w| match pin {
             0 => w.gpd0(dir),
             1 => w.gpd1(dir),
@@ -599,7 +591,7 @@ where
     }
 
     /// Configures output for a single pin
-    pub fn gpio_config_out(&mut self, pin: u8, output: u8) -> Result<(), Error<SPI, CS>> {
+    pub fn gpio_config_out(&mut self, pin: u8, output: u8) -> Result<(), Error<SPI>> {
         self.ll.gpio_out().modify(|_, w| match pin {
             0 => w.gop0(output),
             1 => w.gop1(output),
@@ -616,7 +608,7 @@ where
     }
 
     /// Returns GPIO config
-    pub fn get_gpio_config(&mut self) -> Result<ConfigGPIOs, Error<SPI, CS>> {
+    pub fn get_gpio_config(&mut self) -> Result<ConfigGPIOs, Error<SPI>> {
         let enabled = self.get_gpio_enabled()?;
         let mode = self.get_gpio_mode()?;
         let gpio_dir = self.get_gpio_dir()?;
@@ -631,7 +623,7 @@ where
     }
 
     /// Returns current gpio enable state
-    pub fn get_gpio_enabled(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+    pub fn get_gpio_enabled(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_pull_en = self.ll.gpio_pull_en().read()?;
         let enabled: [u8; 9] = [
             gpio_pull_en.mgpen0(),
@@ -649,7 +641,7 @@ where
     }
 
     /// Returns current gpio pin mode
-    pub fn get_gpio_mode(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+    pub fn get_gpio_mode(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_mode = self.ll.gpio_mode().read()?;
         let mode: [u8; 9] = [
             gpio_mode.msgp0(),
@@ -667,7 +659,7 @@ where
     }
 
     /// Returns current gpio dir
-    pub fn get_gpio_dir(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+    pub fn get_gpio_dir(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_direction = self.ll.gpio_dir().read()?;
         let gpio_dir = [
             gpio_direction.gpd0(),
@@ -685,7 +677,7 @@ where
     }
 
     /// Returns current output
-    pub fn get_gpio_out(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+    pub fn get_gpio_out(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_out = self.ll.gpio_out().read()?;
         let output = [
             gpio_out.gop0(),
@@ -703,7 +695,7 @@ where
     }
 
     /// Returns current raw state / input
-    pub fn get_gpio_raw_state(&mut self) -> Result<[u8; 9], Error<SPI, CS>> {
+    pub fn get_gpio_raw_state(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_raw = self.ll.gpio_raw().read()?;
         let raw = [
             gpio_raw.grawp0(),

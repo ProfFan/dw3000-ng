@@ -1,7 +1,7 @@
 use core::fmt;
 use core::fmt::{Display, Formatter};
 
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
+use embedded_hal::spi;
 
 #[cfg(feature = "defmt")]
 use defmt::Format;
@@ -9,13 +9,12 @@ use defmt::Format;
 use crate::ll;
 
 /// An error that can occur when sending or receiving data
-pub enum Error<SPI, CS>
+pub enum Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
 {
     /// Error occured while using SPI bus
-    Spi(ll::Error<SPI, CS>),
+    Spi(ll::Error<SPI>),
 
     /// Receiver FCS error
     Fcs,
@@ -86,12 +85,11 @@ where
     RxConfigFrameFilteringUnsupported,
 }
 
-impl<SPI, CS> From<ll::Error<SPI, CS>> for Error<SPI, CS>
+impl<SPI> From<ll::Error<SPI>> for Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
 {
-    fn from(error: ll::Error<SPI, CS>) -> Self {
+    fn from(error: ll::Error<SPI>) -> Self {
         Error::Spi(error)
     }
 }
@@ -122,13 +120,10 @@ where
 
 // We can't derive this implementation, as `Debug` is only implemented
 // conditionally for `ll::Debug`.
-impl<SPI, CS> fmt::Debug for Error<SPI, CS>
+impl<SPI> fmt::Debug for Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
-    <SPI as spi::Write<u8>>::Error: fmt::Debug,
-    CS: OutputPin,
-    <CS as OutputPin>::Error: fmt::Debug,
+    SPI: spi::SpiDevice<u8>,
+    SPI::Error: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -162,13 +157,10 @@ where
 
 // We can't derive this implementation, as `Debug` is only implemented
 // conditionally for `ll::Debug`.
-impl<SPI, CS> Format for Error<SPI, CS>
+impl<SPI> Format for Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    <SPI as spi::Transfer<u8>>::Error: defmt::Format,
-    <SPI as spi::Write<u8>>::Error: defmt::Format,
-    CS: OutputPin,
-    <CS as OutputPin>::Error: defmt::Format,
+    SPI: spi::SpiDevice<u8>,
+    SPI::Error: defmt::Format,
 {
     fn format(&self, f: defmt::Formatter) {
         match self {
@@ -203,12 +195,11 @@ where
 mod test {
     use super::*;
 
-    use embedded_hal_mock::eh0::pin::Mock as PinMock;
-    use embedded_hal_mock::eh0::spi::Mock as SpiMock;
+    use embedded_hal_mock::eh1::spi::Mock as SpiMock;
 
     #[test]
     fn test_defmt() {
-        let error = Error::<SpiMock, PinMock>::BufferTooSmall { required_len: 42 };
+        let error = Error::<SpiMock<u8>>::BufferTooSmall { required_len: 42 };
 
         defmt::info!("error: {:?}", error);
     }

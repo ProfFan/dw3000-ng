@@ -34,6 +34,13 @@ Please also refer to the [DW3000 User Manual]
 [API Reference]: https://docs.rs/dw3000-ng
 [DW3000 User Manual]: https://www.qorvo.com/products/d/da008154
 
+## CHANGELOG
+
+### 0.5.0
+
+- Migrated to `embedded-hal` 1.0
+- Removed explicit manipulations of the SPI CS pin
+
 ## License
 
 BSD-3-Clause

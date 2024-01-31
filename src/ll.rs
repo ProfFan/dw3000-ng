@@ -18,10 +18,7 @@
 use core::fmt::{Display, Formatter};
 use core::{fmt, marker::PhantomData};
 
-use embedded_hal::{blocking::spi, digital::v2::OutputPin};
-
-#[cfg(feature = "defmt")]
-use defmt::Format;
+use embedded_hal::spi;
 
 /// Entry point to the DW3000 driver's low-level API
 ///
@@ -29,32 +26,28 @@ use defmt::Format;
 ///
 /// [hl::DW3000]: ../hl/struct.DW3000.html
 #[derive(Copy, Clone)]
-pub struct DW3000<SPI, CS> {
-    spi: SPI,
-    chip_select: CS,
+pub struct DW3000<SPI> {
+    /// SPI device
+    pub spi: SPI,
 }
 
-impl<SPI, CS> DW3000<SPI, CS> {
+impl<SPI> DW3000<SPI> {
     /// Create a new instance of `DW3000`
     ///
-    /// Requires the SPI peripheral and the chip select pin that are connected
-    /// to the DW3000.
-    pub fn new(spi: SPI, chip_select: CS) -> Self {
-        DW3000 { spi, chip_select }
+    /// Requires the SPI device
+    pub fn new(spi: SPI) -> Self {
+        DW3000 { spi }
     }
 
     /// commentaire
-    pub fn fast_command(&mut self, fast: u8) -> Result<(), Error<SPI, CS>>
+    pub fn fast_command(&mut self, fast: u8) -> Result<(), Error<SPI>>
     where
-        SPI: spi::Transfer<u8> + spi::Write<u8>,
-        CS: OutputPin,
+        SPI: spi::SpiDevice<u8>,
     {
         let mut buffer = [0];
         buffer[0] = (0x1 << 7) | ((fast << 1) & 0x3e) | 0x1;
 
-        self.chip_select.set_low().map_err(Error::ChipSelect)?;
-        <SPI as spi::Write<u8>>::write(&mut self.spi, &buffer).map_err(Error::Write)?;
-        self.chip_select.set_high().map_err(Error::ChipSelect)?;
+        SPI::write(&mut self.spi, &buffer).map_err(Error::Transfer)?;
 
         Ok(())
     }
@@ -69,16 +62,15 @@ impl<SPI, CS> DW3000<SPI, CS> {
 ///
 /// You can get an instance for a given register using one of the methods on
 /// [`DW3000`].
-pub struct RegAccessor<'s, R, SPI, CS>(&'s mut DW3000<SPI, CS>, PhantomData<R>);
+pub struct RegAccessor<'s, R, SPI>(&'s mut DW3000<SPI>, PhantomData<R>);
 
-impl<'s, R, SPI, CS> RegAccessor<'s, R, SPI, CS>
+impl<'s, R, SPI> RegAccessor<'s, R, SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
 {
     /// Read from the register
     #[inline]
-    pub fn read(&mut self) -> Result<R::Read, Error<SPI, CS>>
+    pub fn read(&mut self) -> Result<R::Read, Error<SPI>>
     where
         R: Register + Readable,
     {
@@ -86,16 +78,17 @@ where
         let buffer = R::buffer(&mut r);
 
         init_header::<R>(false, buffer);
-        self.0.chip_select.set_low().map_err(Error::ChipSelect)?;
-        self.0.spi.transfer(buffer).map_err(Error::Transfer)?;
-        self.0.chip_select.set_high().map_err(Error::ChipSelect)?;
+        self.0
+            .spi
+            .transfer_in_place(buffer)
+            .map_err(Error::Transfer)?;
 
         Ok(r)
     }
 
     /// Write to the register
     #[inline]
-    pub fn write<F>(&mut self, f: F) -> Result<(), Error<SPI, CS>>
+    pub fn write<F>(&mut self, f: F) -> Result<(), Error<SPI>>
     where
         R: Register + Writable,
         F: FnOnce(&mut R::Write) -> &mut R::Write,
@@ -106,16 +99,14 @@ where
         let buffer = R::buffer(&mut w);
         init_header::<R>(true, buffer);
 
-        self.0.chip_select.set_low().map_err(Error::ChipSelect)?;
-        <SPI as spi::Write<u8>>::write(&mut self.0.spi, buffer).map_err(Error::Write)?;
-        self.0.chip_select.set_high().map_err(Error::ChipSelect)?;
+        SPI::write(&mut self.0.spi, buffer).map_err(Error::Transfer)?;
 
         Ok(())
     }
 
     /// Modify the register
     #[inline]
-    pub fn modify<F>(&mut self, f: F) -> Result<(), Error<SPI, CS>>
+    pub fn modify<F>(&mut self, f: F) -> Result<(), Error<SPI>>
     where
         R: Register + Readable + Writable,
         F: for<'r> FnOnce(&mut R::Read, &'r mut R::Write) -> &'r mut R::Write,
@@ -130,28 +121,19 @@ where
         let buffer = <R as Writable>::buffer(&mut w);
         init_header::<R>(true, buffer);
 
-        self.0.chip_select.set_low().map_err(Error::ChipSelect)?;
-        <SPI as spi::Write<u8>>::write(&mut self.0.spi, buffer).map_err(Error::Write)?;
-        self.0.chip_select.set_high().map_err(Error::ChipSelect)?;
+        SPI::write(&mut self.0.spi, buffer).map_err(Error::Transfer)?;
 
         Ok(())
     }
 }
 
 /// An SPI error that can occur when communicating with the DW3000
-pub enum Error<SPI, CS>
+pub enum Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
 {
     /// SPI error occured during a transfer transaction
-    Transfer(<SPI as spi::Transfer<u8>>::Error),
-
-    /// SPI error occured during a write transaction
-    Write(<SPI as spi::Write<u8>>::Error),
-
-    /// Error occured while changing chip select signal
-    ChipSelect(<CS as OutputPin>::Error),
+    Transfer(SPI::Error),
 }
 
 impl<SPI, CS> Display for Error<SPI, CS>
@@ -180,34 +162,26 @@ where
 
 // We can't derive this implementation, as the compiler will complain that the
 // associated error type doesn't implement `Debug`.
-impl<SPI, CS> fmt::Debug for Error<SPI, CS>
+impl<SPI> fmt::Debug for Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
-    <SPI as spi::Write<u8>>::Error: fmt::Debug,
-    CS: OutputPin,
-    <CS as OutputPin>::Error: fmt::Debug,
+    SPI: spi::SpiDevice<u8>,
+    SPI::Error: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::Transfer(error) => write!(f, "Transfer({:?})", error),
-            Error::Write(error) => write!(f, "Write({:?})", error),
-            Error::ChipSelect(error) => write!(f, "ChipSelect({:?})", error),
         }
     }
 }
 
 #[cfg(feature = "defmt")]
-impl<SPI, CS> defmt::Format for Error<SPI, CS>
+impl<SPI> defmt::Format for Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    CS: OutputPin,
+    SPI: spi::SpiDevice<u8>,
 {
     fn format(&self, f: defmt::Formatter) {
         match self {
             Error::Transfer(_) => defmt::write!(f, "Transfer()"),
-            Error::Write(_) => defmt::write!(f, "Write()"),
-            Error::ChipSelect(_) => defmt::write!(f, "ChipSelect()"),
         }
     }
 }
@@ -226,7 +200,7 @@ fn init_header<R: Register>(write: bool, buffer: &mut [u8]) -> usize {
     // sub_id is a bool that defines if we are in full or short command
     // we start with full address!
     buffer[0] = (((write as u8) << 7) & 0x80)
-        | ((1u8 << 6) & 0x40) // We always use 2-octet addressing
+        | (1u8 << 6) // We always use 2-octet addressing
         | ((R::ID << 1) & 0x3e) // 5-bit base address
         | ((R::SUB_ID >> 6) & 0x01); // MSB of the 7-bit sub-address
 
@@ -589,10 +563,10 @@ macro_rules! impl_register {
         )*
 
 
-        impl<SPI, CS> DW3000<SPI, CS> {
+        impl<SPI> DW3000<SPI> {
             $(
                 #[$doc]
-                pub fn $name_lower(&mut self) -> RegAccessor<$name, SPI, CS> {
+                pub fn $name_lower(&mut self) -> RegAccessor<$name, SPI> {
                     RegAccessor(self, PhantomData)
                 }
             )*
@@ -1690,9 +1664,9 @@ impl Writable for TX_BUFFER {
     }
 }
 
-impl<SPI, CS> DW3000<SPI, CS> {
+impl<SPI> DW3000<SPI> {
     /// Transmit Data Buffer
-    pub fn tx_buffer(&mut self) -> RegAccessor<TX_BUFFER, SPI, CS> {
+    pub fn tx_buffer(&mut self) -> RegAccessor<TX_BUFFER, SPI> {
         RegAccessor(self, PhantomData)
     }
 }
@@ -1739,9 +1713,9 @@ impl Readable for RX_BUFFER_0 {
     }
 }
 
-impl<SPI, CS> DW3000<SPI, CS> {
+impl<SPI> DW3000<SPI> {
     /// Receive Data Buffer
-    pub fn rx_buffer_0(&mut self) -> RegAccessor<RX_BUFFER_0, SPI, CS> {
+    pub fn rx_buffer_0(&mut self) -> RegAccessor<RX_BUFFER_0, SPI> {
         RegAccessor(self, PhantomData)
     }
 }
@@ -1800,9 +1774,9 @@ impl Readable for RX_BUFFER_1 {
     }
 }
 
-impl<SPI, CS> DW3000<SPI, CS> {
+impl<SPI> DW3000<SPI> {
     /// Receive Data Buffer1
-    pub fn rx_buffer_1(&mut self) -> RegAccessor<RX_BUFFER_1, SPI, CS> {
+    pub fn rx_buffer_1(&mut self) -> RegAccessor<RX_BUFFER_1, SPI> {
         RegAccessor(self, PhantomData)
     }
 }

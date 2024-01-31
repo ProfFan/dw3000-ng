@@ -48,34 +48,24 @@ impl Default for Config {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 /// The bitrate at which a message is transmitted
 pub enum BitRate {
     /// 850 kilobits per second.
+    #[default]
     Kbps850 = 0,
     /// 6.8 megabits per second.
     Kbps6800 = 1,
 }
 
-impl Default for BitRate {
-    fn default() -> Self {
-        BitRate::Kbps6800
-    }
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 /// The PRF value
 pub enum PulseRepetitionFrequency {
     /// 16 megahertz
     Mhz16 = 0b01,
     /// 64 megahertz
+    #[default]
     Mhz64 = 0b10,
-}
-
-impl Default for PulseRepetitionFrequency {
-    fn default() -> Self {
-        PulseRepetitionFrequency::Mhz64
-    }
 }
 
 /// imple
@@ -89,7 +79,7 @@ impl PulseRepetitionFrequency {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 /// An enum that specifies the length of the preamble.
 ///
 /// Longer preambles improve the reception quality and thus range.
@@ -112,6 +102,7 @@ pub enum PreambleLength {
     /// 4096 symbols of preamble.
     Symbols32 = 0b0100,
     /// 32 symbols of preamble.
+    #[default]
     Symbols128 = 0b0101,
     /// 128 symbols of preamble.
     Symbols1536 = 0b0110,
@@ -123,12 +114,6 @@ pub enum PreambleLength {
     Symbols512 = 0b1101,
     /// 72 symbols of preamble.
     Symbols72 = 0b0111,
-}
-
-impl Default for PreambleLength {
-    fn default() -> Self {
-        PreambleLength::Symbols128
-    } // MODIF JULIE THOMAS -> 64
 }
 
 impl PreambleLength {
@@ -150,7 +135,7 @@ impl PreambleLength {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 /// An enum that allows the selection between different SFD sequences
 ///
 /// The difference between the two Decawave sequences is that there are two ways
@@ -159,6 +144,7 @@ impl PreambleLength {
 pub enum SfdSequence {
     /// The standard sequence defined by the IEEE standard.
     /// Most likely the best choice for 6.8 Mbps connections.
+    #[default]
     IeeeShort = 0b00,
     /// A sequence defined by Decawave that is supposed to be more robust.
     /// This is an unofficial addition.
@@ -173,13 +159,7 @@ pub enum SfdSequence {
     Ieee = 0b11,
 }
 
-impl Default for SfdSequence {
-    fn default() -> Self {
-        SfdSequence::IeeeShort
-    }
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 /// All the available UWB channels.
 ///
 /// Note that while a channel may have more bandwidth than ~900 Mhz, the DW3000
@@ -190,6 +170,7 @@ pub enum UwbChannel {
     /// - Bandwidth: 499.2 Mhz
     /// - Preamble Codes (16 MHz PRF) : 3, 4
     /// - Preamble Codes (64 MHz PRF) : 9, 10, 11, 12
+    #[default]
     Channel5 = 0,
     /// Channel 9
     /// - Center frequency: 7987.2 Mhz
@@ -197,12 +178,6 @@ pub enum UwbChannel {
     /// - Preamble Codes (16 MHz PRF) : 3, 4
     /// - Preamble Codes (64 MHz PRF) : 9, 10, 11, 12
     Channel9 = 1,
-}
-
-impl Default for UwbChannel {
-    fn default() -> Self {
-        UwbChannel::Channel5
-    }
 }
 
 impl UwbChannel {
@@ -291,11 +266,12 @@ impl UwbChannel {
     }
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 /// An enum that allows the selection of StsMode
 ///
 pub enum StsMode {
     /// Sts disabled
+    #[default]
     StsModeOff = 0,
 
     /// Sts activated : STS follows SFD with PHR and PHY Payload
@@ -308,13 +284,7 @@ pub enum StsMode {
     StsModeND = 3,
 }
 
-impl Default for StsMode {
-    fn default() -> Self {
-        StsMode::StsModeOff
-    }
-}
-
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 /// An enum that allows the selection of Sts length
 ///
 pub enum StsLen {
@@ -322,6 +292,7 @@ pub enum StsLen {
     StsLen32 = 0,
 
     /// STS length = 64 bits
+    #[default]
     StsLen64 = 1,
 
     /// STS length = 128 bits
@@ -339,30 +310,3 @@ pub enum StsLen {
     /// STS length = 2048 bits
     StsLn2048 = 6,
 }
-
-impl Default for StsLen {
-    fn default() -> Self {
-        StsLen::StsLen64
-    }
-}
-
-// #[derive(Copy, Clone, Debug, Eq, PartialEq)]
-// /// parameters for tx emission
-// pub struct TxParameters {
-// 	/// voir doc
-// 	pub pgdelay: u8,
-// 	/// tx_power
-// 	pub power: u32,
-// 	/// voir doc
-// 	pub pgcount: u16,
-// }
-
-// impl Default for TxParameters {
-// 	fn default() -> Self {
-// 		TxParameters {
-// 			pgdelay: 0x34,
-// 			power: 0xfdfdfdfd,
-// 			pgcount: 0x0,
-// 		}
-// 	}
-// }
