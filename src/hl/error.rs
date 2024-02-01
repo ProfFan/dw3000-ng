@@ -1,4 +1,5 @@
 use core::fmt;
+use core::fmt::{Display, Formatter};
 
 use embedded_hal::spi;
 
@@ -91,6 +92,30 @@ where
     fn from(error: ll::Error<SPI>) -> Self {
         Error::Spi(error)
     }
+}
+
+impl<SPI, CS> Display for Error<SPI, CS>
+where
+    <CS as OutputPin>::Error: fmt::Debug,
+    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
+    <SPI as spi::Write<u8>>::Error: fmt::Debug,
+    CS: OutputPin,
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[cfg(feature = "std")]
+impl<SPI, CS> std::error::Error for Error<SPI, CS>
+where
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
+    <SPI as spi::Write<u8>>::Error: fmt::Debug,
+    CS: OutputPin,
+    <CS as OutputPin>::Error: fmt::Debug,
+{
 }
 
 // We can't derive this implementation, as `Debug` is only implemented

@@ -15,6 +15,7 @@
 //! [high-level interface]: ../hl/index.html
 //! [filing an issue]: https://github.com/braun-robotics/rust-dw3000/issues/new
 
+use core::fmt::{Display, Formatter};
 use core::{fmt, marker::PhantomData};
 
 use embedded_hal::spi;
@@ -133,6 +134,30 @@ where
 {
     /// SPI error occured during a transfer transaction
     Transfer(SPI::Error),
+}
+
+impl<SPI, CS> Display for Error<SPI, CS>
+where
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
+    <SPI as spi::Write<u8>>::Error: fmt::Debug,
+    CS: OutputPin,
+    <CS as OutputPin>::Error: fmt::Debug,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[cfg(feature = "std")]
+impl<SPI, CS> std::error::Error for Error<SPI, CS>
+where
+    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
+    <SPI as spi::Write<u8>>::Error: fmt::Debug,
+    CS: OutputPin,
+    <CS as OutputPin>::Error: fmt::Debug,
+{
 }
 
 // We can't derive this implementation, as the compiler will complain that the
