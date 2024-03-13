@@ -71,9 +71,10 @@ where
         self.ll.otp_cfg().modify(|_, w| w.ops_sel(0x2))?;
         self.ll.otp_cfg().modify(|_, w| w.ops_kick(0b1))?;
 
-        self.ll
-            .dtune0()
-            .modify(|_, w| w.pac(config.preamble_length.get_recommended_pac_size()))?;
+        self.ll.dtune0().modify(|_, w| {
+            w.pac(config.preamble_length.get_recommended_pac_size())
+                .dt0b4(0b0)
+        })?;
 
         self.ll
             .sts_cfg()
