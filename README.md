@@ -36,6 +36,10 @@ Please also refer to the [DW3000 User Manual]
 
 ## CHANGELOG
 
+### 0.5.1
+
+- Fix `DTUNE` register value
+
 ### 0.5.0
 
 - Migrated to `embedded-hal` 1.0
