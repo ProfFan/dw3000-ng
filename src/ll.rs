@@ -18,6 +18,7 @@
 use core::fmt::{Display, Formatter};
 use core::{fmt, marker::PhantomData};
 
+use embedded_hal::digital::OutputPin;
 use embedded_hal::spi;
 
 /// Entry point to the DW3000 driver's low-level API
@@ -130,19 +131,16 @@ where
 /// An SPI error that can occur when communicating with the DW3000
 pub enum Error<SPI>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi::ErrorType,
 {
     /// SPI error occured during a transfer transaction
     Transfer(SPI::Error),
 }
 
-impl<SPI, CS> Display for Error<SPI, CS>
+impl<SPI> Display for Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
-    <SPI as spi::Write<u8>>::Error: fmt::Debug,
-    CS: OutputPin,
-    <CS as OutputPin>::Error: fmt::Debug,
+    SPI: spi::ErrorType,
+    SPI::Error: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:?}", self)
@@ -150,13 +148,9 @@ where
 }
 
 #[cfg(feature = "std")]
-impl<SPI, CS> std::error::Error for Error<SPI, CS>
+impl<SPI> std::error::Error for Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
-    <SPI as spi::Write<u8>>::Error: fmt::Debug,
-    CS: OutputPin,
-    <CS as OutputPin>::Error: fmt::Debug,
+    SPI: spi::ErrorType,
 {
 }
 
@@ -164,7 +158,7 @@ where
 // associated error type doesn't implement `Debug`.
 impl<SPI> fmt::Debug for Error<SPI>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi::ErrorType,
     SPI::Error: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

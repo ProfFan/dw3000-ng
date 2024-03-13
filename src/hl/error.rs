@@ -11,7 +11,7 @@ use crate::ll;
 /// An error that can occur when sending or receiving data
 pub enum Error<SPI>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi::ErrorType,
 {
     /// Error occured while using SPI bus
     Spi(ll::Error<SPI>),
@@ -87,20 +87,16 @@ where
 
 impl<SPI> From<ll::Error<SPI>> for Error<SPI>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi::ErrorType,
 {
     fn from(error: ll::Error<SPI>) -> Self {
         Error::Spi(error)
     }
 }
 
-impl<SPI, CS> Display for Error<SPI, CS>
+impl<SPI> Display for Error<SPI>
 where
-    <CS as OutputPin>::Error: fmt::Debug,
-    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
-    <SPI as spi::Write<u8>>::Error: fmt::Debug,
-    CS: OutputPin,
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
+    SPI: spi::ErrorType,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "{:?}", self)
@@ -108,13 +104,9 @@ where
 }
 
 #[cfg(feature = "std")]
-impl<SPI, CS> std::error::Error for Error<SPI, CS>
+impl<SPI> std::error::Error for Error<SPI>
 where
-    SPI: spi::Transfer<u8> + spi::Write<u8>,
-    <SPI as spi::Transfer<u8>>::Error: fmt::Debug,
-    <SPI as spi::Write<u8>>::Error: fmt::Debug,
-    CS: OutputPin,
-    <CS as OutputPin>::Error: fmt::Debug,
+    SPI: spi::ErrorType,
 {
 }
 
@@ -122,7 +114,7 @@ where
 // conditionally for `ll::Debug`.
 impl<SPI> fmt::Debug for Error<SPI>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi::ErrorType,
     SPI::Error: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
