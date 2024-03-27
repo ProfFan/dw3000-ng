@@ -34,6 +34,27 @@ Please also refer to the [DW3000 User Manual]
 [API Reference]: https://docs.rs/dw3000-ng
 [DW3000 User Manual]: https://www.qorvo.com/products/d/da008154
 
+## Citation
+
+If you are using this in your academic work, please cite it as follows:
+
+```bibtex
+@inproceedings{Jiang24hotmobile,
+    author = {Jiang, Fan and Dhekne, Ashutosh},
+    title = {Demo: uFiμ: An open-source integrated UWB-WiFi-IMU platform for localization research and beyond},
+    year = {2024},
+    isbn = {9798400704970},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/3638550.3643628},
+    doi = {10.1145/3638550.3643628},
+    booktitle = {Proceedings of the 25th International Workshop on Mobile Computing Systems and Applications},
+    pages = {156},
+    location = {San Diego, CA, USA},
+    series = {HOTMOBILE '24}
+}
+```
+
 ## CHANGELOG
 
 ### 0.5.1
