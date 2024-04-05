@@ -789,9 +789,11 @@ impl_register! {
         rxpsr,  18, 19, u8; /// RX Preamble Repetition
         rxpacc, 20, 31, u16; /// Preamble Accumulation Count
     }
-    0x00, 0x64, 16, RO, RX_TIME(rx_time) { /// Receive Time Stamp
+    0x00, 0x64, 5, RO, RX_TIME(rx_time) { /// Receive Time Stamp
         rx_stamp,  0,  39, u64; /// Fully adjusted time stamp
-        rx_rawst, 64, 95, u64; /// Raw time stamp
+    }
+    0x00, 0x70, 4, RO, RX_RAWST(rx_rawst) { /// Raw receive time stamp
+        value, 0, 31, u32; /// Raw receive time stamp
     }
     0x00, 0x74, 5, RO, TX_TIME(tx_time) { /// Transmit Time Stamp
         tx_stamp,  0, 39, u64; /// Fully adjusted time stamp
