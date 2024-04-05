@@ -18,7 +18,6 @@
 use core::fmt::{Display, Formatter};
 use core::{fmt, marker::PhantomData};
 
-use embedded_hal::digital::OutputPin;
 use embedded_hal::spi;
 
 /// Entry point to the DW3000 driver's low-level API
@@ -1125,7 +1124,7 @@ impl_register! {
         value,  0,  31, u32; /// value
     }
     0x06, 0x29, 3, RO, DRX_CAR_INT(drx_car_int) { /// Carrier recovery integrator register
-        //  formule de math !! A FINIR // TODO
+        value,  0,  23, u32; /// value
     }
 
     /*******************************************************************/

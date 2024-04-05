@@ -57,6 +57,10 @@ If you are using this in your academic work, please cite it as follows:
 
 ## CHANGELOG
 
+### 0.6.0
+
+- Added the carrier recovery integrator register
+
 ### 0.5.1
 
 - Fix `DTUNE` register value
