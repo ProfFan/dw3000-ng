@@ -29,6 +29,8 @@ pub struct Config {
     pub sts_len: StsLen,
     /// SFD_timeout = Preamble length + 1 + sfdlength - pac size
     pub sfd_timeout: u32,
+    /// Enable full CIA diagnostics (required for RSSI calculation)
+    pub cia_full_diag: bool,
 }
 
 impl Default for Config {
@@ -44,6 +46,7 @@ impl Default for Config {
             sts_mode: Default::default(), //mode off
             sts_len: Default::default(),
             sfd_timeout: 121,
+            cia_full_diag: true,
         }
     }
 }
