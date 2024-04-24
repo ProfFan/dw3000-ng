@@ -30,12 +30,15 @@ pub struct Message<'l> {
     /// register.
     pub rx_time: Instant,
 
+    /// quality of the message received
+    pub rx_quality: RxQuality,
+
     /// The MAC frame
     pub frame: Ieee802154Frame<&'l [u8]>,
 }
 
 /// A struct representing the quality of the received message.
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Format, serde::Serialize, serde::Deserialize)]
 pub struct RxQuality {
     /// The confidence that there was Line Of Sight between the sender and the
     /// receiver.
@@ -162,6 +165,12 @@ where
         // are buggy, the following should never panic.
         let rx_time = Instant::new(rx_time).unwrap();
 
+        let rssi = self.get_first_path_signal_power()?;
+        let rx_quality = RxQuality {
+            los_confidence_level: 1.0, // TODO
+            rssi,
+        };
+
         //  Reset status bits. This is not strictly necessary, but it helps, if
         // you have to inspect SYS_STATUS manually during debugging.
         self.ll()
@@ -213,7 +222,11 @@ where
 
         let frame = Ieee802154Frame::new_checked(buffer).unwrap();
 
-        Ok(Message { rx_time, frame })
+        Ok(Message {
+            rx_time,
+            rx_quality,
+            frame,
+        })
     }
 
     /// Wait for receive operation to finish
