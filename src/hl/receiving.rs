@@ -5,13 +5,15 @@ use core::convert::TryInto;
 use byte::BytesExt as _;
 use embedded_hal::spi;
 use fixed::traits::LossyInto;
+#[cfg(feature = "num-traits")]
+use num_traits::Float;
 
 #[cfg(feature = "defmt")]
 use defmt::Format;
 
 use super::{AutoDoubleBufferReceiving, Receiving};
 use crate::{
-    configs::{BitRate, SfdSequence},
+    configs::{BitRate, PulseRepetitionFrequency, SfdSequence},
     time::Instant,
     Config, Error, FastCommand, Ready, DW3000,
 };
@@ -338,6 +340,68 @@ where
         self.state.mark_finished();
 
         Ok((len, rx_time))
+    }
+
+    /// DW3000 User Manual 4.7.1
+    /// returns dBm
+    #[cfg(feature = "num-traits")]
+    fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
+        let prf = self.state.get_rx_config().pulse_repetition_frequency;
+        let ll = self.ll();
+
+        #[derive(Copy, Clone)]
+        enum Method {
+            Ipatov,
+            Sts,
+        }
+
+        // prefer ipatov over sts
+        let method: Method = if ll.sys_cfg().read()?.cia_ipatov() != 0 {
+            Method::Ipatov
+        } else if ll.sys_cfg().read()?.cia_sts() != 0 {
+            Method::Sts
+        } else {
+            Err(Error::InvalidConfiguration)?
+        };
+
+        let a: f32 = match (prf, method) {
+            (PulseRepetitionFrequency::Mhz16, _) => 113.8,
+            (PulseRepetitionFrequency::Mhz64, Method::Ipatov) => 121.7,
+            (PulseRepetitionFrequency::Mhz64, Method::Sts) => 120.7,
+        };
+
+        let f1;
+        let f2;
+        let f3;
+        let n;
+
+        match method {
+            Method::Ipatov => {
+                f1 = ll.ip_diag_2().read()?.ip_fp1m();
+                f2 = ll.ip_diag_3().read()?.ip_fp2m();
+                f3 = ll.ip_diag_4().read()?.ip_fp3m();
+                n = ll.ip_diag_12().read()?.ip_nacc();
+            }
+            Method::Sts => {
+                f1 = ll.sts_diag_2().read()?.cp0_fp1m();
+                f2 = ll.sts_diag_3().read()?.cp0_fp2m();
+                f3 = ll.sts_diag_4().read()?.cp0_fp3m();
+                n = ll.sts_diag_12().read()?.cp0_nacc();
+            }
+        }
+
+        let d6: u32 = if ll.dgc_cfg().read()?.rx_tune_en() != 0 {
+            let d: u32 = ll.dgc_dbg().read()?.dgc_decision().into();
+            6u32 * d
+        } else {
+            0u32
+        };
+
+        Ok(10.0
+            * (((f1 * f1 + f2 * f2 + f3 * f3) as f32) / ((u32::from(n) * u32::from(n)) as f32))
+                .log10()
+            + (d6 as f32)
+            - a)
     }
 
     #[allow(clippy::type_complexity)]
