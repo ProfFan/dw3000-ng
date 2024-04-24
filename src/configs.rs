@@ -286,27 +286,27 @@ pub enum StsMode {
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 /// An enum that allows the selection of Sts length
-///
+/// Value step is a block of eight (user manual 8.2.3.1)
 pub enum StsLen {
     /// STS length = 32 bits
-    StsLen32 = 0,
+    StsLen32 = 4,
 
     /// STS length = 64 bits
     #[default]
-    StsLen64 = 1,
+    StsLen64 = 8,
 
     /// STS length = 128 bits
-    StsLen128 = 2,
+    StsLen128 = 16,
 
     /// STS length = 256 bits
-    StsLen256 = 3,
+    StsLen256 = 32,
 
     /// STS length = 512 bits
-    StsLen512 = 4,
+    StsLen512 = 64,
 
     /// STS length = 1024 bits
-    StsLen1024 = 5,
+    StsLen1024 = 128,
 
     /// STS length = 2048 bits
-    StsLn2048 = 6,
+    StsLn2048 = 256,
 }
