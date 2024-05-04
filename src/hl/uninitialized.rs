@@ -35,7 +35,7 @@ where
         // wait for CPLOCK to be set
         while self.ll.sys_status().read()?.cplock() == 0 {}
 
-        // Configuration du xtal_trim
+        // Configuration of `XTAL_TRIM`
         self.ll.otp_cfg().modify(|_, w| w.otp_man(1))?;
         self.ll.otp_addr().modify(|_, w| w.otp_addr(0x1E))?;
         self.ll.otp_cfg().modify(|_, w| w.otp_read(1))?;
