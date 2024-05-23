@@ -226,7 +226,10 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
-    pub fn r_wait_buf(&mut self, buffer: &mut [u8]) -> nb::Result<(usize, Instant), Error<SPI>> {
+    pub fn r_wait_buf(
+        &mut self,
+        buffer: &mut [u8],
+    ) -> nb::Result<(usize, Instant, RxQuality), Error<SPI>> {
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
@@ -285,6 +288,12 @@ where
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?
             .rx_stamp();
 
+        let rssi = self.get_first_path_signal_power()?;
+        let rx_quality = RxQuality {
+            los_confidence_level: 1.0, // TODO
+            rssi,
+        };
+
         // `rx_time` comes directly from the register, which should always
         // contain a 40-bit timestamp. Unless the hardware or its documentation
         // are buggy, the following should never panic.
@@ -337,7 +346,7 @@ where
 
         self.state.mark_finished();
 
-        Ok((len, rx_time))
+        Ok((len, rx_time, rx_quality))
     }
 
     #[allow(clippy::type_complexity)]
