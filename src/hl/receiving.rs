@@ -9,7 +9,7 @@ use fixed::traits::LossyInto;
 #[cfg(feature = "defmt")]
 use defmt::Format;
 
-use super::{AutoDoubleBufferReceiving, Receiving};
+use super::{AutoDoubleBufferReceiving, ReceiveTime, Receiving};
 use crate::{
     configs::{BitRate, SfdSequence},
     time::Instant,
@@ -62,7 +62,11 @@ where
         Ok(self.ll.sys_state().read()?.rx_state())
     }
 
-    pub(super) fn start_receiving(&mut self, config: Config) -> Result<(), Error<SPI>> {
+    pub(super) fn start_receiving(
+        &mut self,
+        recv_time: ReceiveTime,
+        config: Config,
+    ) -> Result<(), Error<SPI>> {
         if config.frame_filtering {
             self.ll.sys_cfg().modify(
                 |_, w| w.ffen(0b1), // enable frame filtering
@@ -79,7 +83,26 @@ where
             self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
         }
 
-        self.fast_cmd(FastCommand::CMD_RX)?;
+        match recv_time {
+            ReceiveTime::Delayed(time) => {
+                // Panic if the time is not rounded to top 31 bits
+                //
+                // NOTE: DW3000's DX_TIME register is 32 bits wide, but only the top 31 bits are used.
+                // The last bit is ignored per the user manual!!!
+                if time.value() % (1 << 9) != 0 {
+                    panic!("Time must be rounded to top 31 bits!");
+                }
+
+                // Put the time into the delay register
+                // By setting this register, the chip knows to delay before transmitting
+                self.ll
+                    .dx_time()
+                    .modify(|_, w| // 32-bits value of the most significant bits
+                    w.value( (time.value() >> 8) as u32 ))?;
+                self.fast_cmd(FastCommand::CMD_DRX)?;
+            }
+            ReceiveTime::Now => self.fast_cmd(FastCommand::CMD_RX)?,
+        }
 
         Ok(())
     }
