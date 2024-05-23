@@ -1,4 +1,4 @@
-use core::{num::Wrapping, ops::Not};
+use core::num::Wrapping;
 
 use embedded_hal::spi;
 
@@ -79,10 +79,6 @@ where
         self.ll
             .sts_cfg()
             .modify(|_, w| w.cps_len(config.sts_len as u8 - 1))?;
-
-        self.ll
-            .cia_conf()
-            .modify(|_, w| w.mindiag(config.cia_full_diag.not() as u8))?;
 
         self.ll.tx_fctrl().modify(|_, w| w.fine_plen(0x0))?;
 

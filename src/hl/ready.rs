@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
 
-use core::num::Wrapping;
+use core::{num::Wrapping, ops::Not};
 
 use byte::BytesExt as _;
 use embedded_hal::spi;
@@ -74,6 +74,16 @@ where
             w.pan_id(pan_id.0)
                 .short_addr(u16::from_be_bytes(short_addr))
         })?;
+
+        Ok(())
+    }
+
+    /// Enable/disable CIA diagnostics
+    /// Enabling CIA diagnostics is required for RSSI calculation
+    pub fn set_full_cia_diagnostics(&mut self, enabled: bool) -> Result<(), Error<SPI>> {
+        self.ll
+            .cia_conf()
+            .modify(|_, w| w.mindiag(enabled.not() as u8))?;
 
         Ok(())
     }
