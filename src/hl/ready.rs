@@ -48,6 +48,18 @@ pub enum IrqPolarity {
     ActiveLow = 0,
 }
 
+/// PDoA mode
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u8)]
+pub enum PDoAMode {
+    /// Disabled
+    Disabled = 0,
+    /// PDoA mode 1
+    Mode1 = 1,
+    /// PDoA mode 3
+    Mode3 = 3,
+}
+
 impl<SPI> DW3000<SPI, Ready>
 where
     SPI: spi::SpiDevice<u8>,
@@ -84,6 +96,24 @@ where
         self.ll
             .cia_conf()
             .modify(|_, w| w.mindiag(enabled.not() as u8))?;
+
+        Ok(())
+    }
+
+    /// Set the current PDoA mode
+    ///
+    /// Note in order for PDoA to work, the DW3000 must be configured with STS.
+    ///
+    /// The PDoA mode can be set to one of the following:
+    /// 0: Disabled
+    /// 1: PDoA mode 1
+    /// 3: PDoA mode 3
+    ///
+    /// The PDoA mode is set to 0 by default.
+    ///
+    /// NOTE: PDoA mode 3 requires the STS length to be integer multiples of 128.
+    pub fn set_pdoa_mode(&mut self, mode: PDoAMode) -> Result<(), Error<SPI>> {
+        self.ll.sys_cfg().modify(|_, w| w.pdoa_mode(mode as u8))?;
 
         Ok(())
     }

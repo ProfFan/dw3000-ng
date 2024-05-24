@@ -11,7 +11,7 @@ A modernized driver for the Decawave [DW3000] UWB transceiver, written in the [R
 ## Status
 
 Both RTT methods (single and double sided) are working and giving good positioning values.
-No implementation of PDoA or AoA.
+PDoA and TDoA can be enabled optionally (Please read the docs as they require certain configurations!).
 
 Compared to the old `dw3000` crate we fixed the GPIOs and LEDs, also got rid of the old unmaintained ieee802154 crate and replaced it with `smoltcp`.
 
@@ -56,6 +56,11 @@ If you are using this in your academic work, please cite it as follows:
 ```
 
 ## CHANGELOG
+
+### 0.8.0
+
+- Renamed the `num-traits` feature to `rssi` to better indicate what it does
+- Added PDoA and TDoA support
 
 ### 0.7.0
 

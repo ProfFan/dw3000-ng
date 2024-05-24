@@ -5,7 +5,7 @@ use core::convert::TryInto;
 use byte::BytesExt as _;
 use embedded_hal::spi;
 use fixed::traits::LossyInto;
-#[cfg(feature = "num-traits")]
+#[cfg(feature = "rssi")]
 use num_traits::Float;
 
 #[cfg(feature = "defmt")]
@@ -367,7 +367,7 @@ where
 
     /// DW3000 User Manual 4.7.1
     /// returns dBm
-    #[cfg(feature = "num-traits")]
+    #[cfg(feature = "rssi")]
     fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
         let prf = self.state.get_rx_config().pulse_repetition_frequency;
         let ll = self.ll();
@@ -427,7 +427,7 @@ where
             - a)
     }
 
-    #[cfg(not(feature = "num-traits"))]
+    #[cfg(not(feature = "rssi"))]
     fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
         Ok(0.0)
     }
