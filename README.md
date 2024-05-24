@@ -22,7 +22,7 @@ We mainly test on the ESP32 platform with `embassy` async framework.
 Include this crate in your Cargo project by adding the following to `Cargo.toml`:
 ```toml
 [dependencies]
-dw3000-ng = "0.5.1
+dw3000-ng = "0.7"
 ```
 
 ## Documentation
@@ -56,6 +56,11 @@ If you are using this in your academic work, please cite it as follows:
 ```
 
 ## CHANGELOG
+
+### 0.7.0
+
+- Add field rx_quality to struct Message holding first path signal power by (@elrafoon)
+- Fixed STS config values by (@elrafoon)
 
 ### 0.6.1
 
