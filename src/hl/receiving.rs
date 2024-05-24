@@ -38,7 +38,8 @@ pub struct Message<'l> {
 }
 
 /// A struct representing the quality of the received message.
-#[derive(Debug, Format, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "defmt", derive(Format))]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct RxQuality {
     /// The confidence that there was Line Of Sight between the sender and the
     /// receiver.
@@ -424,6 +425,11 @@ where
                 .log10()
             + (d6 as f32)
             - a)
+    }
+
+    #[cfg(not(feature = "num-traits"))]
+    fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
+        Ok(0.0)
     }
 
     #[allow(clippy::type_complexity)]

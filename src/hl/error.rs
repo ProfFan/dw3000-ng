@@ -185,6 +185,7 @@ mod test {
 
     use embedded_hal_mock::eh1::spi::Mock as SpiMock;
 
+    #[cfg(feature = "defmt")]
     #[test]
     fn test_defmt() {
         let error = Error::<SpiMock<u8>>::BufferTooSmall { required_len: 42 };
