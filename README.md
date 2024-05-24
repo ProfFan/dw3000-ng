@@ -13,7 +13,7 @@ A modernized driver for the Decawave [DW3000] UWB transceiver, written in the [R
 Both RTT methods (single and double sided) are working and giving good positioning values.
 No implementation of PDoA or AoA.
 
-Compared to the old `dw3000` crate we fixed the GPIOs and LEDs, also got rid of the old unmaintained ieee802154 crate and replaced it with smoltcp.
+Compared to the old `dw3000` crate we fixed the GPIOs and LEDs, also got rid of the old unmaintained ieee802154 crate and replaced it with `smoltcp`.
 
 We mainly test on the ESP32 platform with `embassy` async framework.
 
