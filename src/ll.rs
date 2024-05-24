@@ -147,11 +147,7 @@ where
 }
 
 #[cfg(feature = "std")]
-impl<SPI> std::error::Error for Error<SPI>
-where
-    SPI: spi::ErrorType,
-{
-}
+impl<SPI> std::error::Error for Error<SPI> where SPI: spi::ErrorType {}
 
 // We can't derive this implementation, as the compiler will complain that the
 // associated error type doesn't implement `Debug`.
@@ -430,6 +426,7 @@ macro_rules! impl_register {
                 }
 
                 /// Used to write to the register
+                #[allow(unused)]
                 pub struct W(pub(crate) [u8; HEADER_LEN + $len]);
 
                 impl W {

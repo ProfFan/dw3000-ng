@@ -104,11 +104,7 @@ where
 }
 
 #[cfg(feature = "std")]
-impl<SPI> std::error::Error for Error<SPI>
-where
-    SPI: spi::ErrorType,
-{
-}
+impl<SPI> std::error::Error for Error<SPI> where SPI: spi::ErrorType {}
 
 // We can't derive this implementation, as `Debug` is only implemented
 // conditionally for `ll::Debug`.
