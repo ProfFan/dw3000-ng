@@ -57,6 +57,10 @@ If you are using this in your academic work, please cite it as follows:
 
 ## CHANGELOG
 
+### 0.8.1
+
+- Fixed the `STS` register setup when calling `config()` with STS enabled
+
 ### 0.8.0
 
 - Renamed the `num-traits` feature to `rssi` to better indicate what it does
