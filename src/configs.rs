@@ -267,6 +267,7 @@ impl UwbChannel {
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+#[repr(u8)]
 /// An enum that allows the selection of StsMode
 ///
 pub enum StsMode {
