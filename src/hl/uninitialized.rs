@@ -64,7 +64,7 @@ where
         //Configuration du sys_cfg
         self.ll.sys_cfg().modify(|_, w| w.phr_mode(0))?;
         self.ll.sys_cfg().modify(|_, w| w.phr_6m8(0))?;
-        self.ll.sys_cfg().modify(|_, w| w.cp_spc(0))?;
+        self.ll.sys_cfg().modify(|_, w| w.cp_spc(config.sts_mode as u8))?;
         self.ll.sys_cfg().modify(|_, w| w.pdoa_mode(0))?;
         self.ll.sys_cfg().modify(|_, w| w.cp_sdc(0))?;
 
