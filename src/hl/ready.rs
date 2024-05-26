@@ -40,6 +40,14 @@ pub enum SendTime {
     OnSync,
 }
 
+/// The time at which the reception will start
+pub enum ReceiveTime {
+    /// As fast as possible
+    Now,
+    /// After some time
+    Delayed(Instant),
+}
+
 /// The polarity of the irq signal
 pub enum IrqPolarity {
     /// The signal will be high when the interrupt is active
@@ -436,7 +444,11 @@ where
     /// and more. Make sure that the values used are the same as of the frames
     /// that are transmitted. The default works with the TxConfig's default and
     /// is a sane starting point.
-    pub fn receive(self, config: Config) -> Result<DW3000<SPI, SingleBufferReceiving>, Error<SPI>> {
+    pub fn receive(
+        self,
+        recv_time: ReceiveTime,
+        config: Config,
+    ) -> Result<DW3000<SPI, SingleBufferReceiving>, Error<SPI>> {
         let mut rx_radio = DW3000 {
             ll: self.ll,
             seq: self.seq,
@@ -447,7 +459,7 @@ where
         };
 
         // Start rx'ing
-        rx_radio.start_receiving(config)?;
+        rx_radio.start_receiving(recv_time, config)?;
 
         // Return the double buffer state
         Ok(rx_radio)
