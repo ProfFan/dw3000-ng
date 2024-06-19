@@ -444,7 +444,25 @@ where
     /// and more. Make sure that the values used are the same as of the frames
     /// that are transmitted. The default works with the TxConfig's default and
     /// is a sane starting point.
-    pub fn receive(
+    pub fn receive(self, config: Config) -> Result<DW3000<SPI, SingleBufferReceiving>, Error<SPI>> {
+        self.receive_delayed(ReceiveTime::Now, config)
+    }
+
+    /// Attempt to receive a single IEEE 802.15.4 MAC frame
+    ///
+    /// Initializes the receiver. The method consumes this instance of `DW3000`
+    /// and returns another instance which is in the [SingleBufferReceiving]
+    /// state, and can be used to wait for a message.
+    ///
+    /// This operation can be delayed to aid in distance measurement, by setting
+    /// `recv_time` to `ReceiveTime::Delayed(instant)`. If you want to send the
+    /// frame as soon as possible, just pass `ReceiveTime::Now` instead.
+    ///
+    /// The config parameter allows for the configuration of bitrate, channel
+    /// and more. Make sure that the values used are the same as of the frames
+    /// that are transmitted. The default works with the TxConfig's default and
+    /// is a sane starting point.
+    pub fn receive_delayed(
         self,
         recv_time: ReceiveTime,
         config: Config,
