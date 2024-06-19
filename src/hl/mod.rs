@@ -24,6 +24,8 @@ pub use sleeping::*;
 pub use state_impls::*;
 #[allow(unused_imports)]
 pub use uninitialized::*;
+#[allow(unused_imports)]
+pub use carrier_freq_offset::*;
 
 use crate::ll;
 
@@ -35,6 +37,7 @@ mod sending;
 mod sleeping;
 mod state_impls;
 mod uninitialized;
+mod carrier_freq_offset;
 
 /// Entry point to the DW3000 driver API
 #[derive(Copy, Clone)]
