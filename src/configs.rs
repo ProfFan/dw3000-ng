@@ -264,6 +264,14 @@ impl UwbChannel {
             UwbChannel::Channel9 => 0x0002AFB5,
         }
     }
+
+    /// Get center frequency in hertz
+    pub fn get_center_frequency(&self) -> u64 {
+        match self {
+            UwbChannel::Channel5 => 6489600000,
+            UwbChannel::Channel9 => 7987200000,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
