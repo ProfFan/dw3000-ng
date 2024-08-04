@@ -1205,8 +1205,8 @@ impl_register! {
         value, 0, 15, u16; /// PLL configuration
     }
     0x09, 0x04, 3, RW, PLL_CC(pll_cc) { /// PLL coarse code – starting code for calibration procedure
-        ch9_code, 0,  7, u8; /// PLL calibration coarse code for channel 5.
-        ch5_code, 8, 21, u8; /// PLL calibration coarse code for channel 9.
+        ch9_code, 0,  7, u8; /// PLL calibration coarse code for channel 9.
+        ch5_code, 8, 21, u16; /// PLL calibration coarse code for channel 5.
     }
     0x09, 0x08, 2, RW, PLL_CAL(pll_cal) { /// PLL calibration configuration
         use_old,    1, 1, u8; /// Use the coarse code value as set in PLL_CC register as starting point for PLL calibration.
