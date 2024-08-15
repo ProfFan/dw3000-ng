@@ -29,7 +29,7 @@ dw3000-ng = "0.8"
 
 Please refer to the **[API Reference]**.
 
-Please also refer to the [DW3000 User Manual] 
+Please also refer to the [DW3000 User Manual]
 
 [API Reference]: https://docs.rs/dw3000-ng
 [DW3000 User Manual]: https://www.qorvo.com/products/d/da008154
@@ -56,6 +56,11 @@ If you are using this in your academic work, please cite it as follows:
 ```
 
 ## CHANGELOG
+
+### 0.8.2
+
+- Add parameter `recv_time` to allow delayed receiving by @trembel
+- Fix `pll_cc` register by @JohannesProgrammiert
 
 ### 0.8.1
 
