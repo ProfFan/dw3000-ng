@@ -57,6 +57,10 @@ If you are using this in your academic work, please cite it as follows:
 
 ## CHANGELOG
 
+### 0.8.3
+
+- Fixed infinite loop in `init()` if the SPI device is not ready or connected
+
 ### 0.8.2
 
 - Add parameter `recv_time` to allow delayed receiving by @trembel
