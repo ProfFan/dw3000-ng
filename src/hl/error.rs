@@ -140,6 +140,7 @@ where
             Error::RxConfigFrameFilteringUnsupported => {
                 write!(f, "RxConfigFrameFilteringUnsupported")
             }
+            Error::InitializationFailed => write!(f, "InitializationFailed"),
         }
     }
 }
@@ -177,6 +178,7 @@ where
             Error::RxConfigFrameFilteringUnsupported => {
                 defmt::write!(f, "RxConfigFrameFilteringUnsupported")
             }
+            Error::InitializationFailed => defmt::write!(f, "InitializationFailed"),
         }
     }
 }
