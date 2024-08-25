@@ -83,6 +83,9 @@ where
     /// There are issues with frame filtering in double buffer mode.
     /// So it's not supported now.
     RxConfigFrameFilteringUnsupported,
+
+    /// Failed Initialization
+    InitializationFailed,
 }
 
 impl<SPI> From<ll::Error<SPI>> for Error<SPI>

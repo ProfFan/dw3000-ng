@@ -1119,6 +1119,9 @@ impl_register! {
     0x06, 0x0C, 4, RW, DTUNE3(dtune3) { /// Receiver tuning register
         value,  0,  31, u32; /// value
     }
+    0x06, 0x10, 4, RW, DTUNE4(dtune4) { /// Digital Tuning Reserved register
+        value,  0,  31, u32; /// value
+    }
     0x06, 0x14, 4, RO, DTUNE5(dtune5) { /// Digital Tuning Reserved register
         value,  0,  31, u32; /// value
     }

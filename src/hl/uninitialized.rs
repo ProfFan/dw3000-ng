@@ -21,13 +21,41 @@ where
         }
     }
 
+    /// Read the OTP memory at the given address
+    pub fn read_otp(&mut self, addr: u16) -> Result<u32, ll::Error<SPI>> {
+        // Set OTP_MAN to 1
+        self.ll.otp_cfg().modify(|_, w| w.otp_man(1))?;
+        // Set the 10-bit address
+        self.ll.otp_addr().modify(|_, w| w.otp_addr(addr))?;
+        // Set OTP_READ to 1
+        self.ll.otp_cfg().modify(|_, w| w.otp_read(1))?;
+        // Read the data (32 bits)
+        let data = self.ll.otp_rdata().read()?.value();
+        Ok(data)
+    }
+
     /// Initialize the DW3000
     /// Basicaly, this is the pll configuration. We want to have a locked pll in order to provide a constant speed clock.
     /// This is important when using th clock to measure distances.
     /// At the end of this function, pll is locked and it can be checked by the bit CPLOCK in SYS_STATUS register (see state_test example)
     pub fn init(mut self) -> Result<DW3000<SPI, Uninitialized>, Error<SPI>> {
-        // Wait for the IDLE_RC state
-        while self.ll.sys_status().read()?.rcinit() == 0 {}
+        // Try reading the device ID
+        let device_id = self.ll().dev_id().read()?;
+
+        if device_id.ridtag() != 0xDECA || device_id.model() != 0x3 {
+            return Err(Error::InvalidConfiguration);
+        }
+
+        // Wait for the INIT_RC state
+        for _ in 0..1000 {
+            if self.ll.sys_status().read()?.rcinit() == 1 {
+                break;
+            }
+        }
+        if self.ll.sys_status().read()?.rcinit() == 0 {
+            return Err(Error::InitializationFailed);
+        }
+
         // select PLL mode auto
         self.ll.clk_ctrl().modify(|_, w| w.sys_clk(0))?;
         // set ainit2idle
@@ -64,7 +92,9 @@ where
         //Configuration du sys_cfg
         self.ll.sys_cfg().modify(|_, w| w.phr_mode(0))?;
         self.ll.sys_cfg().modify(|_, w| w.phr_6m8(0))?;
-        self.ll.sys_cfg().modify(|_, w| w.cp_spc(config.sts_mode as u8))?;
+        self.ll
+            .sys_cfg()
+            .modify(|_, w| w.cp_spc(config.sts_mode as u8))?;
         self.ll.sys_cfg().modify(|_, w| w.pdoa_mode(0))?;
         self.ll.sys_cfg().modify(|_, w| w.cp_sdc(0))?;
 
