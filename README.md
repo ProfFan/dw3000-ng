@@ -57,6 +57,10 @@ If you are using this in your academic work, please cite it as follows:
 
 ## CHANGELOG
 
+### 0.8.4
+
+- Fixed important bug in 0.8.3 where we are trying to read the device ID before the device is ready
+
 ### 0.8.3
 
 - Fixed infinite loop in `init()` if the SPI device is not ready or connected

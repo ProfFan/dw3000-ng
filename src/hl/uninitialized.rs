@@ -39,13 +39,6 @@ where
     /// This is important when using th clock to measure distances.
     /// At the end of this function, pll is locked and it can be checked by the bit CPLOCK in SYS_STATUS register (see state_test example)
     pub fn init(mut self) -> Result<DW3000<SPI, Uninitialized>, Error<SPI>> {
-        // Try reading the device ID
-        let device_id = self.ll().dev_id().read()?;
-
-        if device_id.ridtag() != 0xDECA || device_id.model() != 0x3 {
-            return Err(Error::InvalidConfiguration);
-        }
-
         // Wait for the INIT_RC state
         for _ in 0..1000 {
             if self.ll.sys_status().read()?.rcinit() == 1 {
@@ -54,6 +47,14 @@ where
         }
         if self.ll.sys_status().read()?.rcinit() == 0 {
             return Err(Error::InitializationFailed);
+        }
+
+        // Try reading the device ID
+        let device_id = self.ll().dev_id().read()?;
+
+        if device_id.ridtag() != 0xDECA || device_id.model() != 0x3 {
+            defmt::error!("ID = {}", device_id.ridtag());
+            return Err(Error::InvalidConfiguration);
         }
 
         // select PLL mode auto
