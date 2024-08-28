@@ -57,6 +57,12 @@ If you are using this in your academic work, please cite it as follows:
 
 ## CHANGELOG
 
+### (main) 0.9.0
+
+- API change: `config` now takes a `delay_us(u32)` function to allow non-blocking initialization.
+- Now the radio init is feature-par with the official DW3000 driver. You should have much better TX/RX performance now.
+- Fixed the register definition of `RX_FWTO`. RX timeout is now working.
+
 ### 0.8.4
 
 - Fixed important bug in 0.8.3 where we are trying to read the device ID before the device is ready

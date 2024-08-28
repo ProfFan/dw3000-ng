@@ -1,7 +1,9 @@
+use core::future::Future;
 use core::num::Wrapping;
 
 use embedded_hal::spi;
 
+use crate::configs::{PhrRate, StsLen, UwbChannel};
 use crate::{
     configs::{PdoaMode, PhrMode, PreambleLength, StsMode},
     ll, Config, Error, Ready, Uninitialized, DW3000,
@@ -137,111 +139,298 @@ where
 
         // Are we using the special PHR mode?
         let is_extended_phr = config.phr_mode == PhrMode::Extended;
+        let phr_rate = config.phr_rate;
+        let sts_mode = config.sts_mode;
+        let sts_len = config.sts_len;
+        let pdoa_mode = config.pdoa_mode;
 
-        self.ll
-            .sys_cfg()
-            .modify(|_, w| w.phr_mode(is_extended_phr as u8))?;
-        self.ll
-            .sys_cfg()
-            .modify(|_, w| w.phr_6m8(config.phr_rate as u8))?;
-        self.ll
-            .sys_cfg()
-            .modify(|_, w| w.cp_spc(config.sts_mode as u8))?;
-        self.ll
-            .sys_cfg()
-            .modify(|_, w| w.pdoa_mode(config.pdoa_mode as u8))?;
-        self.ll.sys_cfg().modify(|_, w| w.cp_sdc(0))?;
+        self.config_basic_params(
+            &mut preamble_length_actual,
+            is_scp,
+            is_extended_phr,
+            phr_rate,
+            sts_mode,
+            sts_len,
+            pdoa_mode,
+        )?;
 
-        // SCP Mode specific configuration
-        if is_scp {
-            // TODO: We probably need to adjust our sleep mode accordingly
-            //
-            // But we don't have a sleep mode yet
-            self.ll
-                .otp_cfg()
-                .modify(|_, w| w.ops_sel(0x1).ops_kick(0x1))?;
-            self.ll.ip_conf_lo().write(|w| w.ip_ntm(0x6).ip_scp(0x3))?;
-            self.ll.ip_conf_hi().write(|w| w.value(0))?;
-            self.ll
-                .sts_conf_0()
-                .write(|w| w.sts_ntm(0xA).sts_scp(0x5A).sts_rtm(0xC))?;
-            self.ll.sts_conf_1().modify(|_, w| w.res_b0(0x9D))?;
-        } else {
-            if config.sts_mode != StsMode::StsModeOff {
-                #[cfg(feature = "defmt")]
-                defmt::trace!("STS Mode is enabled, calculating STS_MNTH");
+        self.config_txrx_params(config, tx_preamble_code, rx_preamble_code)?;
 
-                // Configure CIA STS minimum thresholds for security
-                let mut sts_mnth = config.sts_len.get_sts_mnth(config.pdoa_mode);
+        self.start_pll_calibration(config)?;
 
-                if sts_mnth > 0x7F {
-                    #[cfg(feature = "defmt")]
-                    defmt::warn!("STS_MNTH is too high, setting to 0x7F");
-                    sts_mnth = 0x7F;
-                }
+        // wait for CPLOCK to be set
+        let mut timeout = 1000;
+        while self.ll.sys_status().read()?.cplock() == 0 {
+            delay_us(20);
 
-                preamble_length_actual += config.sts_len.get_sts_length() as usize;
-                self.ll
-                    .sts_conf_0()
-                    .modify(|_, w| w.sts_rtm(sts_mnth as u8))?;
-                self.ll.sts_conf_1().modify(|_, w| w.res_b0(0x94))?;
+            if self.ll.sys_status().read()?.cplock() != 0 {
+                break;
             }
 
-            if preamble_length_actual > 256 {
-                // TODO: Need custom sleep kick mode for long preamble
-                // This is DWT_ALT_OPS | DWT_SEL_OPS0 in official driver
+            if timeout == 0 {
                 #[cfg(feature = "defmt")]
-                defmt::trace!("Long preamble detected, setting OTP to DWT_OPSET_LONG");
-                self.ll
-                    .otp_cfg()
-                    .modify(|_, w| w.ops_sel(0x0).ops_kick(1))?; // DWT_OPSET_LONG
+                defmt::error!("PLL CPLOCK timeout");
+                return Err(Error::InitializationFailed);
+            }
+            timeout -= 1;
+        }
+
+        // PLL is locked from here on
+
+        self.config_set_dgc_dtune4(channel, preamble_length_actual, rx_preamble_code)?;
+
+        // Start PGF calibration
+
+        let ldo_ctrl_low = self.ll.ldo_ctrl().read()?.low();
+        self.ll.ldo_ctrl().modify(|_, w| w.low(0x105))?;
+
+        delay_us(20);
+
+        let pgf_cal_result = self.run_pgf_cal(delay_us);
+
+        self.ll.ldo_ctrl().modify(|_, w| w.low(ldo_ctrl_low))?; // restore LDO_CTRL
+        pgf_cal_result?;
+
+        Ok(DW3000 {
+            ll: self.ll,
+            seq: self.seq,
+            state: Ready,
+        })
+    }
+
+    /// Async version of the `config` function
+    ///
+    /// Configuration of the DW3000, need to be called after an init.
+    /// This function need to be improved. TODO
+    /// There is several steps to do on this function that improve the sending and reception of a message.
+    /// Without doing this, the receiver almost never receive a frame from transmitter
+    pub async fn config_async<DELAY, F>(
+        mut self,
+        config: Config,
+        mut delay_us: DELAY,
+    ) -> Result<DW3000<SPI, Ready>, Error<SPI>>
+    where
+        F: Future<Output = ()>,
+        DELAY: FnMut(u32) -> F,
+    {
+        // New configuration method that match the offical driver
+        let channel = config.channel;
+        let mut preamble_length_actual = config.preamble_length.get_num_of_symbols();
+        let tx_preamble_code = config
+            .tx_preamble_code
+            .unwrap_or(channel.get_recommended_preamble_code(config.pulse_repetition_frequency));
+        let rx_preamble_code = config
+            .rx_preamble_code
+            .unwrap_or(channel.get_recommended_preamble_code(config.pulse_repetition_frequency));
+
+        // Check if the channel is SCP or not
+        let is_scp = rx_preamble_code > 24 || tx_preamble_code > 24;
+
+        // Are we using the special PHR mode?
+        let is_extended_phr = config.phr_mode == PhrMode::Extended;
+        let phr_rate = config.phr_rate;
+        let sts_mode = config.sts_mode;
+        let sts_len = config.sts_len;
+        let pdoa_mode = config.pdoa_mode;
+
+        self.config_basic_params(
+            &mut preamble_length_actual,
+            is_scp,
+            is_extended_phr,
+            phr_rate,
+            sts_mode,
+            sts_len,
+            pdoa_mode,
+        )?;
+
+        self.config_txrx_params(config, tx_preamble_code, rx_preamble_code)?;
+
+        self.start_pll_calibration(config)?;
+
+        // wait for CPLOCK to be set
+        let mut timeout = 1000;
+        while self.ll.sys_status().read()?.cplock() == 0 {
+            delay_us(20).await;
+
+            if self.ll.sys_status().read()?.cplock() != 0 {
+                break;
+            }
+
+            if timeout == 0 {
+                #[cfg(feature = "defmt")]
+                defmt::error!("PLL CPLOCK timeout");
+                return Err(Error::InitializationFailed);
+            }
+            timeout -= 1;
+        }
+
+        // PLL is locked from here on
+
+        self.config_set_dgc_dtune4(channel, preamble_length_actual, rx_preamble_code)?;
+
+        // Start PGF calibration
+
+        let ldo_ctrl_low = self.ll.ldo_ctrl().read()?.low();
+        self.ll.ldo_ctrl().modify(|_, w| w.low(0x105))?;
+
+        delay_us(20);
+
+        let pgf_cal_result = self.run_pgf_cal_async(delay_us).await;
+
+        self.ll.ldo_ctrl().modify(|_, w| w.low(ldo_ctrl_low))?; // restore LDO_CTRL
+        pgf_cal_result?;
+
+        Ok(DW3000 {
+            ll: self.ll,
+            seq: self.seq,
+            state: Ready,
+        })
+    }
+
+    /// Run the PGF calibration
+    fn run_pgf_cal<DELAY>(&mut self, mut delay_us: DELAY) -> Result<(), Error<SPI>>
+    where
+        DELAY: FnMut(u32),
+    {
+        self.ll
+            .rx_cal()
+            .modify(|_, w| w.comp_dly(0x2).cal_mode(1))?;
+
+        self.ll.rx_cal().modify(|_, w| w.cal_en(1))?;
+
+        let mut max_retries = 3;
+        let mut success = true;
+        delay_us(20);
+        while self.ll.rx_cal_sts().read()?.value() == 0 {
+            max_retries -= 1;
+            if max_retries == 0 {
+                success = false;
+                break;
+            }
+            delay_us(20);
+        }
+
+        if !success {
+            return Err(Error::PGFCalibrationFailed);
+        }
+
+        self.ll.rx_cal().modify(|_, w| w.cal_mode(0).cal_en(0))?;
+        self.ll.rx_cal_sts().modify(|_, w| w.value(1))?;
+        self.ll
+            .rx_cal()
+            .modify(|r, w| w.comp_dly(r.comp_dly() | 0x1))?;
+
+        let rx_cal_resi = self.ll.rx_cal_resi().read()?.value();
+        let rx_cal_resq = self.ll.rx_cal_resq().read()?.value();
+        if rx_cal_resi == 0x1fffffff || rx_cal_resq == 0x1fffffff {
+            return Err(Error::PGFCalibrationFailed);
+        }
+
+        Ok(())
+    }
+
+    /// Run the PGF calibration, async version
+    async fn run_pgf_cal_async<DELAY, F>(&mut self, mut delay_us: DELAY) -> Result<(), Error<SPI>>
+    where
+        DELAY: FnMut(u32) -> F,
+        F: Future<Output = ()>,
+    {
+        self.ll
+            .rx_cal()
+            .modify(|_, w| w.comp_dly(0x2).cal_mode(1))?;
+
+        self.ll.rx_cal().modify(|_, w| w.cal_en(1))?;
+
+        let mut max_retries = 3;
+        let mut success = true;
+        delay_us(20).await;
+        while self.ll.rx_cal_sts().read()?.value() == 0 {
+            max_retries -= 1;
+            if max_retries == 0 {
+                success = false;
+                break;
+            }
+            delay_us(20).await;
+        }
+
+        if !success {
+            return Err(Error::PGFCalibrationFailed);
+        }
+
+        self.ll.rx_cal().modify(|_, w| w.cal_mode(0).cal_en(0))?;
+        self.ll.rx_cal_sts().modify(|_, w| w.value(1))?;
+        self.ll
+            .rx_cal()
+            .modify(|r, w| w.comp_dly(r.comp_dly() | 0x1))?;
+
+        let rx_cal_resi = self.ll.rx_cal_resi().read()?.value();
+        let rx_cal_resq = self.ll.rx_cal_resq().read()?.value();
+        if rx_cal_resi == 0x1fffffff || rx_cal_resq == 0x1fffffff {
+            return Err(Error::PGFCalibrationFailed);
+        }
+
+        Ok(())
+    }
+
+    fn config_set_dgc_dtune4(
+        &mut self,
+        channel: UwbChannel,
+        preamble_length_actual: usize,
+        rx_preamble_code: u8,
+    ) -> Result<(), Error<SPI>> {
+        if (9..=24).contains(&rx_preamble_code) {
+            let dgc_otp = self.read_otp(0x20)?;
+
+            if dgc_otp == 0x10000240 {
+                #[cfg(feature = "defmt")]
+                defmt::trace!("Configuring DGC from OTP");
+
+                self.ll.otp_cfg().modify(|_, w| w.dgc_kick(1))?;
+                self.ll.otp_cfg().modify(|_, w| w.dgc_sel(channel as u8))?; // 0 if channel5 and 1 if channel9
             } else {
+                #[cfg(feature = "defmt")]
+                defmt::trace!("Configuring DGC from hardcoded values");
+
                 self.ll
-                    .otp_cfg()
-                    .modify(|_, w| w.ops_sel(0x2).ops_kick(1))?; // DWT_OPSET_SHORT
+                    .dgc_lut_0()
+                    .modify(|_, w| w.value(channel.get_recommended_dgc_lut_0()))?;
+                self.ll
+                    .dgc_lut_1()
+                    .modify(|_, w| w.value(channel.get_recommended_dgc_lut_1()))?;
+                self.ll
+                    .dgc_lut_2()
+                    .modify(|_, w| w.value(channel.get_recommended_dgc_lut_2()))?;
+                self.ll
+                    .dgc_lut_3()
+                    .modify(|_, w| w.value(channel.get_recommended_dgc_lut_3()))?;
+                self.ll
+                    .dgc_lut_4()
+                    .modify(|_, w| w.value(channel.get_recommended_dgc_lut_4()))?;
+                self.ll
+                    .dgc_lut_5()
+                    .modify(|_, w| w.value(channel.get_recommended_dgc_lut_5()))?;
+                self.ll
+                    .dgc_lut_6()
+                    .modify(|_, w| w.value(channel.get_recommended_dgc_lut_6()))?;
+                self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
+                self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
             }
-        }
 
-        self.ll.dtune0().modify(|_, w| {
-            w.pac(config.preamble_length.get_recommended_pac_size())
-                .dt0b4(if config.pdoa_mode == PdoaMode::Mode1 {
-                    0x0
-                } else {
-                    0x1
-                })
-        })?;
-
-        self.ll
-            .sts_cfg()
-            .modify(|_, w| w.cps_len(config.sts_len as u8 - 1))?;
-
-        if config.preamble_length == PreambleLength::Symbols72 {
-            self.ll.tx_fctrl().modify(|_, w| w.fine_plen(0x8))?;
+            self.ll.dgc_cfg().modify(|_, w| w.thr_64(0x32))?;
         } else {
-            self.ll.tx_fctrl().modify(|_, w| w.fine_plen(0x0))?;
+            self.ll.dgc_cfg().modify(|_, w| w.rx_tune_en(0))?;
         }
 
-        self.ll.dtune3().modify(|_, w| w.value(0xAF5F35CC))?;
+        // Set DTUNE4 according to current preamble length
+        if preamble_length_actual > 64 {
+            self.ll.dtune4().modify(|_, w| w.dtune4(0x20))?;
+        } else {
+            self.ll.dtune4().modify(|_, w| w.dtune4(0x14))?;
+        }
+        Ok(())
+    }
 
-        self.ll.chan_ctrl().modify(|_, w| {
-            w.rf_chan(config.channel as u8) // 0 if channel5 and 1 if channel9
-                .sfd_type(config.sfd_sequence as u8)
-                .tx_pcode(tx_preamble_code)
-                .rx_pcode(rx_preamble_code)
-        })?;
-
-        // TXBR is set to 1 when using 6M8 data rate
-        self.ll
-            .tx_fctrl()
-            .modify(|_, w| w.txbr(config.bitrate as u8))?;
-        self.ll
-            .tx_fctrl()
-            .modify(|_, w| w.txpsr(config.preamble_length as u8))?;
-
-        self.ll
-            .rx_sfd_toc()
-            .modify(|_, w| w.value(config.sfd_timeout as u16))?;
-
+    fn start_pll_calibration(&mut self, config: Config) -> Result<(), Error<SPI>> {
         // Read the sys_state register
         let pmsc_state = self.ll.sys_state().read()?.pmsc_state();
 
@@ -311,130 +500,127 @@ where
         self.ll.clk_ctrl().modify(|_, w| w.sys_clk(0))?;
         // set ainit2idle
         self.ll.seq_ctrl().modify(|_, w| w.ainit2idle(1))?;
-        // wait for CPLOCK to be set
-        let mut timeout = 1000;
-        while self.ll.sys_status().read()?.cplock() == 0 {
-            delay_us(20);
+        Ok(())
+    }
 
-            if self.ll.sys_status().read()?.cplock() != 0 {
-                break;
-            }
+    fn config_txrx_params(
+        &mut self,
+        config: Config,
+        tx_preamble_code: u8,
+        rx_preamble_code: u8,
+    ) -> Result<(), Error<SPI>> {
+        self.ll.dtune0().modify(|_, w| {
+            w.pac(config.preamble_length.get_recommended_pac_size())
+                .dt0b4(if config.pdoa_mode == PdoaMode::Mode1 {
+                    0x0
+                } else {
+                    0x1
+                })
+        })?;
 
-            if timeout == 0 {
-                #[cfg(feature = "defmt")]
-                defmt::error!("PLL CPLOCK timeout");
-                return Err(Error::InitializationFailed);
-            }
-            timeout -= 1;
+        self.ll
+            .sts_cfg()
+            .modify(|_, w| w.cps_len(config.sts_len as u8 - 1))?;
+
+        if config.preamble_length == PreambleLength::Symbols72 {
+            self.ll.tx_fctrl().modify(|_, w| w.fine_plen(0x8))?;
+        } else {
+            self.ll.tx_fctrl().modify(|_, w| w.fine_plen(0x0))?;
         }
 
-        // PLL is locked from here on
+        self.ll.dtune3().modify(|_, w| w.value(0xAF5F35CC))?;
 
-        if (9..=24).contains(&rx_preamble_code) {
-            let dgc_otp = self.read_otp(0x20)?;
+        self.ll.chan_ctrl().modify(|_, w| {
+            w.rf_chan(config.channel as u8) // 0 if channel5 and 1 if channel9
+                .sfd_type(config.sfd_sequence as u8)
+                .tx_pcode(tx_preamble_code)
+                .rx_pcode(rx_preamble_code)
+        })?;
 
-            if dgc_otp == 0x10000240 {
+        // TXBR is set to 1 when using 6M8 data rate
+        self.ll
+            .tx_fctrl()
+            .modify(|_, w| w.txbr(config.bitrate as u8))?;
+        self.ll
+            .tx_fctrl()
+            .modify(|_, w| w.txpsr(config.preamble_length as u8))?;
+
+        self.ll
+            .rx_sfd_toc()
+            .modify(|_, w| w.value(config.sfd_timeout as u16))?;
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn config_basic_params(
+        &mut self,
+        preamble_length_actual: &mut usize,
+        is_scp: bool,
+        is_extended_phr: bool,
+        phr_rate: PhrRate,
+        sts_mode: StsMode,
+        sts_len: StsLen,
+        pdoa_mode: PdoaMode,
+    ) -> Result<(), Error<SPI>> {
+        self.ll
+            .sys_cfg()
+            .modify(|_, w| w.phr_mode(is_extended_phr as u8))?;
+        self.ll.sys_cfg().modify(|_, w| w.phr_6m8(phr_rate as u8))?;
+        self.ll.sys_cfg().modify(|_, w| w.cp_spc(sts_mode as u8))?;
+        self.ll
+            .sys_cfg()
+            .modify(|_, w| w.pdoa_mode(pdoa_mode as u8))?;
+        self.ll.sys_cfg().modify(|_, w| w.cp_sdc(0))?;
+
+        // SCP Mode specific configuration
+        if is_scp {
+            // TODO: We probably need to adjust our sleep mode accordingly
+            //
+            // But we don't have a sleep mode yet
+            self.ll
+                .otp_cfg()
+                .modify(|_, w| w.ops_sel(0x1).ops_kick(0x1))?;
+            self.ll.ip_conf_lo().write(|w| w.ip_ntm(0x6).ip_scp(0x3))?;
+            self.ll.ip_conf_hi().write(|w| w.value(0))?;
+            self.ll
+                .sts_conf_0()
+                .write(|w| w.sts_ntm(0xA).sts_scp(0x5A).sts_rtm(0xC))?;
+            self.ll.sts_conf_1().modify(|_, w| w.res_b0(0x9D))?;
+        } else {
+            if sts_mode != StsMode::StsModeOff {
                 #[cfg(feature = "defmt")]
-                defmt::trace!("Configuring DGC from OTP");
+                defmt::trace!("STS Mode is enabled, calculating STS_MNTH");
 
-                self.ll.otp_cfg().modify(|_, w| w.dgc_kick(1))?;
+                // Configure CIA STS minimum thresholds for security
+                let mut sts_mnth = sts_len.get_sts_mnth(pdoa_mode);
+
+                if sts_mnth > 0x7F {
+                    #[cfg(feature = "defmt")]
+                    defmt::warn!("STS_MNTH is too high, setting to 0x7F");
+                    sts_mnth = 0x7F;
+                }
+
+                *preamble_length_actual += sts_len.get_sts_length() as usize;
+                self.ll
+                    .sts_conf_0()
+                    .modify(|_, w| w.sts_rtm(sts_mnth as u8))?;
+                self.ll.sts_conf_1().modify(|_, w| w.res_b0(0x94))?;
+            }
+
+            if *preamble_length_actual > 256 {
+                // TODO: Need custom sleep kick mode for long preamble
+                // This is DWT_ALT_OPS | DWT_SEL_OPS0 in official driver
+                #[cfg(feature = "defmt")]
+                defmt::trace!("Long preamble detected, setting OTP to DWT_OPSET_LONG");
                 self.ll
                     .otp_cfg()
-                    .modify(|_, w| w.dgc_sel(config.channel as u8))?; // 0 if channel5 and 1 if channel9
+                    .modify(|_, w| w.ops_sel(0x0).ops_kick(1))?; // DWT_OPSET_LONG
             } else {
-                #[cfg(feature = "defmt")]
-                defmt::trace!("Configuring DGC from hardcoded values");
-
                 self.ll
-                    .dgc_lut_0()
-                    .modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_0()))?;
-                self.ll
-                    .dgc_lut_1()
-                    .modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_1()))?;
-                self.ll
-                    .dgc_lut_2()
-                    .modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_2()))?;
-                self.ll
-                    .dgc_lut_3()
-                    .modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_3()))?;
-                self.ll
-                    .dgc_lut_4()
-                    .modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_4()))?;
-                self.ll
-                    .dgc_lut_5()
-                    .modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_5()))?;
-                self.ll
-                    .dgc_lut_6()
-                    .modify(|_, w| w.value(config.channel.get_recommended_dgc_lut_6()))?;
-                self.ll.dgc_cfg0().modify(|_, w| w.value(0x10000240))?;
-                self.ll.dgc_cfg1().modify(|_, w| w.value(0x1b6da489))?;
+                    .otp_cfg()
+                    .modify(|_, w| w.ops_sel(0x2).ops_kick(1))?; // DWT_OPSET_SHORT
             }
-
-            self.ll.dgc_cfg().modify(|_, w| w.thr_64(0x32))?;
-        } else {
-            self.ll.dgc_cfg().modify(|_, w| w.rx_tune_en(0))?;
         }
-
-        // Set DTUNE4 according to current preamble length
-        if preamble_length_actual > 64 {
-            self.ll.dtune4().modify(|_, w| w.dtune4(0x20))?;
-        } else {
-            self.ll.dtune4().modify(|_, w| w.dtune4(0x14))?;
-        }
-
-        // Start PGF calibration
-
-        let ldo_ctrl_low = self.ll.ldo_ctrl().read()?.low();
-        self.ll.ldo_ctrl().modify(|_, w| w.low(0x105))?;
-
-        delay_us(20);
-
-        let mut run_pgf_cal = || -> Result<(), Error<SPI>> {
-            self.ll
-                .rx_cal()
-                .modify(|_, w| w.comp_dly(0x2).cal_mode(1))?;
-
-            self.ll.rx_cal().modify(|_, w| w.cal_en(1))?;
-
-            let mut max_retries = 3;
-            let mut success = true;
-            delay_us(20);
-            while self.ll.rx_cal_sts().read()?.value() == 0 {
-                max_retries -= 1;
-                if max_retries == 0 {
-                    success = false;
-                    break;
-                }
-                delay_us(20);
-            }
-
-            if !success {
-                return Err(Error::PGFCalibrationFailed);
-            }
-
-            self.ll.rx_cal().modify(|_, w| w.cal_mode(0).cal_en(0))?;
-            self.ll.rx_cal_sts().modify(|_, w| w.value(1))?;
-            self.ll
-                .rx_cal()
-                .modify(|r, w| w.comp_dly(r.comp_dly() | 0x1))?;
-
-            let rx_cal_resi = self.ll.rx_cal_resi().read()?.value();
-            let rx_cal_resq = self.ll.rx_cal_resq().read()?.value();
-            if rx_cal_resi == 0x1fffffff || rx_cal_resq == 0x1fffffff {
-                return Err(Error::PGFCalibrationFailed);
-            }
-
-            Ok(())
-        };
-
-        let pgf_cal_result = run_pgf_cal();
-        self.ll.ldo_ctrl().modify(|_, w| w.low(ldo_ctrl_low))?; // restore LDO_CTRL
-        pgf_cal_result?;
-
-        Ok(DW3000 {
-            ll: self.ll,
-            seq: self.seq,
-            state: Ready,
-        })
+        Ok(())
     }
 }

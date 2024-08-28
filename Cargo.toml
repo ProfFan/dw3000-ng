@@ -1,7 +1,7 @@
 [package]
 name = "dw3000-ng"
 description = "A modernized driver for DW3000 Ultra Wide Band module"
-version = "0.8.4"
+version = "0.9.0"
 authors = [
     "Fan Jiang <i@fanjiang.me>",
     "Clement Pene <clement.pene@sii.fr>",
