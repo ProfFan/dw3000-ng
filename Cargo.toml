@@ -27,6 +27,7 @@ defmt = { version = "0.3", optional = true }
 num-traits = { version = "0.2.18", default-features = false, features = [
     "libm",
 ], optional = true }
+spin_on = "0.1"
 
 [dev-dependencies]
 embedded-hal-mock = "0.10"

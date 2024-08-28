@@ -117,85 +117,17 @@ where
     /// There is several steps to do on this function that improve the sending and reception of a message.
     /// Without doing this, the receiver almost never receive a frame from transmitter
     pub fn config<DELAY>(
-        mut self,
+        self,
         config: Config,
         mut delay_us: DELAY,
     ) -> Result<DW3000<SPI, Ready>, Error<SPI>>
     where
         DELAY: FnMut(u32),
     {
-        // New configuration method that match the offical driver
-        let channel = config.channel;
-        let mut preamble_length_actual = config.preamble_length.get_num_of_symbols();
-        let tx_preamble_code = config
-            .tx_preamble_code
-            .unwrap_or(channel.get_recommended_preamble_code(config.pulse_repetition_frequency));
-        let rx_preamble_code = config
-            .rx_preamble_code
-            .unwrap_or(channel.get_recommended_preamble_code(config.pulse_repetition_frequency));
-
-        // Check if the channel is SCP or not
-        let is_scp = rx_preamble_code > 24 || tx_preamble_code > 24;
-
-        // Are we using the special PHR mode?
-        let is_extended_phr = config.phr_mode == PhrMode::Extended;
-        let phr_rate = config.phr_rate;
-        let sts_mode = config.sts_mode;
-        let sts_len = config.sts_len;
-        let pdoa_mode = config.pdoa_mode;
-
-        self.config_basic_params(
-            &mut preamble_length_actual,
-            is_scp,
-            is_extended_phr,
-            phr_rate,
-            sts_mode,
-            sts_len,
-            pdoa_mode,
-        )?;
-
-        self.config_txrx_params(config, tx_preamble_code, rx_preamble_code)?;
-
-        self.start_pll_calibration(config)?;
-
-        // wait for CPLOCK to be set
-        let mut timeout = 1000;
-        while self.ll.sys_status().read()?.cplock() == 0 {
-            delay_us(20);
-
-            if self.ll.sys_status().read()?.cplock() != 0 {
-                break;
-            }
-
-            if timeout == 0 {
-                #[cfg(feature = "defmt")]
-                defmt::error!("PLL CPLOCK timeout");
-                return Err(Error::InitializationFailed);
-            }
-            timeout -= 1;
-        }
-
-        // PLL is locked from here on
-
-        self.config_set_dgc_dtune4(channel, preamble_length_actual, rx_preamble_code)?;
-
-        // Start PGF calibration
-
-        let ldo_ctrl_low = self.ll.ldo_ctrl().read()?.low();
-        self.ll.ldo_ctrl().modify(|_, w| w.low(0x105))?;
-
-        delay_us(20);
-
-        let pgf_cal_result = self.run_pgf_cal(delay_us);
-
-        self.ll.ldo_ctrl().modify(|_, w| w.low(ldo_ctrl_low))?; // restore LDO_CTRL
-        pgf_cal_result?;
-
-        Ok(DW3000 {
-            ll: self.ll,
-            seq: self.seq,
-            state: Ready,
-        })
+        spin_on::spin_on(self.config_async(config, |us| {
+            delay_us(us);
+            async {}
+        }))
     }
 
     /// Async version of the `config` function
@@ -285,48 +217,6 @@ where
             seq: self.seq,
             state: Ready,
         })
-    }
-
-    /// Run the PGF calibration
-    fn run_pgf_cal<DELAY>(&mut self, mut delay_us: DELAY) -> Result<(), Error<SPI>>
-    where
-        DELAY: FnMut(u32),
-    {
-        self.ll
-            .rx_cal()
-            .modify(|_, w| w.comp_dly(0x2).cal_mode(1))?;
-
-        self.ll.rx_cal().modify(|_, w| w.cal_en(1))?;
-
-        let mut max_retries = 3;
-        let mut success = true;
-        delay_us(20);
-        while self.ll.rx_cal_sts().read()?.value() == 0 {
-            max_retries -= 1;
-            if max_retries == 0 {
-                success = false;
-                break;
-            }
-            delay_us(20);
-        }
-
-        if !success {
-            return Err(Error::PGFCalibrationFailed);
-        }
-
-        self.ll.rx_cal().modify(|_, w| w.cal_mode(0).cal_en(0))?;
-        self.ll.rx_cal_sts().modify(|_, w| w.value(1))?;
-        self.ll
-            .rx_cal()
-            .modify(|r, w| w.comp_dly(r.comp_dly() | 0x1))?;
-
-        let rx_cal_resi = self.ll.rx_cal_resi().read()?.value();
-        let rx_cal_resq = self.ll.rx_cal_resq().read()?.value();
-        if rx_cal_resi == 0x1fffffff || rx_cal_resq == 0x1fffffff {
-            return Err(Error::PGFCalibrationFailed);
-        }
-
-        Ok(())
     }
 
     /// Run the PGF calibration, async version
