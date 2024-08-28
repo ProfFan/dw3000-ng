@@ -86,6 +86,9 @@ where
 
     /// Failed Initialization
     InitializationFailed,
+
+    /// Failed to calibrate the PGF values
+    PGFCalibrationFailed,
 }
 
 impl<SPI> From<ll::Error<SPI>> for Error<SPI>
@@ -141,6 +144,7 @@ where
                 write!(f, "RxConfigFrameFilteringUnsupported")
             }
             Error::InitializationFailed => write!(f, "InitializationFailed"),
+            Error::PGFCalibrationFailed => write!(f, "PGFCalibrationFailed"),
         }
     }
 }
@@ -179,6 +183,7 @@ where
                 defmt::write!(f, "RxConfigFrameFilteringUnsupported")
             }
             Error::InitializationFailed => defmt::write!(f, "InitializationFailed"),
+            Error::PGFCalibrationFailed => defmt::write!(f, "PGFCalibrationFailed"),
         }
     }
 }
