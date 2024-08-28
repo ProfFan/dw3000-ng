@@ -7,8 +7,9 @@ use embedded_hal::spi;
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
-    configs::SfdSequence, time::Instant, Config, Error, FastCommand, Ready, Sending,
-    SingleBufferReceiving, Sleeping, DW3000,
+    configs::{PdoaMode, SfdSequence},
+    time::Instant,
+    Config, Error, FastCommand, Ready, Sending, SingleBufferReceiving, Sleeping, DW3000,
 };
 
 use smoltcp::wire::{Ieee802154Address, Ieee802154Frame, Ieee802154Pan, Ieee802154Repr};
@@ -46,26 +47,6 @@ pub enum ReceiveTime {
     Now,
     /// After some time
     Delayed(Instant),
-}
-
-/// The polarity of the irq signal
-pub enum IrqPolarity {
-    /// The signal will be high when the interrupt is active
-    ActiveHigh = 1,
-    /// The signal will be low when the interrupt is active
-    ActiveLow = 0,
-}
-
-/// PDoA mode
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-#[repr(u8)]
-pub enum PDoAMode {
-    /// Disabled
-    Disabled = 0,
-    /// PDoA mode 1
-    Mode1 = 1,
-    /// PDoA mode 3
-    Mode3 = 3,
 }
 
 impl<SPI> DW3000<SPI, Ready>
@@ -120,7 +101,7 @@ where
     /// The PDoA mode is set to 0 by default.
     ///
     /// NOTE: PDoA mode 3 requires the STS length to be integer multiples of 128.
-    pub fn set_pdoa_mode(&mut self, mode: PDoAMode) -> Result<(), Error<SPI>> {
+    pub fn set_pdoa_mode(&mut self, mode: PdoaMode) -> Result<(), Error<SPI>> {
         self.ll.sys_cfg().modify(|_, w| w.pdoa_mode(mode as u8))?;
 
         Ok(())

@@ -475,7 +475,13 @@ where
             self.ll
                 .sts_conf_0()
                 .write(|w| w.sts_ntm(0xA).sts_scp(0x5A).sts_rtm(0xC))?;
-            self.ll.sts_conf_1().modify(|_, w| w.res_b0(0x9D))?;
+            self.ll.sts_conf_1().modify(|_, w| {
+                w.res_b0(0x9D)
+                    .fp_agreed_en(0)
+                    .sts_cq_en(0)
+                    .sts_pgr_en(0)
+                    .sts_ss_en(0)
+            })?;
         } else {
             if sts_mode != StsMode::StsModeOff {
                 #[cfg(feature = "defmt")]
@@ -494,7 +500,13 @@ where
                 self.ll
                     .sts_conf_0()
                     .modify(|_, w| w.sts_rtm(sts_mnth as u8))?;
-                self.ll.sts_conf_1().modify(|_, w| w.res_b0(0x94))?;
+                self.ll.sts_conf_1().modify(|_, w| {
+                    w.res_b0(0x94)
+                        .fp_agreed_en(0)
+                        .sts_cq_en(0)
+                        .sts_pgr_en(0)
+                        .sts_ss_en(0)
+                })?;
             }
 
             if *preamble_length_actual > 256 {
