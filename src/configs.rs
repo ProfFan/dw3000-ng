@@ -21,7 +21,6 @@ pub struct Config {
     pub frame_filtering: bool,
     /// Sets the ranging bit in the transmitted frame.
     /// This has no effect on the capabilities of the DW3000.
-    /// maybe can be degaged
     pub ranging_enable: bool,
     /// Defaults to mode off
     pub sts_mode: StsMode,
@@ -29,6 +28,18 @@ pub struct Config {
     pub sts_len: StsLen,
     /// SFD_timeout = Preamble length + 1 + sfdlength - pac size
     pub sfd_timeout: u32,
+    /// TX preamble code, optional
+    /// If not set, the recommended value will be used (see `get_recommended_preamble_code`)
+    pub tx_preamble_code: Option<u8>,
+    /// RX preamble code, optional
+    /// If not set, the recommended value will be used (see `get_recommended_preamble_code`)
+    pub rx_preamble_code: Option<u8>,
+    /// PHR mode
+    pub phr_mode: PhrMode,
+    /// PHR rate
+    pub phr_rate: PhrRate,
+    /// PDoA mode
+    pub pdoa_mode: PdoaMode,
 }
 
 impl Default for Config {
@@ -43,7 +54,12 @@ impl Default for Config {
             ranging_enable: false,
             sts_mode: Default::default(), //mode off
             sts_len: Default::default(),
-            sfd_timeout: 121,
+            sfd_timeout: 129,
+            tx_preamble_code: None,
+            rx_preamble_code: None,
+            phr_mode: Default::default(),
+            phr_rate: Default::default(),
+            pdoa_mode: Default::default(),
         }
     }
 }
@@ -131,6 +147,22 @@ impl PreambleLength {
             PreambleLength::Symbols2048 => 1,
             PreambleLength::Symbols4096 => 1,
             PreambleLength::Symbols72 => 1, // AJOUT ULIE THOMAS
+        }
+    }
+
+    /// Get the number of symbols in the preamble
+    pub fn get_num_of_symbols(&self) -> usize {
+        match self {
+            PreambleLength::Symbols32 => 32,
+            PreambleLength::Symbols64 => 64,
+            PreambleLength::Symbols128 => 128,
+            PreambleLength::Symbols256 => 256,
+            PreambleLength::Symbols512 => 512,
+            PreambleLength::Symbols1024 => 1024,
+            PreambleLength::Symbols1536 => 1536,
+            PreambleLength::Symbols2048 => 2048,
+            PreambleLength::Symbols4096 => 4096,
+            PreambleLength::Symbols72 => 72,
         }
     }
 }
@@ -310,4 +342,94 @@ pub enum StsLen {
 
     /// STS length = 2048 bits
     StsLn2048 = 256,
+}
+
+impl StsLen {
+    /// Get the STS length in bits
+    pub fn get_sts_length(&self) -> u16 {
+        match self {
+            StsLen::StsLen32 => 32,
+            StsLen::StsLen64 => 64,
+            StsLen::StsLen128 => 128,
+            StsLen::StsLen256 => 256,
+            StsLen::StsLen512 => 512,
+            StsLen::StsLen1024 => 1024,
+            StsLen::StsLn2048 => 2048,
+        }
+    }
+
+    /// Get the STS Minimum Threshold (STS_MNTH in offical driver)
+    ///
+    /// This can be computed using the following formula:
+    ///
+    /// STS_MNTH = sqrt(x/y)*DEFAULT_STS_MNTH
+    ///
+    /// where:
+    /// - DEFAULT_STS_MNTH = 0x10
+    /// - x: length of the STS in units of 8 (i.e. 8 for 64 length, 16 for 128 length etc.)
+    /// - y: either 8 or 16, 8 when no PDOA or PDOA mode 1 and 16 for PDOA mode 3
+    pub fn get_sts_mnth(&self, pdoa_mode: PdoaMode) -> u16 {
+        let sts_length_8 = match self {
+            StsLen::StsLen32 => 4,
+            StsLen::StsLen64 => 8,
+            StsLen::StsLen128 => 16,
+            StsLen::StsLen256 => 32,
+            StsLen::StsLen512 => 64,
+            StsLen::StsLen1024 => 128,
+            StsLen::StsLn2048 => 256,
+        };
+        let y = match pdoa_mode {
+            PdoaMode::Mode0 | PdoaMode::Mode1 => 8,
+            PdoaMode::Mode3 => 16,
+        };
+        let squared = 0x10 * 0x10 * sts_length_8 / y;
+
+        // Compute the square root of the squared value with Newton's method
+        let sqrt = |x: u32| -> u32 {
+            let mut z = (x + 1) / 2;
+            let mut y = x;
+            while z < y {
+                y = z;
+                z = (x / z + z) / 2;
+            }
+            y
+        };
+
+        sqrt(squared as u32) as u16
+    }
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+/// PHR mode
+pub enum PhrMode {
+    /// Standard PHR mode
+    #[default]
+    Standard = 0,
+
+    /// Extended PHR mode (Decawave proprietary mode)
+    Extended = 1,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+/// PDoA mode
+#[repr(u8)]
+pub enum PdoaMode {
+    /// PDoA disabled
+    #[default]
+    Mode0 = 0x0,
+    /// Mode 1
+    Mode1 = 0x1,
+    /// Mode 3
+    Mode3 = 0x3,
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+/// PHR rate
+#[repr(u8)]
+pub enum PhrRate {
+    #[default]
+    /// PHR at standard rate
+    Standard = 0,
+    /// PHR at data rate (6.8 Mbps)
+    DataRate = 1,
 }
