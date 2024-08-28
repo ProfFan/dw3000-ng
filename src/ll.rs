@@ -690,7 +690,7 @@ impl_register! {
     0x00, 0x30, 4, RW, DREF_TIME(dref_time) { ///  Delayed send or receive reference time
         value, 0, 31, u32; /// Delayed send or receive reference time
     }
-    0x00, 0x4, 3, RW, RX_FWTO(rx_fwto) { /// Receive frame wait timeout period
+    0x00, 0x34, 3, RW, RX_FWTO(rx_fwto) { /// Receive frame wait timeout period
         value, 0, 23, u32; /// Receive frame wait timeout period
     }
     0x00, 0x38, 1, RW, SYS_CTRL(sys_ctrl) { /// System Control Register
