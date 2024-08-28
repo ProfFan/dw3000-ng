@@ -330,7 +330,7 @@ where
 
         // PLL is locked from here on
 
-        if rx_preamble_code >= 9 && rx_preamble_code <= 24 {
+        if (9..=24).contains(&rx_preamble_code) {
             let dgc_otp = self.read_otp(0x20)?;
 
             if dgc_otp == 0x10000240 {
