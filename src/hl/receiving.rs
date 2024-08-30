@@ -33,6 +33,9 @@ pub struct Message<'l> {
     /// quality of the message received
     pub rx_quality: RxQuality,
 
+    /// carrier recovery integrator of the message received
+    pub carrier_integrator: CarrierRecoveryIntegrator,
+
     /// The MAC frame
     pub frame: Ieee802154Frame<&'l [u8]>,
 }
@@ -57,6 +60,32 @@ pub struct RxQuality {
     /// Above -85 dBm, the estimation underestimates the actual value.
     pub rssi: f32,
 }
+
+/// A struct representing the carrier recovery integrator of the received message.
+#[cfg_attr(feature = "defmt", derive(Format))]
+#[derive(Clone, Copy, Debug, serde::Deserialize, serde::Serialize)]
+#[repr(C)]
+pub struct CarrierRecoveryIntegrator(i32);
+
+impl CarrierRecoveryIntegrator {
+    /// Creates a new instance of `CarrierRecoveryIntegrator`
+    /// The value is represented as a signed fixed point, with the 17 LSBs being the
+    /// fractional part of the value
+    pub fn new(drx_car_int: u32) -> Self {
+        Self(((drx_car_int << 11) as i32) >> 11)
+    }
+
+    /// Wraps an i32 into a carrier recovery integrator value
+    pub fn from(carrier_integrator: i32) -> Self {
+        Self(carrier_integrator)
+    }
+
+    /// Returns the raw i32 drx_car_int
+    pub fn value(&self) -> i32 {
+        self.0
+    }
+}
+
 
 impl<SPI, RECEIVING> DW3000<SPI, RECEIVING>
 where
@@ -195,6 +224,16 @@ where
             rssi,
         };
 
+        // read the carrier recovery integrator from the dw3000
+        use crate::ll::drx_car_int;
+        let carrier_integrator = CarrierRecoveryIntegrator::new(
+            self.ll()
+                .drx_car_int()
+                .read()
+                .map_err(|error| nb::Error::Other(Error::Spi(error)))?
+                .value(),
+        );
+
         //  Reset status bits. This is not strictly necessary, but it helps, if
         // you have to inspect SYS_STATUS manually during debugging.
         self.ll()
@@ -249,6 +288,7 @@ where
         Ok(Message {
             rx_time,
             rx_quality,
+            carrier_integrator,
             frame,
         })
     }
@@ -268,7 +308,7 @@ where
     pub fn r_wait_buf(
         &mut self,
         buffer: &mut [u8],
-    ) -> nb::Result<(usize, Instant, RxQuality), Error<SPI>> {
+    ) -> nb::Result<(usize, Instant, RxQuality, CarrierRecoveryIntegrator), Error<SPI>> {
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
@@ -333,6 +373,16 @@ where
             rssi,
         };
 
+        // read the carrier recovery integrator from the dw3000
+        use crate::ll::drx_car_int;
+        let carrier_integrator = CarrierRecoveryIntegrator::new(
+            self.ll()
+                .drx_car_int()
+                .read()
+                .map_err(|error| nb::Error::Other(Error::Spi(error)))?
+                .value(),
+        );
+
         // `rx_time` comes directly from the register, which should always
         // contain a 40-bit timestamp. Unless the hardware or its documentation
         // are buggy, the following should never panic.
@@ -385,7 +435,7 @@ where
 
         self.state.mark_finished();
 
-        Ok((len, rx_time, rx_quality))
+        Ok((len, rx_time, rx_quality, carrier_integrator))
     }
 
     /// DW3000 User Manual 4.7.1
