@@ -22,7 +22,7 @@ We mainly test on the ESP32 platform with `embassy` async framework.
 Include this crate in your Cargo project by adding the following to `Cargo.toml`:
 ```toml
 [dependencies]
-dw3000-ng = "0.8"
+dw3000-ng = "0.9"
 ```
 
 ## Documentation
@@ -57,7 +57,7 @@ If you are using this in your academic work, please cite it as follows:
 
 ## CHANGELOG
 
-### (main) 0.9.0
+### 0.9.0
 
 - API change: `config` now takes a `delay_us(u32)` function to allow non-blocking initialization.
 - Now the radio init is feature-par with the official DW3000 driver. You should have much better TX/RX performance now.
