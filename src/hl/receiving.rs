@@ -195,7 +195,7 @@ where
             rssi,
         };
 
-        //  Reset status bits. This is not strictly necessary, but it helps, if
+        // Reset status bits. This is not strictly necessary, but it helps, if
         // you have to inspect SYS_STATUS manually during debugging.
         self.ll()
             .sys_status()

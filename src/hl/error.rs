@@ -13,7 +13,7 @@ pub enum Error<SPI>
 where
     SPI: spi::ErrorType,
 {
-    /// Error occured while using SPI bus
+    /// Error occurred while using SPI bus
     Spi(ll::Error<SPI>),
 
     /// Receiver FCS error
