@@ -57,6 +57,11 @@ If you are using this in your academic work, please cite it as follows:
 
 ## CHANGELOG
 
+### Current `main`
+
+- Added `init_tracing` example to inspect the SPI transactions happening during the initialization of the DW3000
+- Modified `rx_wait` to not use `_unchecked` and return `Err` when the decoding of the 802.15.4 frame fails
+
 ### 0.9.0
 
 - API change: `config` now takes a `delay_us(u32)` function to allow non-blocking initialization.

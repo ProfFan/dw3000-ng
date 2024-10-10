@@ -197,6 +197,7 @@ where
 
         // Reset status bits. This is not strictly necessary, but it helps, if
         // you have to inspect SYS_STATUS manually during debugging.
+        // NOTE: The `SYS_STATUS` register is write-to-clear
         self.ll()
             .sys_status()
             .write(|w| {
@@ -244,7 +245,11 @@ where
 
         self.state.mark_finished();
 
-        let frame = Ieee802154Frame::new_checked(buffer).unwrap();
+        let frame = Ieee802154Frame::new_checked(buffer).map_err(|_| {
+            nb::Error::Other(Error::Frame(byte::Error::BadInput {
+                err: "Cannot decode 802.15.4 frame",
+            }))
+        })?;
 
         Ok(Message {
             rx_time,

@@ -1754,7 +1754,7 @@ pub mod rx_buffer_0 {
 /// Receive Data Buffer 1
 ///
 /// Currently only the first 127 bytes of the buffer are supported, which is
-/// enough to support standard Standard IEEE 802.15.4 UWB frames.
+/// enough to support Standard IEEE 802.15.4 UWB frames.
 #[allow(non_camel_case_types)]
 pub struct RX_BUFFER_1;
 
