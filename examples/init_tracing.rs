@@ -42,13 +42,13 @@ impl embedded_hal::spi::ErrorType for DummySpi {
     type Error = DummyError;
 }
 
-impl embedded_hal::spi::SpiBus<u8> for DummySpi {
-    fn read(&mut self, _data: &mut [u8]) -> Result<(), Self::Error> {
+impl embedded_hal_async::spi::SpiBus<u8> for DummySpi {
+    async fn read(&mut self, _data: &mut [u8]) -> Result<(), Self::Error> {
         log::debug!("SPI read");
         Ok(())
     }
 
-    fn write(&mut self, _data: &[u8]) -> Result<(), Self::Error> {
+    async fn write(&mut self, _data: &[u8]) -> Result<(), Self::Error> {
         let (id, sub_id, write) = DummySpi::decode_header(_data);
 
         if id == 0x11 && sub_id == 0x08 && self.state == SimulatedState::Startup {
@@ -68,12 +68,12 @@ impl embedded_hal::spi::SpiBus<u8> for DummySpi {
         Ok(())
     }
 
-    fn transfer(&mut self, _in: &mut [u8], _out: &[u8]) -> Result<(), Self::Error> {
+    async fn transfer(&mut self, _in: &mut [u8], _out: &[u8]) -> Result<(), Self::Error> {
         log::debug!("SPI transfer: {:02x?} -> {:02x?}", _in, _out);
         Ok(())
     }
 
-    fn transfer_in_place(&mut self, _data: &mut [u8]) -> Result<(), Self::Error> {
+    async fn transfer_in_place(&mut self, _data: &mut [u8]) -> Result<(), Self::Error> {
         let (id, sub_id, write) = DummySpi::decode_header(_data);
         log::debug!(
             "SPI in-place transfer: {:02x?} (id: {:02x}, sub_id: {:02x}, write: {})",
@@ -108,7 +108,7 @@ impl embedded_hal::spi::SpiBus<u8> for DummySpi {
         Ok(())
     }
 
-    fn flush(&mut self) -> Result<(), Self::Error> {
+    async fn flush(&mut self) -> Result<(), Self::Error> {
         log::debug!("SPI flush");
         Ok(())
     }
@@ -141,7 +141,8 @@ impl embedded_hal::digital::ErrorType for DummyGpio {
     type Error = DummyGpioError;
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // logging setup
     env_logger::init();
 

@@ -3,7 +3,7 @@
 use core::convert::TryInto;
 
 use byte::BytesExt as _;
-use embedded_hal::spi;
+use embedded_hal_async::spi;
 use fixed::traits::LossyInto;
 #[cfg(feature = "rssi")]
 use num_traits::Float;
@@ -64,29 +64,35 @@ where
     RECEIVING: Receiving,
 {
     /// Returns the RX state of the DW3000
-    pub fn rx_state(&mut self) -> Result<u8, Error<SPI>> {
-        Ok(self.ll.sys_state().read()?.rx_state())
+    pub async fn rx_state(&mut self) -> Result<u8, Error<SPI>> {
+        Ok(self.ll.sys_state().read().await?.rx_state())
     }
 
-    pub(super) fn start_receiving(
+    pub(super) async fn start_receiving(
         &mut self,
         recv_time: ReceiveTime,
         config: Config,
     ) -> Result<(), Error<SPI>> {
         if config.frame_filtering {
-            self.ll.sys_cfg().modify(
-                |_, w| w.ffen(0b1), // enable frame filtering
-            )?;
-            self.ll.ff_cfg().modify(
-                |_, w| {
-                    w.ffab(0b1) // receive beacon frames
-                        .ffad(0b1) // receive data frames
-                        .ffaa(0b1) // receive acknowledgement frames
-                        .ffam(0b1)
-                }, // receive MAC command frames
-            )?;
+            self.ll
+                .sys_cfg()
+                .modify(
+                    |_, w| w.ffen(0b1), // enable frame filtering
+                )
+                .await?;
+            self.ll
+                .ff_cfg()
+                .modify(
+                    |_, w| {
+                        w.ffab(0b1) // receive beacon frames
+                            .ffad(0b1) // receive data frames
+                            .ffaa(0b1) // receive acknowledgement frames
+                            .ffam(0b1)
+                    }, // receive MAC command frames
+                )
+                .await?;
         } else {
-            self.ll.sys_cfg().modify(|_, w| w.ffen(0b0))?; // disable frame filtering
+            self.ll.sys_cfg().modify(|_, w| w.ffen(0b0)).await?; // disable frame filtering
         }
 
         match recv_time {
@@ -104,10 +110,11 @@ where
                 self.ll
                     .dx_time()
                     .modify(|_, w| // 32-bits value of the most significant bits
-                    w.value( (time.value() >> 8) as u32 ))?;
-                self.fast_cmd(FastCommand::CMD_DRX)?;
+                    w.value( (time.value() >> 8) as u32 ))
+                    .await?;
+                self.fast_cmd(FastCommand::CMD_DRX).await?;
             }
-            ReceiveTime::Now => self.fast_cmd(FastCommand::CMD_RX)?,
+            ReceiveTime::Now => self.fast_cmd(FastCommand::CMD_RX).await?,
         }
 
         Ok(())
@@ -125,7 +132,10 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
-    pub fn r_wait<'b>(&mut self, buffer: &'b mut [u8]) -> nb::Result<Message<'b>, Error<SPI>> {
+    pub async fn r_wait<'b>(
+        &mut self,
+        buffer: &'b mut [u8],
+    ) -> nb::Result<Message<'b>, Error<SPI>> {
         // ATTENTION:
         // If you're changing anything about which SYS_STATUS flags are being
         // checked in this method, also make sure to update `enable_interrupts`.
@@ -133,6 +143,7 @@ where
             .ll()
             .sys_status()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
         // Is a frame ready?
@@ -181,6 +192,7 @@ where
             .ll()
             .rx_time()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?
             .rx_stamp();
 
@@ -189,7 +201,7 @@ where
         // are buggy, the following should never panic.
         let rx_time = Instant::new(rx_time).unwrap();
 
-        let rssi = self.get_first_path_signal_power()?;
+        let rssi = self.get_first_path_signal_power().await?;
         let rx_quality = RxQuality {
             los_confidence_level: 1.0, // TODO
             rssi,
@@ -217,6 +229,7 @@ where
                     .rxsto(0b1) // Receiver SFD Timeout
                     .rxprej(0b1) // Receiver Preamble Rejection
             })
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
         // Read received frame
@@ -224,11 +237,13 @@ where
             .ll()
             .rx_finfo()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
         let rx_buffer = self
             .ll()
             .rx_buffer_0()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
         let len = rx_finfo.rxflen() as usize;
@@ -270,7 +285,7 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
-    pub fn r_wait_buf(
+    pub async fn r_wait_buf(
         &mut self,
         buffer: &mut [u8],
     ) -> nb::Result<(usize, Instant, RxQuality), Error<SPI>> {
@@ -281,6 +296,7 @@ where
             .ll()
             .sys_status()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
         // Is a frame ready?
@@ -329,10 +345,11 @@ where
             .ll()
             .rx_time()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?
             .rx_stamp();
 
-        let rssi = self.get_first_path_signal_power()?;
+        let rssi = self.get_first_path_signal_power().await?;
         let rx_quality = RxQuality {
             los_confidence_level: 1.0, // TODO
             rssi,
@@ -364,6 +381,7 @@ where
                     .rxsto(0b1) // Receiver SFD Timeout
                     .rxprej(0b1) // Receiver Preamble Rejection
             })
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
         // Read received frame
@@ -371,11 +389,13 @@ where
             .ll()
             .rx_finfo()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
         let rx_buffer = self
             .ll()
             .rx_buffer_0()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
         let len = rx_finfo.rxflen() as usize;
@@ -396,7 +416,7 @@ where
     /// DW3000 User Manual 4.7.1
     /// returns dBm
     #[cfg(feature = "rssi")]
-    fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
+    async fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
         let prf = self.state.get_rx_config().pulse_repetition_frequency;
         let ll = self.ll();
 
@@ -407,9 +427,9 @@ where
         }
 
         // prefer ipatov over sts
-        let method: Method = if ll.sys_cfg().read()?.cia_ipatov() != 0 {
+        let method: Method = if ll.sys_cfg().read().await?.cia_ipatov() != 0 {
             Method::Ipatov
-        } else if ll.sys_cfg().read()?.cia_sts() != 0 {
+        } else if ll.sys_cfg().read().await?.cia_sts() != 0 {
             Method::Sts
         } else {
             Err(Error::InvalidConfiguration)?
@@ -428,21 +448,21 @@ where
 
         match method {
             Method::Ipatov => {
-                f1 = ll.ip_diag_2().read()?.ip_fp1m();
-                f2 = ll.ip_diag_3().read()?.ip_fp2m();
-                f3 = ll.ip_diag_4().read()?.ip_fp3m();
-                n = ll.ip_diag_12().read()?.ip_nacc();
+                f1 = ll.ip_diag_2().read().await?.ip_fp1m();
+                f2 = ll.ip_diag_3().read().await?.ip_fp2m();
+                f3 = ll.ip_diag_4().read().await?.ip_fp3m();
+                n = ll.ip_diag_12().read().await?.ip_nacc();
             }
             Method::Sts => {
-                f1 = ll.sts_diag_2().read()?.cp0_fp1m();
-                f2 = ll.sts_diag_3().read()?.cp0_fp2m();
-                f3 = ll.sts_diag_4().read()?.cp0_fp3m();
-                n = ll.sts_diag_12().read()?.cp0_nacc();
+                f1 = ll.sts_diag_2().read().await?.cp0_fp1m();
+                f2 = ll.sts_diag_3().read().await?.cp0_fp2m();
+                f3 = ll.sts_diag_4().read().await?.cp0_fp3m();
+                n = ll.sts_diag_12().read().await?.cp0_nacc();
             }
         }
 
-        let d6: u32 = if ll.dgc_cfg().read()?.rx_tune_en() != 0 {
-            let d: u32 = ll.dgc_dbg().read()?.dgc_decision().into();
+        let d6: u32 = if ll.dgc_cfg().read().await?.rx_tune_en() != 0 {
+            let d: u32 = ll.dgc_dbg().read().await?.dgc_decision().into();
             6u32 * d
         } else {
             0u32
@@ -456,7 +476,7 @@ where
     }
 
     #[cfg(not(feature = "rssi"))]
-    fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
+    async fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
         Ok(0.0)
     }
 
@@ -465,12 +485,12 @@ where
     ///
     /// If the receive operation has finished, as indicated by `wait`, this is a
     /// no-op. If the receive operation is still ongoing, it will be aborted.
-    pub fn finish_receiving(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
+    pub async fn finish_receiving(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
         // TO DO : if we are not in state 3 (IDLE), we need to have a reset of the module (with a new initialisation)
         // BECAUSE : using force_idle (fast command 0) is not puting the pll back to stable !!!
 
         if !self.state.is_finished() {
-            match self.force_idle() {
+            match self.force_idle().await {
                 Ok(()) => (),
                 Err(error) => return Err((self, error)),
             }

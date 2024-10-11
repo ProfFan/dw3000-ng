@@ -16,6 +16,7 @@ repository = "https://github.com/ProfFan/dw3000-ng"
 [dependencies]
 byte = "0.2"
 embedded-hal = "1.0"
+embedded-hal-async = "1.0"
 smoltcp = { version = "0.11", default-features = false, features = [
     "socket-raw",
     "defmt",
@@ -30,10 +31,11 @@ num-traits = { version = "0.2.18", default-features = false, features = [
 spin_on = "0.1"
 
 [dev-dependencies]
-embedded-hal-mock = "0.10"
-embedded-hal-bus = "0.2"
+embedded-hal-mock = { version = "0.10", features = ["embedded-hal-async"] }
+embedded-hal-bus = { version = "0.2", features = ["async"] }
 log = "0.4"
 env_logger = "0.11"
+tokio = { version = "1", features = ["full"] }
 
 [dependencies.serde]
 version = "1"

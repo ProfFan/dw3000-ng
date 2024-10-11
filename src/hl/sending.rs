@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
 
-use embedded_hal::spi;
+use embedded_hal_async::spi;
 use nb;
 
 use crate::{time::Instant, Error, Ready, Sending, DW3000};
@@ -10,8 +10,8 @@ where
     SPI: spi::SpiDevice<u8>,
 {
     /// Returns the TX state of the DW3000
-    pub fn tx_state(&mut self) -> Result<u8, Error<SPI>> {
-        Ok(self.ll.sys_state().read()?.tx_state())
+    pub async fn tx_state(&mut self) -> Result<u8, Error<SPI>> {
+        Ok(self.ll.sys_state().read().await?.tx_state())
     }
 
     /// Wait for the transmission to finish
@@ -27,7 +27,7 @@ where
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
     #[inline(always)]
-    pub fn s_wait(&mut self) -> nb::Result<Instant, Error<SPI>> {
+    pub async fn s_wait(&mut self) -> nb::Result<Instant, Error<SPI>> {
         // Check Half Period Warning Counter. If this is a delayed transmission,
         // this will indicate that the delay was too short, and the frame was
         // sent too late.
@@ -35,6 +35,7 @@ where
             .ll
             .evc_hpw()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?
             .value();
 
@@ -49,6 +50,7 @@ where
             .ll
             .sys_status()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
 
         // Has the frame been sent?
@@ -58,13 +60,14 @@ where
         }
 
         // Frame sent
-        self.reset_flags().map_err(nb::Error::Other)?;
+        self.reset_flags().await.map_err(nb::Error::Other)?;
         self.state.mark_finished();
 
         let tx_timestamp = self
             .ll
             .tx_time()
             .read()
+            .await
             .map_err(|error| nb::Error::Other(Error::Spi(error)))?
             .tx_stamp();
 
@@ -84,15 +87,15 @@ where
     ///
     /// If the send operation has finished, as indicated by `wait`, this is a
     /// no-op. If the send operation is still ongoing, it will be aborted.
-    pub fn finish_sending(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
+    pub async fn finish_sending(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
         // In order to avoid undetermined states after a sending, we will force the state to idle
 
         if !self.state.is_finished() {
-            match self.force_idle() {
+            match self.force_idle().await {
                 Ok(()) => (),
                 Err(error) => return Err((self, error)),
             }
-            match self.reset_flags() {
+            match self.reset_flags().await {
                 Ok(()) => (),
                 Err(error) => return Err((self, error)),
             }
@@ -105,13 +108,16 @@ where
         })
     }
 
-    fn reset_flags(&mut self) -> Result<(), Error<SPI>> {
-        self.ll.sys_status().write(|w| {
-            w.txfrb(0b1) // Transmit Frame Begins
-                .txprs(0b1) // Transmit Preamble Sent
-                .txphs(0b1) // Transmit PHY Header Sent
-                .txfrs(0b1) // Transmit Frame Sent
-        })?;
+    async fn reset_flags(&mut self) -> Result<(), Error<SPI>> {
+        self.ll
+            .sys_status()
+            .write(|w| {
+                w.txfrb(0b1) // Transmit Frame Begins
+                    .txprs(0b1) // Transmit Preamble Sent
+                    .txphs(0b1) // Transmit PHY Header Sent
+                    .txfrs(0b1) // Transmit Frame Sent
+            })
+            .await?;
 
         Ok(())
     }

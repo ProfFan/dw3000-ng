@@ -18,7 +18,7 @@
 use core::fmt::{Display, Formatter};
 use core::{fmt, marker::PhantomData};
 
-use embedded_hal::spi;
+use embedded_hal_async::spi;
 
 /// Entry point to the DW3000 driver's low-level API
 ///
@@ -40,14 +40,16 @@ impl<SPI> DW3000<SPI> {
     }
 
     /// commentaire
-    pub fn fast_command(&mut self, fast: u8) -> Result<(), Error<SPI>>
+    pub async fn fast_command(&mut self, fast: u8) -> Result<(), Error<SPI>>
     where
         SPI: spi::SpiDevice<u8>,
     {
         let mut buffer = [0];
         buffer[0] = (0x1 << 7) | ((fast << 1) & 0x3e) | 0x1;
 
-        SPI::write(&mut self.spi, &buffer).map_err(Error::Transfer)?;
+        SPI::write(&mut self.spi, &buffer)
+            .await
+            .map_err(Error::Transfer)?;
 
         Ok(())
     }
@@ -70,7 +72,7 @@ where
 {
     /// Read from the register
     #[inline]
-    pub fn read(&mut self) -> Result<R::Read, Error<SPI>>
+    pub async fn read(&mut self) -> Result<R::Read, Error<SPI>>
     where
         R: Register + Readable,
     {
@@ -81,6 +83,7 @@ where
         self.0
             .spi
             .transfer_in_place(buffer)
+            .await
             .map_err(Error::Transfer)?;
 
         Ok(r)
@@ -88,7 +91,7 @@ where
 
     /// Write to the register
     #[inline]
-    pub fn write<F>(&mut self, f: F) -> Result<(), Error<SPI>>
+    pub async fn write<F>(&mut self, f: F) -> Result<(), Error<SPI>>
     where
         R: Register + Writable,
         F: FnOnce(&mut R::Write) -> &mut R::Write,
@@ -99,19 +102,21 @@ where
         let buffer = R::buffer(&mut w);
         init_header::<R>(true, buffer);
 
-        SPI::write(&mut self.0.spi, buffer).map_err(Error::Transfer)?;
+        SPI::write(&mut self.0.spi, buffer)
+            .await
+            .map_err(Error::Transfer)?;
 
         Ok(())
     }
 
     /// Modify the register
     #[inline]
-    pub fn modify<F>(&mut self, f: F) -> Result<(), Error<SPI>>
+    pub async fn modify<F>(&mut self, f: F) -> Result<(), Error<SPI>>
     where
         R: Register + Readable + Writable,
         F: for<'r> FnOnce(&mut R::Read, &'r mut R::Write) -> &'r mut R::Write,
     {
-        let mut r = self.read()?;
+        let mut r = self.read().await?;
         let mut w = R::write();
 
         <R as Writable>::buffer(&mut w).copy_from_slice(<R as Readable>::buffer(&mut r));
@@ -121,7 +126,9 @@ where
         let buffer = <R as Writable>::buffer(&mut w);
         init_header::<R>(true, buffer);
 
-        SPI::write(&mut self.0.spi, buffer).map_err(Error::Transfer)?;
+        SPI::write(&mut self.0.spi, buffer)
+            .await
+            .map_err(Error::Transfer)?;
 
         Ok(())
     }

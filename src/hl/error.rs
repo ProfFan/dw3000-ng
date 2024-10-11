@@ -1,7 +1,7 @@
 use core::fmt;
 use core::fmt::{Display, Formatter};
 
-use embedded_hal::spi;
+use embedded_hal_async::spi;
 
 #[cfg(feature = "defmt")]
 use defmt::Format;

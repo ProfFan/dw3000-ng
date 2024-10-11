@@ -3,7 +3,7 @@
 use core::{num::Wrapping, ops::Not};
 
 use byte::BytesExt as _;
-use embedded_hal::spi;
+use embedded_hal_async::spi;
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
@@ -54,15 +54,19 @@ where
     SPI: spi::SpiDevice<u8>,
 {
     /// Sets the RX and TX antenna delays
-    pub fn set_antenna_delay(&mut self, rx_delay: u16, tx_delay: u16) -> Result<(), Error<SPI>> {
-        self.ll.cia_conf().modify(|_, w| w.rxantd(rx_delay))?;
-        self.ll.tx_antd().write(|w| w.value(tx_delay))?;
+    pub async fn set_antenna_delay(
+        &mut self,
+        rx_delay: u16,
+        tx_delay: u16,
+    ) -> Result<(), Error<SPI>> {
+        self.ll.cia_conf().modify(|_, w| w.rxantd(rx_delay)).await?;
+        self.ll.tx_antd().write(|w| w.value(tx_delay)).await?;
 
         Ok(())
     }
 
     /// Sets the network id and address used for sending and receiving
-    pub fn set_address(
+    pub async fn set_address(
         &mut self,
         pan_id: Ieee802154Pan,
         addr: Ieee802154Address,
@@ -71,20 +75,24 @@ where
             return Err(Error::InvalidConfiguration);
         };
 
-        self.ll.panadr().write(|w| {
-            w.pan_id(pan_id.0)
-                .short_addr(u16::from_be_bytes(short_addr))
-        })?;
+        self.ll
+            .panadr()
+            .write(|w| {
+                w.pan_id(pan_id.0)
+                    .short_addr(u16::from_be_bytes(short_addr))
+            })
+            .await?;
 
         Ok(())
     }
 
     /// Enable/disable CIA diagnostics
     /// Enabling CIA diagnostics is required for RSSI calculation
-    pub fn set_full_cia_diagnostics(&mut self, enabled: bool) -> Result<(), Error<SPI>> {
+    pub async fn set_full_cia_diagnostics(&mut self, enabled: bool) -> Result<(), Error<SPI>> {
         self.ll
             .cia_conf()
-            .modify(|_, w| w.mindiag(enabled.not() as u8))?;
+            .modify(|_, w| w.mindiag(enabled.not() as u8))
+            .await?;
 
         Ok(())
     }
@@ -101,8 +109,11 @@ where
     /// The PDoA mode is set to 0 by default.
     ///
     /// NOTE: PDoA mode 3 requires the STS length to be integer multiples of 128.
-    pub fn set_pdoa_mode(&mut self, mode: PdoaMode) -> Result<(), Error<SPI>> {
-        self.ll.sys_cfg().modify(|_, w| w.pdoa_mode(mode as u8))?;
+    pub async fn set_pdoa_mode(&mut self, mode: PdoaMode) -> Result<(), Error<SPI>> {
+        self.ll
+            .sys_cfg()
+            .modify(|_, w| w.pdoa_mode(mode as u8))
+            .await?;
 
         Ok(())
     }
@@ -126,33 +137,36 @@ where
     /// to finish and check its result.
     ///
     /// Will panic if the delayed TX time is not rounded to top 31 bits.
-    pub fn send_raw(
+    pub async fn send_raw(
         mut self,
         data: &[u8],
         send_time: SendTime,
         config: &Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         // Clear event counters
-        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
+        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1)).await?;
         // while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
 
         // (Re-)Enable event counters
-        self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
+        self.ll.evc_ctrl().write(|w| w.evc_en(0b1)).await?;
         // while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
 
-        // self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
+        // self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10)).await?;
 
         // Prepare transmitter
         let mut len: usize = 0;
-        self.ll.tx_buffer().write(|w| {
-            let result = w.data().write(&mut len, data);
+        self.ll
+            .tx_buffer()
+            .write(|w| {
+                let result = w.data().write(&mut len, data);
 
-            if let Err(err) = result {
-                panic!("Failed to write frame: {:?}", err);
-            }
+                if let Err(err) = result {
+                    panic!("Failed to write frame: {:?}", err);
+                }
 
-            w
-        })?;
+                w
+            })
+            .await?;
 
         let txb_offset = 0; // no offset in TX_BUFFER
         let mut txb_offset_errata = txb_offset;
@@ -161,15 +175,18 @@ where
             txb_offset_errata += 128;
         }
 
-        self.ll.tx_fctrl().modify(|_, w| {
-            let txflen = len as u16 + 2;
-            w.txflen(txflen) // data length + two-octet CRC
-                .txbr(config.bitrate as u8) // configured bitrate
-                .tr(config.ranging_enable as u8) // configured ranging bit
-                .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
-                .txpsr(config.preamble_length as u8) // configure preamble length
-                .fine_plen(0) // Not implemented, replacing txpsr
-        })?;
+        self.ll
+            .tx_fctrl()
+            .modify(|_, w| {
+                let txflen = len as u16 + 2;
+                w.txflen(txflen) // data length + two-octet CRC
+                    .txbr(config.bitrate as u8) // configured bitrate
+                    .tr(config.ranging_enable as u8) // configured ranging bit
+                    .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
+                    .txpsr(config.preamble_length as u8) // configure preamble length
+                    .fine_plen(0) // Not implemented, replacing txpsr
+            })
+            .await?;
 
         match send_time {
             SendTime::Delayed(time) => {
@@ -186,14 +203,15 @@ where
                 self.ll
                     .dx_time()
                     .modify(|_, w| // 32-bits value of the most significant bits
-                    w.value( (time.value() >> 8) as u32 ))?;
-                self.fast_cmd(FastCommand::CMD_DTX)?;
+                    w.value( (time.value() >> 8) as u32 ))
+                    .await?;
+                self.fast_cmd(FastCommand::CMD_DTX).await?;
             }
             SendTime::OnSync => {
-                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
-                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
+                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
+                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
             }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
+            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
         }
 
         Ok(DW3000 {
@@ -221,7 +239,7 @@ where
     /// is in the `Sending` state, and can be used to wait for the transmission
     /// to finish and check its result.
     #[inline]
-    pub fn send_frame<T>(
+    pub async fn send_frame<T>(
         mut self,
         frame: Ieee802154Frame<T>,
         send_time: SendTime,
@@ -231,25 +249,28 @@ where
         T: AsRef<[u8]>,
     {
         // Clear event counters
-        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
-        while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
+        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1)).await?;
+        while self.ll.evc_ctrl().read().await?.evc_clr() == 0b1 {}
 
         // (Re-)Enable event counters
-        self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
-        while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
+        self.ll.evc_ctrl().write(|w| w.evc_en(0b1)).await?;
+        while self.ll.evc_ctrl().read().await?.evc_en() == 0b1 {}
 
-        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
+        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10)).await?;
 
         // Prepare transmitter
         let buf = frame.into_inner();
         let mut len = 0;
-        self.ll.tx_buffer().write(|w| {
-            let result = w.data();
-            len = buf.as_ref().len();
-            result[0..len].copy_from_slice(buf.as_ref());
+        self.ll
+            .tx_buffer()
+            .write(|w| {
+                let result = w.data();
+                len = buf.as_ref().len();
+                result[0..len].copy_from_slice(buf.as_ref());
 
-            w
-        })?;
+                w
+            })
+            .await?;
 
         let txb_offset = 0; // no offset in TX_BUFFER
         let mut txb_offset_errata = txb_offset;
@@ -258,15 +279,18 @@ where
             txb_offset_errata += 128;
         }
 
-        self.ll.tx_fctrl().modify(|_, w| {
-            let txflen = len as u16 + 2;
-            w.txflen(txflen) // data length + two-octet CRC
-                .txbr(config.bitrate as u8) // configured bitrate
-                .tr(config.ranging_enable as u8) // configured ranging bit
-                .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
-                .txpsr(config.preamble_length as u8) // configure preamble length
-                .fine_plen(0) // Not implemented, replacing txpsr
-        })?;
+        self.ll
+            .tx_fctrl()
+            .modify(|_, w| {
+                let txflen = len as u16 + 2;
+                w.txflen(txflen) // data length + two-octet CRC
+                    .txbr(config.bitrate as u8) // configured bitrate
+                    .tr(config.ranging_enable as u8) // configured ranging bit
+                    .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
+                    .txpsr(config.preamble_length as u8) // configure preamble length
+                    .fine_plen(0) // Not implemented, replacing txpsr
+            })
+            .await?;
 
         match send_time {
             SendTime::Delayed(time) => {
@@ -280,14 +304,15 @@ where
                 self.ll
                     .dx_time()
                     .modify(|_, w| // 32-bits value of the most significant bits
-                    w.value( (time.value() >> 8) as u32 ))?;
-                self.fast_cmd(FastCommand::CMD_DTX)?;
+                    w.value( (time.value() >> 8) as u32 ))
+                    .await?;
+                self.fast_cmd(FastCommand::CMD_DTX).await?;
             }
             SendTime::OnSync => {
-                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
-                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
+                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
+                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
             }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
+            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
         }
 
         Ok(DW3000 {
@@ -316,21 +341,21 @@ where
     /// is in the `Sending` state, and can be used to wait for the transmission
     /// to finish and check its result.
     #[inline(always)]
-    pub fn send(
+    pub async fn send(
         mut self,
         data: &[u8],
         send_time: SendTime,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         // Clear event counters
-        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1))?;
-        while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
+        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1)).await?;
+        while self.ll.evc_ctrl().read().await?.evc_clr() == 0b1 {}
 
         // (Re-)Enable event counters
-        self.ll.evc_ctrl().write(|w| w.evc_en(0b1))?;
-        while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
+        self.ll.evc_ctrl().write(|w| w.evc_en(0b1)).await?;
+        while self.ll.evc_ctrl().read().await?.evc_en() == 0b1 {}
 
-        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10))?;
+        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10)).await?;
 
         let seq = self.seq.0;
         self.seq += Wrapping(1);
@@ -344,30 +369,33 @@ where
             ack_request: false,
             pan_id_compression: true,
             dst_addr: Some(Ieee802154Address::BROADCAST),
-            src_addr: Some(self.get_address()?.1),
-            src_pan_id: Some(self.get_address()?.0),
+            src_addr: Some(self.get_address().await?.1),
+            src_pan_id: Some(self.get_address().await?.0),
             dst_pan_id: None,
         };
 
         // Prepare transmitter
         let mut len = 0;
-        self.ll.tx_buffer().write(|w| {
-            let result = w.data();
+        self.ll
+            .tx_buffer()
+            .write(|w| {
+                let result = w.data();
 
-            let mut frame = Ieee802154Frame::new_unchecked(&mut result[0..]);
-            frame_repr.emit(&mut frame);
+                let mut frame = Ieee802154Frame::new_unchecked(&mut result[0..]);
+                frame_repr.emit(&mut frame);
 
-            // copy data
-            result[frame_repr.buffer_len()..frame_repr.buffer_len() + data.len()]
-                .copy_from_slice(data);
+                // copy data
+                result[frame_repr.buffer_len()..frame_repr.buffer_len() + data.len()]
+                    .copy_from_slice(data);
 
-            // footer
-            result[frame_repr.buffer_len() + data.len()] = 0x00;
+                // footer
+                result[frame_repr.buffer_len() + data.len()] = 0x00;
 
-            len = frame_repr.buffer_len() + data.len() + 2;
+                len = frame_repr.buffer_len() + data.len() + 2;
 
-            w
-        })?;
+                w
+            })
+            .await?;
 
         let txb_offset = 0; // no offset in TX_BUFFER
         let mut txb_offset_errata = txb_offset;
@@ -376,15 +404,18 @@ where
             txb_offset_errata += 128;
         }
 
-        self.ll.tx_fctrl().modify(|_, w| {
-            let txflen = len as u16 + 2;
-            w.txflen(txflen) // data length + two-octet CRC
-                .txbr(config.bitrate as u8) // configured bitrate
-                .tr(config.ranging_enable as u8) // configured ranging bit
-                .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
-                .txpsr(config.preamble_length as u8) // configure preamble length
-                .fine_plen(0) // Not implemented, replacing txpsr
-        })?;
+        self.ll
+            .tx_fctrl()
+            .modify(|_, w| {
+                let txflen = len as u16 + 2;
+                w.txflen(txflen) // data length + two-octet CRC
+                    .txbr(config.bitrate as u8) // configured bitrate
+                    .tr(config.ranging_enable as u8) // configured ranging bit
+                    .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
+                    .txpsr(config.preamble_length as u8) // configure preamble length
+                    .fine_plen(0) // Not implemented, replacing txpsr
+            })
+            .await?;
 
         match send_time {
             SendTime::Delayed(time) => {
@@ -398,14 +429,15 @@ where
                 self.ll
                     .dx_time()
                     .modify(|_, w| // 32-bits value of the most significant bits
-                    w.value( (time.value() >> 8) as u32 ))?;
-                self.fast_cmd(FastCommand::CMD_DTX)?;
+                    w.value( (time.value() >> 8) as u32 ))
+                    .await?;
+                self.fast_cmd(FastCommand::CMD_DTX).await?;
             }
             SendTime::OnSync => {
-                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1))?;
-                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33))?;
+                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
+                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
             }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX)?,
+            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
         }
 
         Ok(DW3000 {
@@ -425,8 +457,11 @@ where
     /// and more. Make sure that the values used are the same as of the frames
     /// that are transmitted. The default works with the TxConfig's default and
     /// is a sane starting point.
-    pub fn receive(self, config: Config) -> Result<DW3000<SPI, SingleBufferReceiving>, Error<SPI>> {
-        self.receive_delayed(ReceiveTime::Now, config)
+    pub async fn receive(
+        self,
+        config: Config,
+    ) -> Result<DW3000<SPI, SingleBufferReceiving>, Error<SPI>> {
+        self.receive_delayed(ReceiveTime::Now, config).await
     }
 
     /// Attempt to receive a single IEEE 802.15.4 MAC frame
@@ -443,7 +478,7 @@ where
     /// and more. Make sure that the values used are the same as of the frames
     /// that are transmitted. The default works with the TxConfig's default and
     /// is a sane starting point.
-    pub fn receive_delayed(
+    pub async fn receive_delayed(
         self,
         recv_time: ReceiveTime,
         config: Config,
@@ -458,212 +493,246 @@ where
         };
 
         // Start rx'ing
-        rx_radio.start_receiving(recv_time, config)?;
+        rx_radio.start_receiving(recv_time, config).await?;
 
         // Return the double buffer state
         Ok(rx_radio)
     }
 
     /// Disable the SPIRDY interrupt flag
-    pub fn disable_spirdy_interrupt(&mut self) -> Result<(), Error<SPI>> {
-        self.ll.sys_enable().modify(|_, w| w.spirdy_en(0b0))?;
+    pub async fn disable_spirdy_interrupt(&mut self) -> Result<(), Error<SPI>> {
+        self.ll.sys_enable().modify(|_, w| w.spirdy_en(0b0)).await?;
         Ok(())
     }
 
     /// Enables transmit interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
-    pub fn enable_tx_interrupts(&mut self) -> Result<(), Error<SPI>> {
-        self.ll.sys_enable().modify(|_, w| w.txfrs_en(0b1))?;
+    pub async fn enable_tx_interrupts(&mut self) -> Result<(), Error<SPI>> {
+        self.ll.sys_enable().modify(|_, w| w.txfrs_en(0b1)).await?;
         Ok(())
     }
 
     /// Enables receive interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
-    pub fn enable_rx_interrupts(&mut self) -> Result<(), Error<SPI>> {
-        self.ll().sys_enable().modify(|_, w| {
-            w
-                // .rxprd_en(0b1)
-                //     .rxsfdd_en(0b1)
-                //     .rxphd_en(0b1)
-                .rxphe_en(0b1)
-                .rxfr_en(0b1)
-                // .rxfcg_en(0b1)
-                .rxfce_en(0b1)
-                .rxrfsl_en(0b1)
-                .rxfto_en(0b1)
-                .rxovrr_en(0b1)
-                .rxpto_en(0b1)
-                .rxsto_en(0b1)
-            // .rxprej_en(0b1)
-        })?;
+    pub async fn enable_rx_interrupts(&mut self) -> Result<(), Error<SPI>> {
+        self.ll()
+            .sys_enable()
+            .modify(|_, w| {
+                w
+                    // .rxprd_en(0b1)
+                    //     .rxsfdd_en(0b1)
+                    //     .rxphd_en(0b1)
+                    .rxphe_en(0b1)
+                    .rxfr_en(0b1)
+                    // .rxfcg_en(0b1)
+                    .rxfce_en(0b1)
+                    .rxrfsl_en(0b1)
+                    .rxfto_en(0b1)
+                    .rxovrr_en(0b1)
+                    .rxpto_en(0b1)
+                    .rxsto_en(0b1)
+                // .rxprej_en(0b1)
+            })
+            .await?;
         Ok(())
     }
 
     /// Disables all interrupts
-    pub fn disable_interrupts(&mut self) -> Result<(), Error<SPI>> {
-        self.ll.sys_enable().write(|w| w)?;
+    pub async fn disable_interrupts(&mut self) -> Result<(), Error<SPI>> {
+        self.ll.sys_enable().write(|w| w).await?;
         Ok(())
     }
 
     /// GPIO SECTION, gpios seems to have a problem with its register.
     /// Init GPIO WRT Config
-    pub fn gpio_config(&mut self, config: ConfigGPIOs) -> Result<(), Error<SPI>> {
-        self.gpio_config_clocks()?;
+    pub async fn gpio_config(&mut self, config: ConfigGPIOs) -> Result<(), Error<SPI>> {
+        self.gpio_config_clocks().await?;
 
-        self.ll.gpio_pull_en().modify(|_, w| {
-            w.mgpen0(config.enabled[0])
-                .mgpen1(config.enabled[1])
-                .mgpen2(config.enabled[2])
-                .mgpen3(config.enabled[3])
-                .mgpen4(config.enabled[4])
-                .mgpen5(config.enabled[5])
-                .mgpen6(config.enabled[6])
-                .mgpen7(config.enabled[7])
-                .mgpen8(config.enabled[8])
-        })?;
+        self.ll
+            .gpio_pull_en()
+            .modify(|_, w| {
+                w.mgpen0(config.enabled[0])
+                    .mgpen1(config.enabled[1])
+                    .mgpen2(config.enabled[2])
+                    .mgpen3(config.enabled[3])
+                    .mgpen4(config.enabled[4])
+                    .mgpen5(config.enabled[5])
+                    .mgpen6(config.enabled[6])
+                    .mgpen7(config.enabled[7])
+                    .mgpen8(config.enabled[8])
+            })
+            .await?;
 
-        self.ll.gpio_mode().modify(|_, w| {
-            w.msgp0(0x0)
-                .msgp1(0x0)
-                .msgp2(0x0)
-                .msgp3(0x0)
-                .msgp4(0x0)
-                .msgp5(0x0)
-                .msgp6(0x0)
-                .msgp7(0x0)
-                .msgp8(0x0)
-        })?;
-        self.ll.gpio_mode().modify(|_, w| {
-            w.msgp0(config.mode[0])
-                .msgp1(config.mode[1])
-                .msgp2(config.mode[2])
-                .msgp3(config.mode[3])
-                .msgp4(config.mode[4])
-                .msgp5(config.mode[5])
-                .msgp6(config.mode[6])
-                .msgp7(config.mode[7])
-                .msgp8(config.mode[8])
-        })?;
+        self.ll
+            .gpio_mode()
+            .modify(|_, w| {
+                w.msgp0(0x0)
+                    .msgp1(0x0)
+                    .msgp2(0x0)
+                    .msgp3(0x0)
+                    .msgp4(0x0)
+                    .msgp5(0x0)
+                    .msgp6(0x0)
+                    .msgp7(0x0)
+                    .msgp8(0x0)
+            })
+            .await?;
+        self.ll
+            .gpio_mode()
+            .modify(|_, w| {
+                w.msgp0(config.mode[0])
+                    .msgp1(config.mode[1])
+                    .msgp2(config.mode[2])
+                    .msgp3(config.mode[3])
+                    .msgp4(config.mode[4])
+                    .msgp5(config.mode[5])
+                    .msgp6(config.mode[6])
+                    .msgp7(config.mode[7])
+                    .msgp8(config.mode[8])
+            })
+            .await?;
 
-        self.ll.gpio_dir().modify(|_, w| {
-            w.gpd0(config.gpio_dir[0])
-                .gpd1(config.gpio_dir[1])
-                .gpd2(config.gpio_dir[2])
-                .gpd3(config.gpio_dir[3])
-                .gpd4(config.gpio_dir[4])
-                .gpd5(config.gpio_dir[5])
-                .gpd6(config.gpio_dir[6])
-                .gpd7(config.gpio_dir[7])
-                .gpd8(config.gpio_dir[8])
-        })?;
+        self.ll
+            .gpio_dir()
+            .modify(|_, w| {
+                w.gpd0(config.gpio_dir[0])
+                    .gpd1(config.gpio_dir[1])
+                    .gpd2(config.gpio_dir[2])
+                    .gpd3(config.gpio_dir[3])
+                    .gpd4(config.gpio_dir[4])
+                    .gpd5(config.gpio_dir[5])
+                    .gpd6(config.gpio_dir[6])
+                    .gpd7(config.gpio_dir[7])
+                    .gpd8(config.gpio_dir[8])
+            })
+            .await?;
 
-        self.ll.gpio_out().modify(|_, w| {
-            w.gop0(config.output[0])
-                .gop1(config.output[1])
-                .gop2(config.output[2])
-                .gop3(config.output[3])
-                .gop4(config.output[4])
-                .gop5(config.output[5])
-                .gop6(config.output[6])
-                .gop7(config.output[7])
-                .gop8(config.output[8])
-        })?;
+        self.ll
+            .gpio_out()
+            .modify(|_, w| {
+                w.gop0(config.output[0])
+                    .gop1(config.output[1])
+                    .gop2(config.output[2])
+                    .gop3(config.output[3])
+                    .gop4(config.output[4])
+                    .gop5(config.output[5])
+                    .gop6(config.output[6])
+                    .gop7(config.output[7])
+                    .gop8(config.output[8])
+            })
+            .await?;
 
         Ok(())
     }
 
     /// Enable gpios clocks
-    pub fn gpio_config_clocks(&mut self) -> Result<(), Error<SPI>> {
-        self.ll.clk_ctrl().modify(|_, w| {
-            w.gpio_clk_en(0b1)
-                .gpio_dclk_en(0b1)
-                .gpio_drst_n(0b1)
-                .lp_clk_en(0b1)
-        })?;
+    pub async fn gpio_config_clocks(&mut self) -> Result<(), Error<SPI>> {
+        self.ll
+            .clk_ctrl()
+            .modify(|_, w| {
+                w.gpio_clk_en(0b1)
+                    .gpio_dclk_en(0b1)
+                    .gpio_drst_n(0b1)
+                    .lp_clk_en(0b1)
+            })
+            .await?;
 
         self.ll
             .led_ctrl()
-            .modify(|_, w| w.blink_en(0b1).blink_tim(0x10).force_trig(0x0))?;
+            .modify(|_, w| w.blink_en(0b1).blink_tim(0x10).force_trig(0x0))
+            .await?;
 
         Ok(())
     }
 
     /// Enables single pin
-    pub fn gpio_config_enable(&mut self, pin: u8, enable: u8) -> Result<(), Error<SPI>> {
-        self.ll.gpio_pull_en().modify(|_, w| match pin {
-            0 => w.mgpen0(enable),
-            1 => w.mgpen1(enable),
-            2 => w.mgpen2(enable),
-            3 => w.mgpen3(enable),
-            4 => w.mgpen4(enable),
-            5 => w.mgpen5(enable),
-            6 => w.mgpen6(enable),
-            7 => w.mgpen7(enable),
-            8 => w.mgpen8(enable),
-            _ => w,
-        })?;
+    pub async fn gpio_config_enable(&mut self, pin: u8, enable: u8) -> Result<(), Error<SPI>> {
+        self.ll
+            .gpio_pull_en()
+            .modify(|_, w| match pin {
+                0 => w.mgpen0(enable),
+                1 => w.mgpen1(enable),
+                2 => w.mgpen2(enable),
+                3 => w.mgpen3(enable),
+                4 => w.mgpen4(enable),
+                5 => w.mgpen5(enable),
+                6 => w.mgpen6(enable),
+                7 => w.mgpen7(enable),
+                8 => w.mgpen8(enable),
+                _ => w,
+            })
+            .await?;
         Ok(())
     }
 
     /// Configures mode for a single pin
-    pub fn gpio_config_mode(&mut self, pin: u8, mode: u8) -> Result<(), Error<SPI>> {
-        self.ll.gpio_mode().modify(|_, w| match pin {
-            0 => w.msgp0(mode),
-            1 => w.msgp1(mode),
-            2 => w.msgp2(mode),
-            3 => w.msgp3(mode),
-            4 => w.msgp4(mode),
-            5 => w.msgp5(mode),
-            6 => w.msgp6(mode),
-            7 => w.msgp7(mode),
-            8 => w.msgp8(mode),
-            _ => w,
-        })?;
+    pub async fn gpio_config_mode(&mut self, pin: u8, mode: u8) -> Result<(), Error<SPI>> {
+        self.ll
+            .gpio_mode()
+            .modify(|_, w| match pin {
+                0 => w.msgp0(mode),
+                1 => w.msgp1(mode),
+                2 => w.msgp2(mode),
+                3 => w.msgp3(mode),
+                4 => w.msgp4(mode),
+                5 => w.msgp5(mode),
+                6 => w.msgp6(mode),
+                7 => w.msgp7(mode),
+                8 => w.msgp8(mode),
+                _ => w,
+            })
+            .await?;
         Ok(())
     }
 
     /// Configures direction for a single pin
-    pub fn gpio_config_dir(&mut self, pin: u8, dir: u8) -> Result<(), Error<SPI>> {
-        self.ll.gpio_dir().modify(|_, w| match pin {
-            0 => w.gpd0(dir),
-            1 => w.gpd1(dir),
-            2 => w.gpd2(dir),
-            3 => w.gpd3(dir),
-            4 => w.gpd4(dir),
-            5 => w.gpd5(dir),
-            6 => w.gpd6(dir),
-            7 => w.gpd7(dir),
-            8 => w.gpd8(dir),
-            _ => w,
-        })?;
+    pub async fn gpio_config_dir(&mut self, pin: u8, dir: u8) -> Result<(), Error<SPI>> {
+        self.ll
+            .gpio_dir()
+            .modify(|_, w| match pin {
+                0 => w.gpd0(dir),
+                1 => w.gpd1(dir),
+                2 => w.gpd2(dir),
+                3 => w.gpd3(dir),
+                4 => w.gpd4(dir),
+                5 => w.gpd5(dir),
+                6 => w.gpd6(dir),
+                7 => w.gpd7(dir),
+                8 => w.gpd8(dir),
+                _ => w,
+            })
+            .await?;
         Ok(())
     }
 
     /// Configures output for a single pin
-    pub fn gpio_config_out(&mut self, pin: u8, output: u8) -> Result<(), Error<SPI>> {
-        self.ll.gpio_out().modify(|_, w| match pin {
-            0 => w.gop0(output),
-            1 => w.gop1(output),
-            2 => w.gop2(output),
-            3 => w.gop3(output),
-            4 => w.gop4(output),
-            5 => w.gop5(output),
-            6 => w.gop6(output),
-            7 => w.gop7(output),
-            8 => w.gop8(output),
-            _ => w,
-        })?;
+    pub async fn gpio_config_out(&mut self, pin: u8, output: u8) -> Result<(), Error<SPI>> {
+        self.ll
+            .gpio_out()
+            .modify(|_, w| match pin {
+                0 => w.gop0(output),
+                1 => w.gop1(output),
+                2 => w.gop2(output),
+                3 => w.gop3(output),
+                4 => w.gop4(output),
+                5 => w.gop5(output),
+                6 => w.gop6(output),
+                7 => w.gop7(output),
+                8 => w.gop8(output),
+                _ => w,
+            })
+            .await?;
         Ok(())
     }
 
     /// Returns GPIO config
-    pub fn get_gpio_config(&mut self) -> Result<ConfigGPIOs, Error<SPI>> {
-        let enabled = self.get_gpio_enabled()?;
-        let mode = self.get_gpio_mode()?;
-        let gpio_dir = self.get_gpio_dir()?;
-        let output = self.get_gpio_out()?;
+    pub async fn get_gpio_config(&mut self) -> Result<ConfigGPIOs, Error<SPI>> {
+        let enabled = self.get_gpio_enabled().await?;
+        let mode = self.get_gpio_mode().await?;
+        let gpio_dir = self.get_gpio_dir().await?;
+        let output = self.get_gpio_out().await?;
 
         Ok(ConfigGPIOs {
             enabled,
@@ -674,8 +743,8 @@ where
     }
 
     /// Returns current gpio enable state
-    pub fn get_gpio_enabled(&mut self) -> Result<[u8; 9], Error<SPI>> {
-        let gpio_pull_en = self.ll.gpio_pull_en().read()?;
+    pub async fn get_gpio_enabled(&mut self) -> Result<[u8; 9], Error<SPI>> {
+        let gpio_pull_en = self.ll.gpio_pull_en().read().await?;
         let enabled: [u8; 9] = [
             gpio_pull_en.mgpen0(),
             gpio_pull_en.mgpen1(),
@@ -692,8 +761,8 @@ where
     }
 
     /// Returns current gpio pin mode
-    pub fn get_gpio_mode(&mut self) -> Result<[u8; 9], Error<SPI>> {
-        let gpio_mode = self.ll.gpio_mode().read()?;
+    pub async fn get_gpio_mode(&mut self) -> Result<[u8; 9], Error<SPI>> {
+        let gpio_mode = self.ll.gpio_mode().read().await?;
         let mode: [u8; 9] = [
             gpio_mode.msgp0(),
             gpio_mode.msgp1(),
@@ -710,8 +779,8 @@ where
     }
 
     /// Returns current gpio dir
-    pub fn get_gpio_dir(&mut self) -> Result<[u8; 9], Error<SPI>> {
-        let gpio_direction = self.ll.gpio_dir().read()?;
+    pub async fn get_gpio_dir(&mut self) -> Result<[u8; 9], Error<SPI>> {
+        let gpio_direction = self.ll.gpio_dir().read().await?;
         let gpio_dir = [
             gpio_direction.gpd0(),
             gpio_direction.gpd1(),
@@ -728,8 +797,8 @@ where
     }
 
     /// Returns current output
-    pub fn get_gpio_out(&mut self) -> Result<[u8; 9], Error<SPI>> {
-        let gpio_out = self.ll.gpio_out().read()?;
+    pub async fn get_gpio_out(&mut self) -> Result<[u8; 9], Error<SPI>> {
+        let gpio_out = self.ll.gpio_out().read().await?;
         let output = [
             gpio_out.gop0(),
             gpio_out.gop1(),
@@ -746,8 +815,8 @@ where
     }
 
     /// Returns current raw state / input
-    pub fn get_gpio_raw_state(&mut self) -> Result<[u8; 9], Error<SPI>> {
-        let gpio_raw = self.ll.gpio_raw().read()?;
+    pub async fn get_gpio_raw_state(&mut self) -> Result<[u8; 9], Error<SPI>> {
+        let gpio_raw = self.ll.gpio_raw().read().await?;
         let raw = [
             gpio_raw.grawp0(),
             gpio_raw.grawp1(),

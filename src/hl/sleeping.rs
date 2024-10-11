@@ -1,6 +1,6 @@
 #![allow(unused_imports)]
 
-use embedded_hal::spi;
+use embedded_hal_async::spi;
 
 use crate::{Error, Ready, Sleeping, DW3000};
 
