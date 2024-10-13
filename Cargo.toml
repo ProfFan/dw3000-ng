@@ -47,7 +47,7 @@ version = "0.7"
 default-features = false
 
 [features]
-default = ["async", "defmt", "rssi"]
+default = ["async", "rssi"]
 std = ["serde/std", "num_enum/std"]
 async = []
 defmt = ["dep:defmt"]
