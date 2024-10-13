@@ -22,7 +22,7 @@ We mainly test on the ESP32 platform with `embassy` async framework.
 Include this crate in your Cargo project by adding the following to `Cargo.toml`:
 ```toml
 [dependencies]
-dw3000-ng = "0.9"
+dw3000-ng = "1.0"
 ```
 
 ## Documentation
@@ -58,6 +58,10 @@ If you are using this in your academic work, please cite it as follows:
 ## CHANGELOG
 
 ### Current `main`
+
+(Blank)
+
+### 1.0.0
 
 - Added `init_tracing` example to inspect the SPI transactions happening during the initialization of the DW3000
 - Modified `rx_wait` to not use `_unchecked` and return `Err` when the decoding of the 802.15.4 frame fails
