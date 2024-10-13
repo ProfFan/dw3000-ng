@@ -63,6 +63,7 @@ If you are using this in your academic work, please cite it as follows:
 - Modified `rx_wait` to not use `_unchecked` and return `Err` when the decoding of the 802.15.4 frame fails
 - **BREAKING**: The library is now both `sync` and `async` compatible. The feature `async` can be used to enable the corresponding interfaces.
   - When `async`, the SPI traits are using `embedded_hal_async`, otherwise `embedded_hal`.
+- **BREAKING**: The delay primitives in the `config` function are now `embedded_hal/embedded_hal_async::delay::DelayNs` instead of `FnMut(u32) -> Future<Output = ()>`
 
 ### 0.9.0
 
