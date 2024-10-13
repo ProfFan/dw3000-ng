@@ -3,7 +3,6 @@
 use core::convert::TryInto;
 
 use byte::BytesExt as _;
-use embedded_hal_async::spi;
 use fixed::traits::LossyInto;
 #[cfg(feature = "rssi")]
 use num_traits::Float;
@@ -14,6 +13,7 @@ use defmt::Format;
 use super::{AutoDoubleBufferReceiving, ReceiveTime, Receiving};
 use crate::{
     configs::{BitRate, PulseRepetitionFrequency, SfdSequence},
+    maybe_async_attr, spi_type,
     time::Instant,
     Config, Error, FastCommand, Ready, DW3000,
 };
@@ -60,14 +60,16 @@ pub struct RxQuality {
 
 impl<SPI, RECEIVING> DW3000<SPI, RECEIVING>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi_type::spi::SpiDevice<u8>,
     RECEIVING: Receiving,
 {
     /// Returns the RX state of the DW3000
+    #[maybe_async_attr]
     pub async fn rx_state(&mut self) -> Result<u8, Error<SPI>> {
         Ok(self.ll.sys_state().read().await?.rx_state())
     }
 
+    #[maybe_async_attr]
     pub(super) async fn start_receiving(
         &mut self,
         recv_time: ReceiveTime,
@@ -132,6 +134,7 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
+    #[maybe_async_attr]
     pub async fn r_wait<'b>(
         &mut self,
         buffer: &'b mut [u8],
@@ -285,6 +288,7 @@ where
     /// driver, but please note that if you're using the DWM1001 module or
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
+    #[maybe_async_attr]
     pub async fn r_wait_buf(
         &mut self,
         buffer: &mut [u8],
@@ -416,6 +420,7 @@ where
     /// DW3000 User Manual 4.7.1
     /// returns dBm
     #[cfg(feature = "rssi")]
+    #[maybe_async_attr]
     async fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
         let prf = self.state.get_rx_config().pulse_repetition_frequency;
         let ll = self.ll();
@@ -476,6 +481,7 @@ where
     }
 
     #[cfg(not(feature = "rssi"))]
+    #[maybe_async_attr]
     async fn get_first_path_signal_power(&mut self) -> Result<f32, Error<SPI>> {
         Ok(0.0)
     }
@@ -485,6 +491,7 @@ where
     ///
     /// If the receive operation has finished, as indicated by `wait`, this is a
     /// no-op. If the receive operation is still ongoing, it will be aborted.
+    #[maybe_async_attr]
     pub async fn finish_receiving(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
         // TO DO : if we are not in state 3 (IDLE), we need to have a reset of the module (with a new initialisation)
         // BECAUSE : using force_idle (fast command 0) is not puting the pll back to stable !!!

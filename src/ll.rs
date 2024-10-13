@@ -18,7 +18,7 @@
 use core::fmt::{Display, Formatter};
 use core::{fmt, marker::PhantomData};
 
-use embedded_hal_async::spi;
+use crate::{maybe_async_attr, spi_type};
 
 /// Entry point to the DW3000 driver's low-level API
 ///
@@ -39,10 +39,11 @@ impl<SPI> DW3000<SPI> {
         DW3000 { spi }
     }
 
-    /// commentaire
+    /// DW3000 fast command
+    #[maybe_async_attr]
     pub async fn fast_command(&mut self, fast: u8) -> Result<(), Error<SPI>>
     where
-        SPI: spi::SpiDevice<u8>,
+        SPI: spi_type::spi::SpiDevice<u8>,
     {
         let mut buffer = [0];
         buffer[0] = (0x1 << 7) | ((fast << 1) & 0x3e) | 0x1;
@@ -54,7 +55,7 @@ impl<SPI> DW3000<SPI> {
         Ok(())
     }
 
-    /// Allow access to the SPI bus
+    /// Allow direct access to the SPI bus
     pub fn bus(&mut self) -> &mut SPI {
         &mut self.spi
     }
@@ -68,10 +69,11 @@ pub struct RegAccessor<'s, R, SPI>(&'s mut DW3000<SPI>, PhantomData<R>);
 
 impl<'s, R, SPI> RegAccessor<'s, R, SPI>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi_type::spi::SpiDevice<u8>,
 {
     /// Read from the register
     #[inline]
+    #[maybe_async_attr]
     pub async fn read(&mut self) -> Result<R::Read, Error<SPI>>
     where
         R: Register + Readable,
@@ -91,6 +93,7 @@ where
 
     /// Write to the register
     #[inline]
+    #[maybe_async_attr]
     pub async fn write<F>(&mut self, f: F) -> Result<(), Error<SPI>>
     where
         R: Register + Writable,
@@ -111,6 +114,7 @@ where
 
     /// Modify the register
     #[inline]
+    #[maybe_async_attr]
     pub async fn modify<F>(&mut self, f: F) -> Result<(), Error<SPI>>
     where
         R: Register + Readable + Writable,
@@ -137,7 +141,7 @@ where
 /// An SPI error that can occur when communicating with the DW3000
 pub enum Error<SPI>
 where
-    SPI: spi::ErrorType,
+    SPI: spi_type::spi::ErrorType,
 {
     /// SPI error occured during a transfer transaction
     Transfer(SPI::Error),
@@ -145,7 +149,7 @@ where
 
 impl<SPI> Display for Error<SPI>
 where
-    SPI: spi::ErrorType,
+    SPI: spi_type::spi::ErrorType,
     SPI::Error: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
@@ -154,13 +158,13 @@ where
 }
 
 #[cfg(feature = "std")]
-impl<SPI> std::error::Error for Error<SPI> where SPI: spi::ErrorType {}
+impl<SPI> std::error::Error for Error<SPI> where SPI: spi_type::spi::ErrorType {}
 
 // We can't derive this implementation, as the compiler will complain that the
 // associated error type doesn't implement `Debug`.
 impl<SPI> fmt::Debug for Error<SPI>
 where
-    SPI: spi::ErrorType,
+    SPI: spi_type::spi::ErrorType,
     SPI::Error: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -173,7 +177,7 @@ where
 #[cfg(feature = "defmt")]
 impl<SPI> defmt::Format for Error<SPI>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi_type::spi::SpiDevice<u8>,
 {
     fn format(&self, f: defmt::Formatter) {
         match self {

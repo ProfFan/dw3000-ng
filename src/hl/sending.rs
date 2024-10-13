@@ -1,15 +1,17 @@
 #![allow(unused_imports)]
 
-use embedded_hal_async::spi;
 use nb;
 
 use crate::{time::Instant, Error, Ready, Sending, DW3000};
 
+use crate::{maybe_async_attr, spi_type};
+
 impl<SPI> DW3000<SPI, Sending>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi_type::spi::SpiDevice<u8>,
 {
     /// Returns the TX state of the DW3000
+    #[maybe_async_attr]
     pub async fn tx_state(&mut self) -> Result<u8, Error<SPI>> {
         Ok(self.ll.sys_state().read().await?.tx_state())
     }
@@ -27,6 +29,7 @@ where
     /// DWM1001-Dev board, that the `dwm1001` crate has explicit support for
     /// this.
     #[inline(always)]
+    #[maybe_async_attr]
     pub async fn s_wait(&mut self) -> nb::Result<Instant, Error<SPI>> {
         // Check Half Period Warning Counter. If this is a delayed transmission,
         // this will indicate that the delay was too short, and the frame was
@@ -87,6 +90,7 @@ where
     ///
     /// If the send operation has finished, as indicated by `wait`, this is a
     /// no-op. If the send operation is still ongoing, it will be aborted.
+    #[maybe_async_attr]
     pub async fn finish_sending(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
         // In order to avoid undetermined states after a sending, we will force the state to idle
 
@@ -108,6 +112,7 @@ where
         })
     }
 
+    #[maybe_async_attr]
     async fn reset_flags(&mut self) -> Result<(), Error<SPI>> {
         self.ll
             .sys_status()

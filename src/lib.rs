@@ -12,7 +12,16 @@
 //! [`embedded-hal`]: https://crates.io/crates/embedded-hal
 #![cfg_attr(not(any(test, feature = "std")), no_main)]
 #![cfg_attr(not(any(test, feature = "std")), no_std)]
-#![deny(missing_docs)]
+
+#[cfg(feature = "async")]
+use maybe_async::must_be_async as maybe_async_attr;
+#[cfg(not(feature = "async"))]
+use maybe_async::must_be_sync as maybe_async_attr;
+
+#[cfg(not(feature = "async"))]
+use embedded_hal as spi_type;
+#[cfg(feature = "async")]
+use embedded_hal_async as spi_type;
 
 pub mod configs;
 pub mod fast_command;

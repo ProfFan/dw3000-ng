@@ -1,18 +1,21 @@
-use core::future::Future;
 use core::num::Wrapping;
-
-use embedded_hal_async::spi;
 
 use crate::configs::{PhrRate, StsLen, UwbChannel};
 use crate::{
     configs::{PdoaMode, PhrMode, PreambleLength, StsMode},
     ll, Config, Error, Ready, Uninitialized, DW3000,
 };
-//use rtt_target::{rprintln};
+
+use crate::{maybe_async_attr, spi_type};
+
+#[cfg(not(feature = "async"))]
+use embedded_hal::delay::DelayNs;
+#[cfg(feature = "async")]
+use embedded_hal_async::delay::DelayNs;
 
 impl<SPI> DW3000<SPI, Uninitialized>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi_type::spi::SpiDevice<u8>,
 {
     /// Create a new instance of `DW3000`
     ///
@@ -27,6 +30,7 @@ where
     }
 
     /// Read the OTP memory at the given address
+    #[maybe_async_attr]
     pub async fn read_otp(&mut self, addr: u16) -> Result<u32, ll::Error<SPI>> {
         // Set OTP_MAN to 1
         self.ll.otp_cfg().write(|w| w.otp_man(1)).await?;
@@ -43,6 +47,7 @@ where
     /// Basicaly, this is the pll configuration. We want to have a locked pll in order to provide a constant speed clock.
     /// This is important when using th clock to measure distances.
     /// At the end of this function, pll is locked and it can be checked by the bit CPLOCK in SYS_STATUS register (see state_test example)
+    #[maybe_async_attr]
     pub async fn init(mut self) -> Result<DW3000<SPI, Uninitialized>, Error<SPI>> {
         // Wait for the INIT_RC state
         for _ in 0..1000 {
@@ -116,23 +121,23 @@ where
         })
     }
 
-    /// Configuration of the DW3000, need to be called after an init.
-    /// This function need to be improved. TODO
-    /// There is several steps to do on this function that improve the sending and reception of a message.
-    /// Without doing this, the receiver almost never receive a frame from transmitter
-    pub fn config<DELAY>(
-        self,
-        config: Config,
-        mut delay_us: DELAY,
-    ) -> Result<DW3000<SPI, Ready>, Error<SPI>>
-    where
-        DELAY: FnMut(u32),
-    {
-        spin_on::spin_on(self.config_async(config, |us| {
-            delay_us(us);
-            async {}
-        }))
-    }
+    // /// Configuration of the DW3000, need to be called after an init.
+    // /// This function need to be improved. TODO
+    // /// There is several steps to do on this function that improve the sending and reception of a message.
+    // /// Without doing this, the receiver almost never receive a frame from transmitter
+    // pub fn config<DELAY>(
+    //     self,
+    //     config: Config,
+    //     mut delay_us: DELAY,
+    // ) -> Result<DW3000<SPI, Ready>, Error<SPI>>
+    // where
+    //     DELAY: FnMut(u32),
+    // {
+    //     spin_on::spin_on(self.config_async(config, |us| {
+    //         delay_us(us);
+    //         async {}
+    //     }))
+    // }
 
     /// Async version of the `config` function
     ///
@@ -140,14 +145,14 @@ where
     /// This function need to be improved. TODO
     /// There is several steps to do on this function that improve the sending and reception of a message.
     /// Without doing this, the receiver almost never receive a frame from transmitter
-    pub async fn config_async<DELAY, F>(
+    #[maybe_async_attr]
+    pub async fn config<DELAY>(
         mut self,
         config: Config,
-        mut delay_us: DELAY,
+        mut delay_ns: DELAY,
     ) -> Result<DW3000<SPI, Ready>, Error<SPI>>
     where
-        F: Future<Output = ()>,
-        DELAY: FnMut(u32) -> F,
+        DELAY: DelayNs,
     {
         // New configuration method that match the offical driver
         let channel = config.channel;
@@ -188,7 +193,7 @@ where
         // wait for CPLOCK to be set
         let mut timeout = 1000;
         while self.ll.sys_status().read().await?.cplock() == 0 {
-            delay_us(20).await;
+            delay_ns.delay_us(20).await;
 
             if self.ll.sys_status().read().await?.cplock() != 0 {
                 break;
@@ -212,9 +217,9 @@ where
         let ldo_ctrl_low = self.ll.ldo_ctrl().read().await?.low();
         self.ll.ldo_ctrl().modify(|_, w| w.low(0x105)).await?;
 
-        delay_us(20);
+        delay_ns.delay_us(20).await;
 
-        let pgf_cal_result = self.run_pgf_cal_async(delay_us).await;
+        let pgf_cal_result = self.run_pgf_cal_async(delay_ns).await;
 
         self.ll
             .ldo_ctrl()
@@ -230,10 +235,10 @@ where
     }
 
     /// Run the PGF calibration, async version
-    async fn run_pgf_cal_async<DELAY, F>(&mut self, mut delay_us: DELAY) -> Result<(), Error<SPI>>
+    #[maybe_async_attr]
+    async fn run_pgf_cal_async<DELAY>(&mut self, mut delay_ns: DELAY) -> Result<(), Error<SPI>>
     where
-        DELAY: FnMut(u32) -> F,
-        F: Future<Output = ()>,
+        DELAY: DelayNs,
     {
         self.ll
             .rx_cal()
@@ -244,14 +249,14 @@ where
 
         let mut max_retries = 3;
         let mut success = true;
-        delay_us(20).await;
+        delay_ns.delay_us(20).await;
         while self.ll.rx_cal_sts().read().await?.value() == 0 {
             max_retries -= 1;
             if max_retries == 0 {
                 success = false;
                 break;
             }
-            delay_us(20).await;
+            delay_ns.delay_us(20).await;
         }
 
         if !success {
@@ -277,6 +282,7 @@ where
         Ok(())
     }
 
+    #[maybe_async_attr]
     async fn config_set_dgc_dtune4(
         &mut self,
         channel: UwbChannel,
@@ -351,6 +357,7 @@ where
         Ok(())
     }
 
+    #[maybe_async_attr]
     async fn start_pll_calibration(&mut self, config: Config) -> Result<(), Error<SPI>> {
         // Read the sys_state register
         let pmsc_state = self.ll.sys_state().read().await?.pmsc_state();
@@ -436,6 +443,7 @@ where
         Ok(())
     }
 
+    #[maybe_async_attr]
     async fn config_txrx_params(
         &mut self,
         config: Config,
@@ -495,6 +503,7 @@ where
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[maybe_async_attr]
     async fn config_basic_params(
         &mut self,
         preamble_length_actual: &mut usize,

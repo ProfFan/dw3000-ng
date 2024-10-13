@@ -61,7 +61,8 @@ If you are using this in your academic work, please cite it as follows:
 
 - Added `init_tracing` example to inspect the SPI transactions happening during the initialization of the DW3000
 - Modified `rx_wait` to not use `_unchecked` and return `Err` when the decoding of the 802.15.4 frame fails
-- **BREAKING**: All SPI-interacting functions are now `async`!
+- **BREAKING**: The library is now both `sync` and `async` compatible. The feature `async` can be used to enable the corresponding interfaces.
+  - When `async`, the SPI traits are using `embedded_hal_async`, otherwise `embedded_hal`.
 
 ### 0.9.0
 

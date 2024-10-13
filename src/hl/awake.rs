@@ -1,16 +1,17 @@
-use embedded_hal_async::spi;
-
 use super::Awake;
 use crate::{fast_command, ll, time::Duration, Error, DW3000};
 
 use smoltcp::wire::{Ieee802154Address, Ieee802154Pan};
 
+use crate::{maybe_async_attr, spi_type};
+
 impl<SPI, State> DW3000<SPI, State>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi_type::spi::SpiDevice<u8>,
     State: Awake,
 {
     /// Returns the TX antenna delay
+    #[maybe_async_attr]
     pub async fn get_tx_antenna_delay(&mut self) -> Result<Duration, Error<SPI>> {
         let tx_antenna_delay = self.ll.tx_antd().read().await?.value();
 
@@ -21,6 +22,7 @@ where
     }
 
     /// Returns the RX antenna delay
+    #[maybe_async_attr]
     pub async fn get_rx_antenna_delay(&mut self) -> Result<Duration, Error<SPI>> {
         let rx_antenna_delay = self.ll.cia_conf().read().await?.rxantd();
 
@@ -31,6 +33,7 @@ where
     }
 
     /// Returns the network id and address used for sending and receiving
+    #[maybe_async_attr]
     pub async fn get_address(&mut self) -> Result<(Ieee802154Pan, Ieee802154Address), Error<SPI>> {
         let panadr = self.ll.panadr().read().await?;
 
@@ -41,6 +44,7 @@ where
     }
 
     /// Returns the current system time (32-bit)
+    #[maybe_async_attr]
     pub async fn sys_time(&mut self) -> Result<u32, Error<SPI>> {
         let sys_time = self.ll.sys_time().read().await?.value();
 
@@ -48,26 +52,31 @@ where
     }
 
     /// Returns the state of the DW3000
+    #[maybe_async_attr]
     pub async fn state(&mut self) -> Result<u8, Error<SPI>> {
         Ok(self.ll.sys_state().read().await?.pmsc_state())
     }
 
     /// Returns the current fast command of the DW3000
+    #[maybe_async_attr]
     pub async fn cmd_status(&mut self) -> Result<u8, Error<SPI>> {
         Ok(self.ll.fcmd_stat().read().await?.value())
     }
 
     /// Returns true if the DW3000 has been in init_rc
+    #[maybe_async_attr]
     pub async fn init_rc_passed(&mut self) -> Result<bool, Error<SPI>> {
         Ok(self.ll.sys_status().read().await?.rcinit() == 0x1)
     }
 
     /// Returns true if the DW3000 has been in idle_rc
+    #[maybe_async_attr]
     pub async fn idle_rc_passed(&mut self) -> Result<bool, Error<SPI>> {
         Ok(self.ll.sys_status().read().await?.spirdy() == 0x1)
     }
 
     /// Returns true if the DW3000 pll is lock
+    #[maybe_async_attr]
     pub async fn idle_pll_passed(&mut self) -> Result<bool, Error<SPI>> {
         Ok(self.ll.sys_status().read().await?.cplock() == 0x1)
     }
@@ -85,16 +94,17 @@ where
     /// Force the DW3000 into IDLE mode
     ///
     /// Any ongoing RX/TX operations will be aborted.
+    #[maybe_async_attr]
     pub async fn force_idle(&mut self) -> Result<(), Error<SPI>> {
         // our probleme on this function is that we never come back to IDLE_PLL with a locked PLL after usng fast command 0
 
         self.ll.fast_command(0).await?;
-        //while self.ll.sys_status().read()?.rcinit() == 0 {}
-        //while self.ll.sys_status().read()?.cplock() == 0 {}
+
         Ok(())
     }
 
     /// Use fast command ll in hl
+    #[maybe_async_attr]
     pub async fn fast_cmd(&mut self, fc: fast_command::FastCommand) -> Result<(), Error<SPI>> {
         self.ll.fast_command(fc as u8).await?;
         Ok(())
@@ -107,7 +117,7 @@ mod test {
 
     use embedded_hal_mock::eh1::spi::{Mock as SpiMock, Transaction as SpiTransaction};
 
-    #[tokio::test]
+    #[maybe_async::test(not(feature = "async"), async(all(feature = "async"), tokio::test))]
     async fn test_new_device() {
         let spi = SpiMock::new(&[
             SpiTransaction::transaction_start(),

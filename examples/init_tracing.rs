@@ -4,6 +4,16 @@ use dw3000_ng::{Config, DW3000};
 
 use embedded_hal_bus::spi::ExclusiveDevice;
 
+#[cfg(not(feature = "async"))]
+use embedded_hal as hal;
+#[cfg(feature = "async")]
+use embedded_hal_async as hal;
+
+#[cfg(feature = "async")]
+use maybe_async::must_be_async as maybe_async_attr;
+#[cfg(not(feature = "async"))]
+use maybe_async::must_be_sync as maybe_async_attr;
+
 /// Simulated DW3000 state
 #[derive(Debug, PartialEq, Eq)]
 enum SimulatedState {
@@ -42,13 +52,21 @@ impl embedded_hal::spi::ErrorType for DummySpi {
     type Error = DummyError;
 }
 
-impl embedded_hal_async::spi::SpiBus<u8> for DummySpi {
+impl hal::spi::SpiBus<u8> for DummySpi {
+    #[maybe_async_attr]
     async fn read(&mut self, _data: &mut [u8]) -> Result<(), Self::Error> {
         log::debug!("SPI read");
         Ok(())
     }
 
+    #[maybe_async_attr]
     async fn write(&mut self, _data: &[u8]) -> Result<(), Self::Error> {
+        if _data.len() == 1 {
+            // This is a SPI fast command
+            log::info!("SPI fast command: {:02x}", _data[0]);
+            return Ok(());
+        }
+
         let (id, sub_id, write) = DummySpi::decode_header(_data);
 
         if id == 0x11 && sub_id == 0x08 && self.state == SimulatedState::Startup {
@@ -68,11 +86,13 @@ impl embedded_hal_async::spi::SpiBus<u8> for DummySpi {
         Ok(())
     }
 
+    #[maybe_async_attr]
     async fn transfer(&mut self, _in: &mut [u8], _out: &[u8]) -> Result<(), Self::Error> {
         log::debug!("SPI transfer: {:02x?} -> {:02x?}", _in, _out);
         Ok(())
     }
 
+    #[maybe_async_attr]
     async fn transfer_in_place(&mut self, _data: &mut [u8]) -> Result<(), Self::Error> {
         let (id, sub_id, write) = DummySpi::decode_header(_data);
         log::debug!(
@@ -108,6 +128,7 @@ impl embedded_hal_async::spi::SpiBus<u8> for DummySpi {
         Ok(())
     }
 
+    #[maybe_async_attr]
     async fn flush(&mut self) -> Result<(), Self::Error> {
         log::debug!("SPI flush");
         Ok(())
@@ -141,7 +162,22 @@ impl embedded_hal::digital::ErrorType for DummyGpio {
     type Error = DummyGpioError;
 }
 
-#[tokio::main]
+struct MockAsyncDelayNs;
+
+impl embedded_hal_async::delay::DelayNs for MockAsyncDelayNs {
+    async fn delay_ns(&mut self, _ns: u32) {
+        std::thread::sleep(std::time::Duration::from_micros(_ns as u64));
+    }
+}
+
+impl embedded_hal::delay::DelayNs for MockAsyncDelayNs {
+    fn delay_ns(&mut self, _ns: u32) {
+        std::thread::sleep(std::time::Duration::from_micros(_ns as u64));
+    }
+}
+
+#[cfg_attr(feature = "async", tokio::main)]
+#[maybe_async_attr]
 async fn main() {
     // logging setup
     env_logger::init();
@@ -156,11 +192,12 @@ async fn main() {
 
     let config = Config::default();
 
-    let dw3000 = dw3000
-        .config(config, |delay| {
-            std::thread::sleep(std::time::Duration::from_micros(delay as u64))
-        })
-        .unwrap();
+    #[cfg(feature = "async")]
+    let dw3000 = dw3000.config(config, MockAsyncDelayNs).await.unwrap();
+    #[cfg(not(feature = "async"))]
+    let dw3000 = dw3000.config(config, MockAsyncDelayNs).await.unwrap();
 
     log::info!("DW3000 initialized");
+
+    dw3000.receive(config).await.unwrap();
 }

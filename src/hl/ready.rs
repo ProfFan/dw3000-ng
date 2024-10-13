@@ -3,11 +3,11 @@
 use core::{num::Wrapping, ops::Not};
 
 use byte::BytesExt as _;
-use embedded_hal_async::spi;
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
     configs::{PdoaMode, SfdSequence},
+    maybe_async_attr, spi_type,
     time::Instant,
     Config, Error, FastCommand, Ready, Sending, SingleBufferReceiving, Sleeping, DW3000,
 };
@@ -51,9 +51,10 @@ pub enum ReceiveTime {
 
 impl<SPI> DW3000<SPI, Ready>
 where
-    SPI: spi::SpiDevice<u8>,
+    SPI: spi_type::spi::SpiDevice<u8>,
 {
     /// Sets the RX and TX antenna delays
+    #[maybe_async_attr]
     pub async fn set_antenna_delay(
         &mut self,
         rx_delay: u16,
@@ -66,6 +67,7 @@ where
     }
 
     /// Sets the network id and address used for sending and receiving
+    #[maybe_async_attr]
     pub async fn set_address(
         &mut self,
         pan_id: Ieee802154Pan,
@@ -88,6 +90,7 @@ where
 
     /// Enable/disable CIA diagnostics
     /// Enabling CIA diagnostics is required for RSSI calculation
+    #[maybe_async_attr]
     pub async fn set_full_cia_diagnostics(&mut self, enabled: bool) -> Result<(), Error<SPI>> {
         self.ll
             .cia_conf()
@@ -109,6 +112,7 @@ where
     /// The PDoA mode is set to 0 by default.
     ///
     /// NOTE: PDoA mode 3 requires the STS length to be integer multiples of 128.
+    #[maybe_async_attr]
     pub async fn set_pdoa_mode(&mut self, mode: PdoaMode) -> Result<(), Error<SPI>> {
         self.ll
             .sys_cfg()
@@ -137,6 +141,7 @@ where
     /// to finish and check its result.
     ///
     /// Will panic if the delayed TX time is not rounded to top 31 bits.
+    #[maybe_async_attr]
     pub async fn send_raw(
         mut self,
         data: &[u8],
@@ -239,6 +244,7 @@ where
     /// is in the `Sending` state, and can be used to wait for the transmission
     /// to finish and check its result.
     #[inline]
+    #[maybe_async_attr]
     pub async fn send_frame<T>(
         mut self,
         frame: Ieee802154Frame<T>,
@@ -341,6 +347,7 @@ where
     /// is in the `Sending` state, and can be used to wait for the transmission
     /// to finish and check its result.
     #[inline(always)]
+    #[maybe_async_attr]
     pub async fn send(
         mut self,
         data: &[u8],
@@ -457,6 +464,7 @@ where
     /// and more. Make sure that the values used are the same as of the frames
     /// that are transmitted. The default works with the TxConfig's default and
     /// is a sane starting point.
+    #[maybe_async_attr]
     pub async fn receive(
         self,
         config: Config,
@@ -478,6 +486,7 @@ where
     /// and more. Make sure that the values used are the same as of the frames
     /// that are transmitted. The default works with the TxConfig's default and
     /// is a sane starting point.
+    #[maybe_async_attr]
     pub async fn receive_delayed(
         self,
         recv_time: ReceiveTime,
@@ -500,6 +509,7 @@ where
     }
 
     /// Disable the SPIRDY interrupt flag
+    #[maybe_async_attr]
     pub async fn disable_spirdy_interrupt(&mut self) -> Result<(), Error<SPI>> {
         self.ll.sys_enable().modify(|_, w| w.spirdy_en(0b0)).await?;
         Ok(())
@@ -508,6 +518,7 @@ where
     /// Enables transmit interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
+    #[maybe_async_attr]
     pub async fn enable_tx_interrupts(&mut self) -> Result<(), Error<SPI>> {
         self.ll.sys_enable().modify(|_, w| w.txfrs_en(0b1)).await?;
         Ok(())
@@ -516,6 +527,7 @@ where
     /// Enables receive interrupts for the events that `wait` checks
     ///
     /// Overwrites any interrupt flags that were previously set.
+    #[maybe_async_attr]
     pub async fn enable_rx_interrupts(&mut self) -> Result<(), Error<SPI>> {
         self.ll()
             .sys_enable()
@@ -540,6 +552,7 @@ where
     }
 
     /// Disables all interrupts
+    #[maybe_async_attr]
     pub async fn disable_interrupts(&mut self) -> Result<(), Error<SPI>> {
         self.ll.sys_enable().write(|w| w).await?;
         Ok(())
@@ -547,6 +560,7 @@ where
 
     /// GPIO SECTION, gpios seems to have a problem with its register.
     /// Init GPIO WRT Config
+    #[maybe_async_attr]
     pub async fn gpio_config(&mut self, config: ConfigGPIOs) -> Result<(), Error<SPI>> {
         self.gpio_config_clocks().await?;
 
@@ -628,6 +642,7 @@ where
     }
 
     /// Enable gpios clocks
+    #[maybe_async_attr]
     pub async fn gpio_config_clocks(&mut self) -> Result<(), Error<SPI>> {
         self.ll
             .clk_ctrl()
@@ -648,6 +663,7 @@ where
     }
 
     /// Enables single pin
+    #[maybe_async_attr]
     pub async fn gpio_config_enable(&mut self, pin: u8, enable: u8) -> Result<(), Error<SPI>> {
         self.ll
             .gpio_pull_en()
@@ -668,6 +684,7 @@ where
     }
 
     /// Configures mode for a single pin
+    #[maybe_async_attr]
     pub async fn gpio_config_mode(&mut self, pin: u8, mode: u8) -> Result<(), Error<SPI>> {
         self.ll
             .gpio_mode()
@@ -688,6 +705,7 @@ where
     }
 
     /// Configures direction for a single pin
+    #[maybe_async_attr]
     pub async fn gpio_config_dir(&mut self, pin: u8, dir: u8) -> Result<(), Error<SPI>> {
         self.ll
             .gpio_dir()
@@ -708,6 +726,7 @@ where
     }
 
     /// Configures output for a single pin
+    #[maybe_async_attr]
     pub async fn gpio_config_out(&mut self, pin: u8, output: u8) -> Result<(), Error<SPI>> {
         self.ll
             .gpio_out()
@@ -728,6 +747,7 @@ where
     }
 
     /// Returns GPIO config
+    #[maybe_async_attr]
     pub async fn get_gpio_config(&mut self) -> Result<ConfigGPIOs, Error<SPI>> {
         let enabled = self.get_gpio_enabled().await?;
         let mode = self.get_gpio_mode().await?;
@@ -743,6 +763,7 @@ where
     }
 
     /// Returns current gpio enable state
+    #[maybe_async_attr]
     pub async fn get_gpio_enabled(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_pull_en = self.ll.gpio_pull_en().read().await?;
         let enabled: [u8; 9] = [
@@ -761,6 +782,7 @@ where
     }
 
     /// Returns current gpio pin mode
+    #[maybe_async_attr]
     pub async fn get_gpio_mode(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_mode = self.ll.gpio_mode().read().await?;
         let mode: [u8; 9] = [
@@ -779,6 +801,7 @@ where
     }
 
     /// Returns current gpio dir
+    #[maybe_async_attr]
     pub async fn get_gpio_dir(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_direction = self.ll.gpio_dir().read().await?;
         let gpio_dir = [
@@ -797,6 +820,7 @@ where
     }
 
     /// Returns current output
+    #[maybe_async_attr]
     pub async fn get_gpio_out(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_out = self.ll.gpio_out().read().await?;
         let output = [
@@ -815,6 +839,7 @@ where
     }
 
     /// Returns current raw state / input
+    #[maybe_async_attr]
     pub async fn get_gpio_raw_state(&mut self) -> Result<[u8; 9], Error<SPI>> {
         let gpio_raw = self.ll.gpio_raw().read().await?;
         let raw = [
