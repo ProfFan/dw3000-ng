@@ -44,9 +44,10 @@ where
     }
 
     /// Initialize the DW3000
+    ///
     /// Basicaly, this is the pll configuration. We want to have a locked pll in order to provide a constant speed clock.
     /// This is important when using th clock to measure distances.
-    /// At the end of this function, pll is locked and it can be checked by the bit CPLOCK in SYS_STATUS register (see state_test example)
+    /// At the end of this function, pll is locked and it can be checked by the bit CPLOCK in SYS_STATUS register
     #[maybe_async_attr]
     pub async fn init(mut self) -> Result<DW3000<SPI, Uninitialized>, Error<SPI>> {
         // Wait for the INIT_RC state
@@ -121,30 +122,7 @@ where
         })
     }
 
-    // /// Configuration of the DW3000, need to be called after an init.
-    // /// This function need to be improved. TODO
-    // /// There is several steps to do on this function that improve the sending and reception of a message.
-    // /// Without doing this, the receiver almost never receive a frame from transmitter
-    // pub fn config<DELAY>(
-    //     self,
-    //     config: Config,
-    //     mut delay_us: DELAY,
-    // ) -> Result<DW3000<SPI, Ready>, Error<SPI>>
-    // where
-    //     DELAY: FnMut(u32),
-    // {
-    //     spin_on::spin_on(self.config_async(config, |us| {
-    //         delay_us(us);
-    //         async {}
-    //     }))
-    // }
-
-    /// Async version of the `config` function
-    ///
     /// Configuration of the DW3000, need to be called after an init.
-    /// This function need to be improved. TODO
-    /// There is several steps to do on this function that improve the sending and reception of a message.
-    /// Without doing this, the receiver almost never receive a frame from transmitter
     #[maybe_async_attr]
     pub async fn config<DELAY>(
         mut self,
