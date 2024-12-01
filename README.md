@@ -59,7 +59,10 @@ If you are using this in your academic work, please cite it as follows:
 
 ### Current `main`
 
-(Blank)
+### 1.0.1
+
+- Elided the `RegAccessor` lifetime
+- Fixed the wrong trait import when `async` is enabled/disabled
 
 ### 1.0.0
 

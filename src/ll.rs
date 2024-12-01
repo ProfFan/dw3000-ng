@@ -67,7 +67,7 @@ impl<SPI> DW3000<SPI> {
 /// [`DW3000`].
 pub struct RegAccessor<'s, R, SPI>(&'s mut DW3000<SPI>, PhantomData<R>);
 
-impl<'s, R, SPI> RegAccessor<'s, R, SPI>
+impl<R, SPI> RegAccessor<'_, R, SPI>
 where
     SPI: spi_type::spi::SpiDevice<u8>,
 {

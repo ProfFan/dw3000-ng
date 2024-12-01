@@ -1,10 +1,10 @@
 use core::fmt;
 use core::fmt::{Display, Formatter};
 
-#[cfg(feature = "async")]
-use embedded_hal_async::spi;
 #[cfg(not(feature = "async"))]
 use embedded_hal::spi;
+#[cfg(feature = "async")]
+use embedded_hal_async::spi;
 
 #[cfg(feature = "defmt")]
 use defmt::Format;
@@ -198,11 +198,11 @@ mod test {
 
     use embedded_hal_mock::eh1::spi::Mock as SpiMock;
 
-    #[cfg(feature = "defmt")]
     #[test]
-    fn test_defmt() {
+    fn test_debug() {
         let error = Error::<SpiMock<u8>>::BufferTooSmall { required_len: 42 };
 
-        defmt::info!("error: {:?}", error);
+        let s = std::format!("error: {:?}", error);
+        assert_eq!(s, "error: BufferTooSmall { required_len: 42 }");
     }
 }
