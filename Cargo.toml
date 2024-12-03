@@ -1,7 +1,7 @@
 [package]
 name = "dw3000-ng"
 description = "A modernized driver for DW3000 Ultra Wide Band module"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
     "Fan Jiang <i@fanjiang.me>",
     "Clement Pene <clement.pene@sii.fr>",
@@ -17,7 +17,7 @@ repository = "https://github.com/ProfFan/dw3000-ng"
 byte = "0.2"
 embedded-hal = "1.0"
 embedded-hal-async = "1.0"
-smoltcp = { version = "0.11", default-features = false, features = [
+smoltcp = { version = ">=0.11", default-features = false, features = [
     "socket-raw",
     "defmt",
     "medium-ieee802154",

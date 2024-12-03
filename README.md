@@ -59,6 +59,10 @@ If you are using this in your academic work, please cite it as follows:
 
 ### Current `main`
 
+### 1.0.2
+
+- Added compatibility with `smoltcp` 0.12
+
 ### 1.0.1
 
 - Elided the `RegAccessor` lifetime
