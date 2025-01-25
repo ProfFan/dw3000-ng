@@ -145,6 +145,67 @@ where
             .write(|w| w.tx_clk(0b10))
             .await.expect("Failed to set clk_ctrl->tx_clk");
     }
+    /// Creates a IEEE 802.15.4 MAC frame header
+    /// With destination address and pan id targets
+    /// For a broadcast frame use:
+    ///    dst_addr: Some(Ieee802154Address::BROADCAST),
+    ///    dst_pan_id: None
+    /// NOTE: every call will increment the frame sequence code
+    pub async fn build_frame_header(
+        &mut self, 
+        dst_addr: Option<Ieee802154Address>,
+        dst_pan_id: Option<Ieee802154Pan>
+    ) -> Ieee802154Repr {
+        let (src_pan_id, src_addr) = self.get_address().await.unwrap();
+
+        let seq = self.seq.0;
+        self.seq += Wrapping(1);
+
+        Ieee802154Repr {
+            frame_type: smoltcp::wire::Ieee802154FrameType::Data,
+            frame_version: smoltcp::wire::Ieee802154FrameVersion::Ieee802154_2006,
+            security_enabled: false,
+            sequence_number: Some(seq),
+            frame_pending: false,
+            ack_request: false,
+            pan_id_compression: true,
+            dst_addr: dst_addr,
+            src_addr: Some(src_addr),
+            src_pan_id: Some(src_pan_id),
+            dst_pan_id: dst_pan_id,
+        }
+    } 
+    
+    /// Write the IEEE 802.15.4 MAC frame to buffer
+    /// 
+    /// You can set the destination address and pan_id in order to use frame filtering.
+    /// 
+    /// The `data` argument is populated on the payload
+    /// 
+    /// It returns the length of the message (Header + Data)
+    pub async fn build_frame(
+        &mut self, 
+        buffer: &mut [u8],
+        data: &[u8],
+        dst_addr: Option<Ieee802154Address>,
+        dst_pan_id: Option<Ieee802154Pan>,
+    ) -> usize{
+        let frame_header = self.build_frame_header(dst_addr, dst_pan_id).await;
+
+        let mut frame = Ieee802154Frame::new_unchecked(&mut buffer[0..]);
+        frame_header.emit(&mut frame);
+
+        // copy data
+        buffer[frame_header.buffer_len()..frame_header.buffer_len() + data.len()]
+            .copy_from_slice(data);
+
+        // footer
+        buffer[frame_header.buffer_len() + data.len()] = 0x00;
+
+        (frame_header.buffer_len() + data.len()) as usize
+        
+    }
+    
     /// Send an raw UWB PHY frame
     ///
     /// The `data` argument is wrapped into an raw UWB PHY frame.
