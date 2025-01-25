@@ -122,6 +122,29 @@ where
         Ok(())
     }
 
+    /// clear evernt counter evc_ctrl->evc_clr
+    pub async fn clear_event_counter(&mut self) {
+        self.ll
+            .evc_ctrl()
+            .write(|w| w.evc_clr(0b1))
+            .await.expect("Failed to set evc_ctrl->evc_clr");
+    }
+
+    /// enable_event_counter evc_ctrl->evc_en
+    pub async fn enable_event_counter(&mut self) {
+        self.ll
+            .evc_ctrl()
+            .write(|w| w.evc_en(0b1))
+            .await.expect("Failed to set evc_ctrl->evc_en");
+    }
+    
+    /// enable_tx_clock clk_ctrl->tx_clk
+    pub async fn enable_tx_clock(&mut self){
+        self.ll
+            .clk_ctrl()
+            .write(|w| w.tx_clk(0b10))
+            .await.expect("Failed to set clk_ctrl->tx_clk");
+    }
     /// Send an raw UWB PHY frame
     ///
     /// The `data` argument is wrapped into an raw UWB PHY frame.
