@@ -367,7 +367,7 @@ where
     #[inline(always)]
     #[maybe_async_attr]
     pub async fn send(
-        mut self,
+        self,
         data: &[u8],
         send_time: SendTime,
         config: Config,
@@ -375,8 +375,8 @@ where
         return self.send_to(
             data,
             send_time,
-            Some(Ieee802154Address::BROADCAST),
-            None,
+            Ieee802154Pan::BROADCAST,
+            Ieee802154Address::BROADCAST,
             config,
         ).await;
     }
