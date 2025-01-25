@@ -122,7 +122,8 @@ where
         Ok(())
     }
 
-    /// clear evernt counter evc_ctrl->evc_clr
+    /// clear event counter evc_ctrl->evc_clr
+    #[maybe_async_attr]
     pub async fn clear_event_counter(&mut self) {
         self.ll
             .evc_ctrl()
@@ -130,7 +131,8 @@ where
             .await.expect("Failed to set evc_ctrl->evc_clr");
     }
 
-    /// enable_event_counter evc_ctrl->evc_en
+    /// re-enable event counter evc_ctrl->evc_en
+    #[maybe_async_attr]
     pub async fn enable_event_counter(&mut self) {
         self.ll
             .evc_ctrl()
@@ -139,6 +141,7 @@ where
     }
     
     /// enable_tx_clock clk_ctrl->tx_clk
+    #[maybe_async_attr]
     pub async fn enable_tx_clock(&mut self){
         self.ll
             .clk_ctrl()
@@ -146,15 +149,13 @@ where
             .await.expect("Failed to set clk_ctrl->tx_clk");
     }
 
-
-
-
     /// Creates a IEEE 802.15.4 MAC frame header
     /// With destination address and pan id targets
     /// For a broadcast frame use:
     ///    dst_addr: Some(Ieee802154Address::BROADCAST),
     ///    dst_pan_id: None
     /// NOTE: every call will increment the frame sequence code
+    #[maybe_async_attr]
     pub async fn build_frame_header(
         &mut self, 
         dst_addr: Option<Ieee802154Address>,
@@ -187,6 +188,7 @@ where
     /// The `data` argument is populated on the payload
     /// 
     /// It returns the length of the message (Header + Data)
+    #[maybe_async_attr]
     pub async fn build_frame(
         &mut self, 
         buffer: &mut [u8],
