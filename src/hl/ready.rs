@@ -145,6 +145,10 @@ where
             .write(|w| w.tx_clk(0b10))
             .await.expect("Failed to set clk_ctrl->tx_clk");
     }
+
+
+
+
     /// Creates a IEEE 802.15.4 MAC frame header
     /// With destination address and pan id targets
     /// For a broadcast frame use:
@@ -206,6 +210,7 @@ where
         
     }
     
+
     /// Send an raw UWB PHY frame
     ///
     /// The `data` argument is wrapped into an raw UWB PHY frame.
@@ -230,17 +235,11 @@ where
         mut self,
         data: &[u8],
         send_time: SendTime,
-        config: &Config,
+        config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
-        // Clear event counters
-        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1)).await?;
-        // while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
-
-        // (Re-)Enable event counters
-        self.ll.evc_ctrl().write(|w| w.evc_en(0b1)).await?;
-        // while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
-
-        // self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10)).await?;
+        self.clear_event_counter().await;
+        self.enable_event_counter().await;
+        // self.enable_tx_clock().await;
 
         // Prepare transmitter
         let mut len: usize = 0;
@@ -266,7 +265,7 @@ where
 
         self.ll
             .tx_fctrl()
-            .modify(|_, w| {
+            .write(|w| {
                 let txflen = len as u16 + 2;
                 w.txflen(txflen) // data length + two-octet CRC
                     .txbr(config.bitrate as u8) // configured bitrate
@@ -291,14 +290,13 @@ where
                 // By setting this register, the chip knows to delay before transmitting
                 self.ll
                     .dx_time()
-                    .modify(|_, w| // 32-bits value of the most significant bits
-                    w.value( (time.value() >> 8) as u32 ))
+                    .write(|w| w.value( (time.value() >> 8) as u32 ))// 32-bits value of the most significant bits
                     .await?;
                 self.fast_cmd(FastCommand::CMD_DTX).await?;
             }
             SendTime::OnSync => {
-                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
-                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
+                self.ll.ec_ctrl().write(|w| w.ostr_mode(1)).await?;
+                self.ll.ec_ctrl().write(|w| w.osts_wait(33)).await?;
             }
             SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
         }
@@ -330,7 +328,7 @@ where
     #[inline]
     #[maybe_async_attr]
     pub async fn send_frame<T>(
-        mut self,
+        self,
         frame: Ieee802154Frame<T>,
         send_time: SendTime,
         config: Config,
@@ -338,79 +336,13 @@ where
     where
         T: AsRef<[u8]>,
     {
-        // Clear event counters
-        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1)).await?;
-        while self.ll.evc_ctrl().read().await?.evc_clr() == 0b1 {}
 
-        // (Re-)Enable event counters
-        self.ll.evc_ctrl().write(|w| w.evc_en(0b1)).await?;
-        while self.ll.evc_ctrl().read().await?.evc_en() == 0b1 {}
-
-        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10)).await?;
-
-        // Prepare transmitter
-        let buf = frame.into_inner();
-        let mut len = 0;
-        self.ll
-            .tx_buffer()
-            .write(|w| {
-                let result = w.data();
-                len = buf.as_ref().len();
-                result[0..len].copy_from_slice(buf.as_ref());
-
-                w
-            })
-            .await?;
-
-        let txb_offset = 0; // no offset in TX_BUFFER
-        let mut txb_offset_errata = txb_offset;
-        if txb_offset > 127 {
-            // Errata in DW3000, see page 86
-            txb_offset_errata += 128;
-        }
-
-        self.ll
-            .tx_fctrl()
-            .modify(|_, w| {
-                let txflen = len as u16 + 2;
-                w.txflen(txflen) // data length + two-octet CRC
-                    .txbr(config.bitrate as u8) // configured bitrate
-                    .tr(config.ranging_enable as u8) // configured ranging bit
-                    .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
-                    .txpsr(config.preamble_length as u8) // configure preamble length
-                    .fine_plen(0) // Not implemented, replacing txpsr
-            })
-            .await?;
-
-        match send_time {
-            SendTime::Delayed(time) => {
-                // Panic if the time is not rounded to top 31 bits
-                if time.value() % (1 << 9) != 0 {
-                    panic!("Time must be rounded to top 31 bits!");
-                }
-
-                // Put the time into the delay register
-                // By setting this register, the chip knows to delay before transmitting
-                self.ll
-                    .dx_time()
-                    .modify(|_, w| // 32-bits value of the most significant bits
-                    w.value( (time.value() >> 8) as u32 ))
-                    .await?;
-                self.fast_cmd(FastCommand::CMD_DTX).await?;
-            }
-            SendTime::OnSync => {
-                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
-                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
-            }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
-        }
-
-        Ok(DW3000 {
-            ll: self.ll,
-            seq: self.seq,
-            state: Sending { finished: false },
-        })
+        let mut buffer= [0_u8; 127];
+        buffer[0..].copy_from_slice(frame.into_inner().as_ref());
+        
+        self.send_raw(&mut buffer, send_time, config).await
     }
+
 
     /// Send an IEEE 802.15.4 MAC frame
     ///
@@ -438,104 +370,52 @@ where
         send_time: SendTime,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
-        // Clear event counters
-        self.ll.evc_ctrl().write(|w| w.evc_clr(0b1)).await?;
-        while self.ll.evc_ctrl().read().await?.evc_clr() == 0b1 {}
+        return self.send_to(
+            data,
+            send_time,
+            Some(Ieee802154Address::BROADCAST),
+            None,
+            config,
+        ).await;
+    }
 
-        // (Re-)Enable event counters
-        self.ll.evc_ctrl().write(|w| w.evc_en(0b1)).await?;
-        while self.ll.evc_ctrl().read().await?.evc_en() == 0b1 {}
+    /// Send an IEEE 802.15.4 MAC frame to a target destination address and pan_id
+    ///
+    /// The `data` argument is wrapped into an IEEE 802.15.4 MAC frame and sent
+    /// to `destination`.
+    ///
+    /// This operation can be delayed to aid in distance measurement, by setting
+    /// `delayed_time` to `Some(instant)`. If you want to send the frame as soon
+    /// as possible, just pass `None` instead.
+    ///
+    /// The config parameter struct allows for setting the channel, bitrate, and
+    /// more. This configuration needs to be the same as the configuration used
+    /// by the receiver, or the message may not be received.
+    /// The defaults are a sane starting point.
+    ///
+    /// This method starts the transmission and returns immediately thereafter.
+    /// It consumes this instance of `DW3000` and returns another instance which
+    /// is in the `Sending` state, and can be used to wait for the transmission
+    /// to finish and check its result.
+    #[inline(always)]
+    #[maybe_async_attr]
+    pub async fn send_to(
+        mut self,
+        data: &[u8],
+        send_time: SendTime,
+        pan_id: Ieee802154Pan,
+        address: Ieee802154Address,
+        config: Config,
+    ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
+        let mut buffer = [0_u8; 127];
+        let len = self.build_frame(
+            &mut buffer,
+            data,
+            Some(address),
+            Some(pan_id)
+        ).await;
 
-        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10)).await?;
-
-        let seq = self.seq.0;
-        self.seq += Wrapping(1);
-
-        let frame_repr = Ieee802154Repr {
-            frame_type: smoltcp::wire::Ieee802154FrameType::Data,
-            frame_version: smoltcp::wire::Ieee802154FrameVersion::Ieee802154_2006,
-            security_enabled: false,
-            sequence_number: Some(seq),
-            frame_pending: false,
-            ack_request: false,
-            pan_id_compression: true,
-            dst_addr: Some(Ieee802154Address::BROADCAST),
-            src_addr: Some(self.get_address().await?.1),
-            src_pan_id: Some(self.get_address().await?.0),
-            dst_pan_id: None,
-        };
-
-        // Prepare transmitter
-        let mut len = 0;
-        self.ll
-            .tx_buffer()
-            .write(|w| {
-                let result = w.data();
-
-                let mut frame = Ieee802154Frame::new_unchecked(&mut result[0..]);
-                frame_repr.emit(&mut frame);
-
-                // copy data
-                result[frame_repr.buffer_len()..frame_repr.buffer_len() + data.len()]
-                    .copy_from_slice(data);
-
-                // footer
-                result[frame_repr.buffer_len() + data.len()] = 0x00;
-
-                len = frame_repr.buffer_len() + data.len() + 2;
-
-                w
-            })
-            .await?;
-
-        let txb_offset = 0; // no offset in TX_BUFFER
-        let mut txb_offset_errata = txb_offset;
-        if txb_offset > 127 {
-            // Errata in DW3000, see page 86
-            txb_offset_errata += 128;
-        }
-
-        self.ll
-            .tx_fctrl()
-            .modify(|_, w| {
-                let txflen = len as u16 + 2;
-                w.txflen(txflen) // data length + two-octet CRC
-                    .txbr(config.bitrate as u8) // configured bitrate
-                    .tr(config.ranging_enable as u8) // configured ranging bit
-                    .txb_offset(txb_offset_errata) // no offset in TX_BUFFER
-                    .txpsr(config.preamble_length as u8) // configure preamble length
-                    .fine_plen(0) // Not implemented, replacing txpsr
-            })
-            .await?;
-
-        match send_time {
-            SendTime::Delayed(time) => {
-                // Panic if the time is not rounded to top 31 bits
-                if time.value() % (1 << 9) != 0 {
-                    panic!("Time must be rounded to top 31 bits!");
-                }
-
-                // Put the time into the delay register
-                // By setting this register, the chip knows to delay before transmitting
-                self.ll
-                    .dx_time()
-                    .modify(|_, w| // 32-bits value of the most significant bits
-                    w.value( (time.value() >> 8) as u32 ))
-                    .await?;
-                self.fast_cmd(FastCommand::CMD_DTX).await?;
-            }
-            SendTime::OnSync => {
-                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
-                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
-            }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
-        }
-
-        Ok(DW3000 {
-            ll: self.ll,
-            seq: self.seq,
-            state: Sending { finished: false },
-        })
+        return self.send_raw(&buffer[0..len], send_time, config).await;
     }
 
     /// Attempt to receive a single IEEE 802.15.4 MAC frame
