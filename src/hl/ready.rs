@@ -201,15 +201,16 @@ where
         let mut frame = Ieee802154Frame::new_unchecked(&mut buffer[0..]);
         frame_header.emit(&mut frame);
 
+        let len = frame_header.buffer_len() + data.len();
+
         // copy data
-        buffer[frame_header.buffer_len()..frame_header.buffer_len() + data.len()]
+        buffer[frame_header.buffer_len()..len]
             .copy_from_slice(data);
 
         // footer
-        buffer[frame_header.buffer_len() + data.len()] = 0x00;
-
-        (frame_header.buffer_len() + data.len()) as usize
+        buffer[len] = 0x00;
         
+        len
     }
     
 
@@ -417,7 +418,7 @@ where
             Some(pan_id)
         ).await;
 
-        return self.send_raw(&buffer[0..len], send_time, config).await;
+        return self.send_raw(&buffer[0..len + 2], send_time, config).await;
     }
 
     /// Attempt to receive a single IEEE 802.15.4 MAC frame
