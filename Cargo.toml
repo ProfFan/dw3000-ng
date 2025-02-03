@@ -41,14 +41,16 @@ tokio = { version = "1", features = ["full"] }
 version = "1"
 default-features = false
 features = ["derive"]
+optional = true
 
 [dependencies.num_enum]
 version = "0.7"
 default-features = false
 
 [features]
-default = ["async", "rssi"]
-std = ["serde/std", "num_enum/std"]
+default = ["async", "rssi", "serde"]
+std = ["serde?/std", "num_enum/std"]
 async = []
 defmt = ["dep:defmt"]
 rssi = ["dep:num-traits"]
+serde = ["dep:serde"]
