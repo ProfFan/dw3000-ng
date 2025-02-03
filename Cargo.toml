@@ -43,13 +43,9 @@ default-features = false
 features = ["derive"]
 optional = true
 
-[dependencies.num_enum]
-version = "0.7"
-default-features = false
-
 [features]
 default = ["async", "rssi", "serde"]
-std = ["serde?/std", "num_enum/std"]
+std = ["serde?/std"]
 async = []
 defmt = ["dep:defmt"]
 rssi = ["dep:num-traits"]

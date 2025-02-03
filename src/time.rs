@@ -2,7 +2,6 @@
 
 use core::ops::{Add, Sub};
 
-
 #[cfg(feature = "defmt")]
 use defmt::Format;
 
