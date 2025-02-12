@@ -1,5 +1,5 @@
 use super::Awake;
-use crate::{fast_command, ll, time::Duration, Error, DW3000};
+use crate::{fast_command, ll, time::{Duration, Instant}, Error, DW3000};
 
 use smoltcp::wire::{Ieee802154Address, Ieee802154Pan};
 
@@ -43,12 +43,13 @@ where
         ))
     }
 
-    /// Returns the current system time (32-bit)
+    /// Returns the current system time (accurate the upper 32-bit)
     #[maybe_async_attr]
-    pub async fn sys_time(&mut self) -> Result<u32, Error<SPI>> {
+    pub async fn sys_time(&mut self) -> Result<Instant, Error<SPI>> {
         let sys_time = self.ll.sys_time().read().await?.value();
 
-        Ok(sys_time)
+        // The systime read the upper 32-bits from the 40-bit timer
+        Ok(Instant((sys_time as u64) << 8))
     }
 
     /// Returns the state of the DW3000

@@ -20,7 +20,7 @@ pub const TIME_MAX: u64 = 0xffffffffff;
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "defmt", derive(Format))]
 #[repr(C)]
-pub struct Instant(u64);
+pub struct Instant(pub(crate) u64);
 
 impl Instant {
     /// Creates a new instance of `Instant`
