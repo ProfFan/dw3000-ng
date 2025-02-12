@@ -27,7 +27,7 @@ pub struct Config {
     /// Defaults to 64
     pub sts_len: StsLen,
     /// SFD_timeout = Preamble length + 1 + sfdlength - pac size
-    pub sfd_timeout: u32,
+    pub sfd_timeout: u16,
     /// TX preamble code, optional
     /// If not set, the recommended value will be used (see `get_recommended_preamble_code`)
     pub tx_preamble_code: Option<u8>,
@@ -40,6 +40,8 @@ pub struct Config {
     pub phr_rate: PhrRate,
     /// PDoA mode
     pub pdoa_mode: PdoaMode,
+    /// When enabled, the radio itself will send acks to messages with the ack bit enabled.
+    pub auto_ack: AutoAck,
 }
 
 impl Default for Config {
@@ -60,8 +62,29 @@ impl Default for Config {
             phr_mode: Default::default(),
             phr_rate: Default::default(),
             pdoa_mode: Default::default(),
+            auto_ack: Default::default(),
         }
     }
+}
+
+/// The auto acknowledge behavior
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+pub enum AutoAck {
+    #[default]
+    /// No automatic acks are sent
+    Disabled,
+    /// An automatic Ack will be sent if:
+    /// - Frame filtering is on
+    /// - The received frame passes through the filter
+    /// - The frame has the ack bit set
+    Enabled {
+        /// The turnaround time in number of symbols.
+        ///
+        /// Recommended minimal value:
+        /// - 850 kbps: 2
+        /// - 6.8 Mbps: 3
+        turnaround_time: u8,
+    },
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]

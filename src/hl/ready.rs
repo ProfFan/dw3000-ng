@@ -532,20 +532,14 @@ where
         self.ll()
             .sys_enable()
             .modify(|_, w| {
-                w
-                    // .rxprd_en(0b1)
-                    //     .rxsfdd_en(0b1)
-                    //     .rxphd_en(0b1)
-                    .rxphe_en(0b1)
+                w.rxphe_en(0b1)
                     .rxfr_en(0b1)
-                    // .rxfcg_en(0b1)
                     .rxfce_en(0b1)
                     .rxrfsl_en(0b1)
                     .rxfto_en(0b1)
                     .rxovrr_en(0b1)
                     .rxpto_en(0b1)
                     .rxsto_en(0b1)
-                // .rxprej_en(0b1)
             })
             .await?;
         Ok(())

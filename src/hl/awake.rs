@@ -1,5 +1,9 @@
 use super::Awake;
-use crate::{fast_command, ll, time::{Duration, Instant}, Error, DW3000};
+use crate::{
+    fast_command, ll,
+    time::{Duration, Instant},
+    Error, DW3000,
+};
 
 use smoltcp::wire::{Ieee802154Address, Ieee802154Pan};
 
@@ -99,7 +103,7 @@ where
     pub async fn force_idle(&mut self) -> Result<(), Error<SPI>> {
         // our probleme on this function is that we never come back to IDLE_PLL with a locked PLL after usng fast command 0
 
-        self.ll.fast_command(0).await?;
+        self.fast_cmd(crate::FastCommand::CMD_TXRXOFF).await?;
 
         Ok(())
     }
