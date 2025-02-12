@@ -92,6 +92,10 @@ where
 
     /// Failed to calibrate the PGF values
     PGFCalibrationFailed,
+
+    WrongTxContinuation,
+
+    TxNotFinishedYet,
 }
 
 impl<SPI> From<ll::Error<SPI>> for Error<SPI>
@@ -148,6 +152,8 @@ where
             }
             Error::InitializationFailed => write!(f, "InitializationFailed"),
             Error::PGFCalibrationFailed => write!(f, "PGFCalibrationFailed"),
+            Error::WrongTxContinuation => write!(f, "WrongTxContinuation"),
+            Error::TxNotFinishedYet => write!(f, "TxNotFinishedYet"),
         }
     }
 }
@@ -187,6 +193,8 @@ where
             }
             Error::InitializationFailed => defmt::write!(f, "InitializationFailed"),
             Error::PGFCalibrationFailed => defmt::write!(f, "PGFCalibrationFailed"),
+            Error::WrongTxContinuation => defmt::write!(f, "WrongTxContinuation"),
+            Error::TxNotFinishedYet => defmt::write!(f, "TxNotFinishedYet"),
         }
     }
 }

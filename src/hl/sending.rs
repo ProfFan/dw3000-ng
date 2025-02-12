@@ -2,9 +2,12 @@
 
 use nb;
 
+use crate::configs::TxContinuation;
 use crate::{time::Instant, Error, Ready, Sending, DW3000};
 
 use crate::{maybe_async_attr, spi_type};
+
+use super::SingleBufferReceiving;
 
 impl<SPI> DW3000<SPI, Sending>
 where
@@ -85,13 +88,29 @@ where
         }
     }
 
+    /// Finishes sending and returns to the `Ready` state.
+    ///
+    /// If the used tx continuation was not set to ready, this function returns an error.
+    ///
+    /// If the send operation has finished, as indicated by `wait`, this is a
+    /// no-op. If the send operation is still ongoing, it will be aborted.
+    #[allow(clippy::type_complexity)]
+    #[maybe_async_attr]
+    pub async fn finish_sending(self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
+        if self.state.continuation != TxContinuation::Ready {
+            return Err((self, Error::WrongTxContinuation));
+        }
+
+        self.abort_sending().await
+    }
+
     #[allow(clippy::type_complexity)]
     /// Finishes sending and returns to the `Ready` state
     ///
     /// If the send operation has finished, as indicated by `wait`, this is a
     /// no-op. If the send operation is still ongoing, it will be aborted.
     #[maybe_async_attr]
-    pub async fn finish_sending(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
+    pub async fn abort_sending(mut self) -> Result<DW3000<SPI, Ready>, (Self, Error<SPI>)> {
         // In order to avoid undetermined states after a sending, we will force the state to idle
 
         if !self.state.is_finished() {
@@ -109,6 +128,37 @@ where
             ll: self.ll,
             seq: self.seq,
             state: Ready,
+        })
+    }
+
+    /// Continue on in the receiving state.
+    ///
+    /// This can only be called when the tx config specified this should be the continuation.
+    /// This function will not abort the send operation, so make sure to call [Self::wait_transmit] first.
+    #[maybe_async_attr]
+    pub async fn continue_receiving(
+        mut self,
+    ) -> Result<DW3000<SPI, SingleBufferReceiving>, (Self, Error<SPI>)> {
+        let TxContinuation::Rx = self.state.continuation else {
+            return Err((self, Error::WrongTxContinuation));
+        };
+
+        if !self.state.finished {
+            return Err((self, Error::TxNotFinishedYet));
+        }
+
+        match self.reset_flags().await {
+            Ok(()) => (),
+            Err(error) => return Err((self, error)),
+        }
+
+        Ok(DW3000 {
+            ll: self.ll,
+            seq: self.seq,
+            state: SingleBufferReceiving {
+                finished: false,
+                config: self.state.config,
+            },
         })
     }
 

@@ -84,14 +84,12 @@ where
                 .await?;
             self.ll
                 .ff_cfg()
-                .modify(
-                    |_, w| {
-                        w.ffab(0b1) // receive beacon frames
-                            .ffad(0b1) // receive data frames
-                            .ffaa(0b1) // receive acknowledgement frames
-                            .ffam(0b1)
-                    }, // receive MAC command frames
-                )
+                .modify(|_, w| {
+                    w.ffab(0b1) // receive beacon frames
+                        .ffad(0b1) // receive data frames
+                        .ffaa(0b1) // receive acknowledgement frames
+                        .ffam(0b1) // receive MAC command frames
+                })
                 .await?;
         } else {
             self.ll.sys_cfg().modify(|_, w| w.ffen(0b0)).await?; // disable frame filtering

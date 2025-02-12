@@ -67,6 +67,16 @@ impl Default for Config {
     }
 }
 
+/// Setting for how the transmission should be continued
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
+pub enum TxContinuation {
+    #[default]
+    /// After the transmission the radio should go back to ready
+    Ready,
+    /// After the transmission the radio should go to the receiving state
+    Rx,
+}
+
 /// The auto acknowledge behavior
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Default)]
 pub enum AutoAck {

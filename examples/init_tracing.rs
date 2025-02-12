@@ -1,6 +1,6 @@
 // This example uses a dummy SPI/GPIO implementation to test what happens when
 // the `dw3000_ng` driver is initialized.
-use dw3000_ng::{hl::SendTime, Config, DW3000};
+use dw3000_ng::{configs::TxContinuation, hl::SendTime, Config, DW3000};
 
 use embedded_hal_bus::spi::ExclusiveDevice;
 
@@ -208,7 +208,10 @@ async fn main() {
     log::info!("DW3000 finished receiving");
 
     let data = [0xDE, 0xAD, 0xBE, 0xEF];
-    let sending = dw3000.send(&data, SendTime::Now, config).await.unwrap();
+    let sending = dw3000
+        .send(&data, SendTime::Now, TxContinuation::Ready, config)
+        .await
+        .unwrap();
 
     log::info!("DW3000 is now sending");
 

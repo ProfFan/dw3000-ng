@@ -1,4 +1,4 @@
-use crate::Config;
+use crate::{configs::TxContinuation, Config};
 
 /// Indicates that the `DW3000` instance is not initialized yet
 #[derive(Debug)]
@@ -12,6 +12,8 @@ pub struct Ready;
 #[derive(Debug)]
 pub struct Sending {
     pub(super) finished: bool,
+    pub(super) continuation: TxContinuation,
+    pub(super) config: Config,
 }
 impl Sending {
     /// Mark the receiving state as finished

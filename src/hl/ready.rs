@@ -6,7 +6,7 @@ use byte::BytesExt as _;
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
-    configs::{PdoaMode, SfdSequence},
+    configs::{PdoaMode, SfdSequence, TxContinuation},
     maybe_async_attr, spi_type,
     time::Instant,
     Config, Error, FastCommand, Ready, Sending, SingleBufferReceiving, Sleeping, DW3000,
@@ -146,7 +146,8 @@ where
         mut self,
         data: &[u8],
         send_time: SendTime,
-        config: &Config,
+        continuation: TxContinuation,
+        config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         // Clear event counters
         self.ll.evc_ctrl().write(|w| w.evc_clr(0b1)).await?;
@@ -210,19 +211,33 @@ where
                     .modify(|_, w| // 32-bits value of the most significant bits
                     w.value( (time.value() >> 8) as u32 ))
                     .await?;
-                self.fast_cmd(FastCommand::CMD_DTX).await?;
+                if matches!(continuation, TxContinuation::Ready) {
+                    self.fast_cmd(FastCommand::CMD_DTX).await?;
+                } else {
+                    self.fast_cmd(FastCommand::CMD_DTX_W4R).await?;
+                }
             }
             SendTime::OnSync => {
                 self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
                 self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
             }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
+            SendTime::Now => {
+                if matches!(continuation, TxContinuation::Ready) {
+                    self.fast_cmd(FastCommand::CMD_TX).await?
+                } else {
+                    self.fast_cmd(FastCommand::CMD_TX_W4R).await?
+                }
+            }
         }
 
         Ok(DW3000 {
             ll: self.ll,
             seq: self.seq,
-            state: Sending { finished: false },
+            state: Sending {
+                finished: false,
+                continuation,
+                config,
+            },
         })
     }
 
@@ -249,6 +264,7 @@ where
         mut self,
         frame: Ieee802154Frame<T>,
         send_time: SendTime,
+        continuation: TxContinuation,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>>
     where
@@ -312,19 +328,33 @@ where
                     .modify(|_, w| // 32-bits value of the most significant bits
                     w.value( (time.value() >> 8) as u32 ))
                     .await?;
-                self.fast_cmd(FastCommand::CMD_DTX).await?;
+                if matches!(continuation, TxContinuation::Ready) {
+                    self.fast_cmd(FastCommand::CMD_DTX).await?;
+                } else {
+                    self.fast_cmd(FastCommand::CMD_DTX_W4R).await?;
+                }
             }
             SendTime::OnSync => {
                 self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
                 self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
             }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
+            SendTime::Now => {
+                if matches!(continuation, TxContinuation::Ready) {
+                    self.fast_cmd(FastCommand::CMD_TX).await?
+                } else {
+                    self.fast_cmd(FastCommand::CMD_TX_W4R).await?
+                }
+            }
         }
 
         Ok(DW3000 {
             ll: self.ll,
             seq: self.seq,
-            state: Sending { finished: false },
+            state: Sending {
+                finished: false,
+                continuation,
+                config,
+            },
         })
     }
 
@@ -352,6 +382,7 @@ where
         mut self,
         data: &[u8],
         send_time: SendTime,
+        continuation: TxContinuation,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         // Clear event counters
@@ -438,19 +469,33 @@ where
                     .modify(|_, w| // 32-bits value of the most significant bits
                     w.value( (time.value() >> 8) as u32 ))
                     .await?;
-                self.fast_cmd(FastCommand::CMD_DTX).await?;
+                if matches!(continuation, TxContinuation::Ready) {
+                    self.fast_cmd(FastCommand::CMD_DTX).await?;
+                } else {
+                    self.fast_cmd(FastCommand::CMD_DTX_W4R).await?;
+                }
             }
             SendTime::OnSync => {
                 self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
                 self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
             }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
+            SendTime::Now => {
+                if matches!(continuation, TxContinuation::Ready) {
+                    self.fast_cmd(FastCommand::CMD_TX).await?
+                } else {
+                    self.fast_cmd(FastCommand::CMD_TX_W4R).await?
+                }
+            }
         }
 
         Ok(DW3000 {
             ll: self.ll,
             seq: self.seq,
-            state: Sending { finished: false },
+            state: Sending {
+                finished: false,
+                continuation,
+                config,
+            },
         })
     }
 
