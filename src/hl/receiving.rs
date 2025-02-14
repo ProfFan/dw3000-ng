@@ -407,22 +407,22 @@ where
             (PulseRepetitionFrequency::Mhz64, Method::Sts) => 120.7,
         };
 
-        let f1;
-        let f2;
-        let f3;
+        let f1: u64;
+        let f2: u64;
+        let f3: u64;
         let n;
 
         match method {
             Method::Ipatov => {
-                f1 = ll.ip_diag_2().read().await?.ip_fp1m();
-                f2 = ll.ip_diag_3().read().await?.ip_fp2m();
-                f3 = ll.ip_diag_4().read().await?.ip_fp3m();
+                f1 = ll.ip_diag_2().read().await?.ip_fp1m() as u64;
+                f2 = ll.ip_diag_3().read().await?.ip_fp2m() as u64;
+                f3 = ll.ip_diag_4().read().await?.ip_fp3m() as u64;
                 n = ll.ip_diag_12().read().await?.ip_nacc();
             }
             Method::Sts => {
-                f1 = ll.sts_diag_2().read().await?.cp0_fp1m();
-                f2 = ll.sts_diag_3().read().await?.cp0_fp2m();
-                f3 = ll.sts_diag_4().read().await?.cp0_fp3m();
+                f1 = ll.sts_diag_2().read().await?.cp0_fp1m() as u64;
+                f2 = ll.sts_diag_3().read().await?.cp0_fp2m() as u64;
+                f3 = ll.sts_diag_4().read().await?.cp0_fp3m() as u64;
                 n = ll.sts_diag_12().read().await?.cp0_nacc();
             }
         }
