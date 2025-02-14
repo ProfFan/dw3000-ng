@@ -47,7 +47,7 @@ where
         ))
     }
 
-    /// Returns the current system time (accurate the upper 32-bit)
+    /// Returns the current system time (accurate to the upper 32-bit)
     #[maybe_async_attr]
     pub async fn sys_time(&mut self) -> Result<Instant, Error<SPI>> {
         let sys_time = self.ll.sys_time().read().await?.value();

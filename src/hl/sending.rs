@@ -134,7 +134,7 @@ where
     /// Continue on in the receiving state.
     ///
     /// This can only be called when the tx config specified this should be the continuation.
-    /// This function will not abort the send operation, so make sure to call [Self::wait_transmit] first.
+    /// This function will not abort the send operation, so make sure to call [Self::s_wait] first.
     #[maybe_async_attr]
     pub async fn continue_receiving(
         mut self,

@@ -93,8 +93,10 @@ where
     /// Failed to calibrate the PGF values
     PGFCalibrationFailed,
 
+    /// The wrong continuation was called on the radio
     WrongTxContinuation,
 
+    /// The transmission has not yet finished
     TxNotFinishedYet,
 }
 
