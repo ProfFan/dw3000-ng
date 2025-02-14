@@ -475,7 +475,7 @@ where
 
         self.ll
             .rx_sfd_toc()
-            .modify(|_, w| w.value(config.sfd_timeout as u16))
+            .modify(|_, w| w.value(config.sfd_timeout))
             .await?;
         Ok(())
     }
