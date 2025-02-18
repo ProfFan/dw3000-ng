@@ -61,7 +61,7 @@ where
         tx_delay: u16,
     ) -> Result<(), Error<SPI>> {
         self.ll.cia_conf().modify(|_, w| w.rxantd(rx_delay)).await?;
-        self.ll.tx_antd().write(|w| w.value(tx_delay)).await?;
+        self.ll.tx_antd().modify(|_, w| w.value(tx_delay)).await?;
 
         Ok(())
     }
@@ -79,7 +79,7 @@ where
 
         self.ll
             .panadr()
-            .write(|w| {
+            .modify(|_, w| {
                 w.pan_id(pan_id.0)
                     .short_addr(u16::from_be_bytes(short_addr))
             })
@@ -124,29 +124,35 @@ where
 
     /// clear event counter evc_ctrl->evc_clr
     #[maybe_async_attr]
-    pub async fn clear_event_counter(&mut self) {
+    pub async fn clear_event_counter(&mut self)-> Result<(), Error<SPI>> {
         self.ll
             .evc_ctrl()
-            .write(|w| w.evc_clr(0b1))
-            .await.expect("Failed to set evc_ctrl->evc_clr");
+            .modify(|_, w| w.evc_clr(0b1))
+            .await?;
+        
+        Ok(())
     }
 
     /// re-enable event counter evc_ctrl->evc_en
     #[maybe_async_attr]
-    pub async fn enable_event_counter(&mut self) {
+    pub async fn enable_event_counter(&mut self)-> Result<(), Error<SPI>> {
         self.ll
             .evc_ctrl()
-            .write(|w| w.evc_en(0b1))
-            .await.expect("Failed to set evc_ctrl->evc_en");
+            .modify(|_, w| w.evc_en(0b1))
+            .await?;
+        
+        Ok(())
     }
     
     /// enable_tx_clock clk_ctrl->tx_clk
     #[maybe_async_attr]
-    pub async fn enable_tx_clock(&mut self){
+    pub async fn enable_tx_clock(&mut self)-> Result<(), Error<SPI>> {
         self.ll
             .clk_ctrl()
-            .write(|w| w.tx_clk(0b10))
-            .await.expect("Failed to set clk_ctrl->tx_clk");
+            .modify(|_, w| w.tx_clk(0b10))
+            .await?;
+        
+        Ok(())
     }
 
     /// Creates a IEEE 802.15.4 MAC frame header
@@ -240,8 +246,8 @@ where
         send_time: SendTime,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
-        self.clear_event_counter().await;
-        self.enable_event_counter().await;
+        self.clear_event_counter().await?;
+        self.enable_event_counter().await?;
         // self.enable_tx_clock().await;
 
         // Prepare transmitter
@@ -268,7 +274,7 @@ where
 
         self.ll
             .tx_fctrl()
-            .write(|w| {
+            .modify(|_, w| {
                 let txflen = len as u16 + 2;
                 w.txflen(txflen) // data length + two-octet CRC
                     .txbr(config.bitrate as u8) // configured bitrate
@@ -281,25 +287,17 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
-                // Panic if the time is not rounded to top 31 bits
-                //
-                // NOTE: DW3000's DX_TIME register is 32 bits wide, but only the top 31 bits are used.
-                // The last bit is ignored per the user manual!!!
-                if time.value() % (1 << 9) != 0 {
-                    panic!("Time must be rounded to top 31 bits!");
-                }
-
                 // Put the time into the delay register
                 // By setting this register, the chip knows to delay before transmitting
                 self.ll
                     .dx_time()
-                    .write(|w| w.value( (time.value() >> 8) as u32 ))// 32-bits value of the most significant bits
+                    .modify(|_, w| w.value( time.value_u31() ))// 32-bits value of the most significant bits
                     .await?;
                 self.fast_cmd(FastCommand::CMD_DTX).await?;
             }
             SendTime::OnSync => {
-                self.ll.ec_ctrl().write(|w| w.ostr_mode(1)).await?;
-                self.ll.ec_ctrl().write(|w| w.osts_wait(33)).await?;
+                self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
+                self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
             }
             SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
         }
