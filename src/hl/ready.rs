@@ -294,7 +294,7 @@ where
                 if time.value() % (1 << 9) != 0 {
                     panic!("Time must be rounded to top 31 bits!");
                 }
-                
+
                 // Put the time into the delay register
                 // By setting this register, the chip knows to delay before transmitting
                 self.ll
