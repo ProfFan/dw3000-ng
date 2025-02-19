@@ -287,6 +287,7 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
+                // Panic if the time is not rounded to top 31 bits
                 //
                 // NOTE: DW3000's DX_TIME register is 32 bits wide, but only the top 31 bits are used.
                 // The last bit is ignored per the user manual!!!
