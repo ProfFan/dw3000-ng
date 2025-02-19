@@ -287,11 +287,19 @@ where
 
         match send_time {
             SendTime::Delayed(time) => {
+                //
+                // NOTE: DW3000's DX_TIME register is 32 bits wide, but only the top 31 bits are used.
+                // The last bit is ignored per the user manual!!!
+                if time.value() % (1 << 9) != 0 {
+                    panic!("Time must be rounded to top 31 bits!");
+                }
+                
                 // Put the time into the delay register
                 // By setting this register, the chip knows to delay before transmitting
                 self.ll
                     .dx_time()
-                    .modify(|_, w| w.value( time.value_u31() ))// 32-bits value of the most significant bits
+                    .modify(|_, w| // 32-bits value of the most significant bits
+                    w.value( (time.value() >> 8) as u32 ))
                     .await?;
                 self.fast_cmd(FastCommand::CMD_DTX).await?;
             }
