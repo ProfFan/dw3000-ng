@@ -180,10 +180,10 @@ where
             frame_pending: false,
             ack_request: false,
             pan_id_compression: true,
-            dst_addr: dst_addr,
+            dst_addr,
             src_addr: Some(src_addr),
             src_pan_id: Some(src_pan_id),
-            dst_pan_id: dst_pan_id,
+            dst_pan_id,
         }
     } 
     
@@ -350,7 +350,7 @@ where
         let mut buffer= [0_u8; 127];
         buffer[0..].copy_from_slice(frame.into_inner().as_ref());
         
-        self.send_raw(&mut buffer, send_time, config).await
+        self.send_raw(&buffer, send_time, config).await
     }
 
 
