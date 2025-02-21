@@ -124,34 +124,25 @@ where
 
     /// clear event counter evc_ctrl->evc_clr
     #[maybe_async_attr]
-    pub async fn clear_event_counter(&mut self)-> Result<(), Error<SPI>> {
-        self.ll
-            .evc_ctrl()
-            .modify(|_, w| w.evc_clr(0b1))
-            .await?;
-        
+    pub async fn clear_event_counter(&mut self) -> Result<(), Error<SPI>> {
+        self.ll.evc_ctrl().modify(|_, w| w.evc_clr(0b1)).await?;
+
         Ok(())
     }
 
     /// re-enable event counter evc_ctrl->evc_en
     #[maybe_async_attr]
-    pub async fn enable_event_counter(&mut self)-> Result<(), Error<SPI>> {
-        self.ll
-            .evc_ctrl()
-            .modify(|_, w| w.evc_en(0b1))
-            .await?;
-        
+    pub async fn enable_event_counter(&mut self) -> Result<(), Error<SPI>> {
+        self.ll.evc_ctrl().modify(|_, w| w.evc_en(0b1)).await?;
+
         Ok(())
     }
-    
+
     /// enable_tx_clock clk_ctrl->tx_clk
     #[maybe_async_attr]
-    pub async fn enable_tx_clock(&mut self)-> Result<(), Error<SPI>> {
-        self.ll
-            .clk_ctrl()
-            .modify(|_, w| w.tx_clk(0b10))
-            .await?;
-        
+    pub async fn enable_tx_clock(&mut self) -> Result<(), Error<SPI>> {
+        self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10)).await?;
+
         Ok(())
     }
 
@@ -163,16 +154,16 @@ where
     /// NOTE: every call will increment the frame sequence code
     #[maybe_async_attr]
     pub async fn build_frame_header(
-        &mut self, 
+        &mut self,
         dst_addr: Option<Ieee802154Address>,
-        dst_pan_id: Option<Ieee802154Pan>
-    ) -> Ieee802154Repr {
-        let (src_pan_id, src_addr) = self.get_address().await.unwrap();
+        dst_pan_id: Option<Ieee802154Pan>,
+    ) -> Result<Ieee802154Repr, Error<SPI>> {
+        let (src_pan_id, src_addr) = self.get_address().await?;
 
         let seq = self.seq.0;
         self.seq += Wrapping(1);
 
-        Ieee802154Repr {
+        Ok(Ieee802154Repr {
             frame_type: smoltcp::wire::Ieee802154FrameType::Data,
             frame_version: smoltcp::wire::Ieee802154FrameVersion::Ieee802154_2006,
             security_enabled: false,
@@ -184,25 +175,25 @@ where
             src_addr: Some(src_addr),
             src_pan_id: Some(src_pan_id),
             dst_pan_id,
-        }
-    } 
-    
+        })
+    }
+
     /// Write the IEEE 802.15.4 MAC frame to buffer
-    /// 
+    ///
     /// You can set the destination address and pan_id in order to use frame filtering.
-    /// 
+    ///
     /// The `data` argument is populated on the payload
-    /// 
+    ///
     /// It returns the length of the message (Header + Data)
     #[maybe_async_attr]
     pub async fn build_frame(
-        &mut self, 
+        &mut self,
         buffer: &mut [u8],
         data: &[u8],
         dst_addr: Option<Ieee802154Address>,
         dst_pan_id: Option<Ieee802154Pan>,
-    ) -> usize{
-        let frame_header = self.build_frame_header(dst_addr, dst_pan_id).await;
+    ) -> Result<usize, Error<SPI>> {
+        let frame_header = self.build_frame_header(dst_addr, dst_pan_id).await?;
 
         let mut frame = Ieee802154Frame::new_unchecked(&mut buffer[0..]);
         frame_header.emit(&mut frame);
@@ -210,15 +201,13 @@ where
         let len = frame_header.buffer_len() + data.len();
 
         // copy data
-        buffer[frame_header.buffer_len()..len]
-            .copy_from_slice(data);
+        buffer[frame_header.buffer_len()..len].copy_from_slice(data);
 
         // footer
         buffer[len] = 0x00;
-        
-        len
+
+        Ok(len)
     }
-    
 
     /// Send an raw UWB PHY frame
     ///
@@ -346,13 +335,11 @@ where
     where
         T: AsRef<[u8]>,
     {
-
-        let mut buffer= [0_u8; 127];
+        let mut buffer = [0_u8; 127];
         buffer[0..].copy_from_slice(frame.into_inner().as_ref());
-        
+
         self.send_raw(&buffer, send_time, config).await
     }
-
 
     /// Send an IEEE 802.15.4 MAC frame
     ///
@@ -380,13 +367,15 @@ where
         send_time: SendTime,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
-        return self.send_to(
-            data,
-            send_time,
-            Ieee802154Pan::BROADCAST,
-            Ieee802154Address::BROADCAST,
-            config,
-        ).await;
+        return self
+            .send_to(
+                data,
+                send_time,
+                Ieee802154Pan::BROADCAST,
+                Ieee802154Address::BROADCAST,
+                config,
+            )
+            .await;
     }
 
     /// Send an IEEE 802.15.4 MAC frame to a target destination address and pan_id
@@ -418,12 +407,9 @@ where
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         let mut buffer = [0_u8; 127];
-        let len = self.build_frame(
-            &mut buffer,
-            data,
-            Some(address),
-            Some(pan_id)
-        ).await;
+        let len = self
+            .build_frame(&mut buffer, data, Some(address), Some(pan_id))
+            .await?;
 
         return self.send_raw(&buffer[0..len + 2], send_time, config).await;
     }
