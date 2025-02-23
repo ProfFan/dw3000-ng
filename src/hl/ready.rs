@@ -335,7 +335,8 @@ where
     where
         T: AsRef<[u8]>,
     {
-        self.send_raw(frame.into_inner().as_ref(), send_time, config).await
+        self.send_raw(frame.into_inner().as_ref(), send_time, config)
+            .await
     }
 
     /// Send an IEEE 802.15.4 MAC frame
