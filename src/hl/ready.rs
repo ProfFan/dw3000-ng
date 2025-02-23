@@ -335,10 +335,7 @@ where
     where
         T: AsRef<[u8]>,
     {
-        let mut buffer = [0_u8; 127];
-        buffer[0..].copy_from_slice(frame.into_inner().as_ref());
-
-        self.send_raw(&buffer, send_time, config).await
+        self.send_raw(frame.into_inner().as_ref(), send_time, config).await
     }
 
     /// Send an IEEE 802.15.4 MAC frame
