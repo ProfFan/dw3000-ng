@@ -151,13 +151,11 @@ where
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         // Clear event counters
         self.ll.evc_ctrl().write(|w| w.evc_clr(0b1)).await?;
-        // while self.ll.evc_ctrl().read()?.evc_clr() == 0b1 {}
+        while self.ll.evc_ctrl().read().await?.evc_clr() == 0b1 {}
 
         // (Re-)Enable event counters
         self.ll.evc_ctrl().write(|w| w.evc_en(0b1)).await?;
-        // while self.ll.evc_ctrl().read()?.evc_en() == 0b1 {}
-
-        // self.ll.clk_ctrl().modify(|_, w| w.tx_clk(0b10)).await?;
+        while self.ll.evc_ctrl().read().await?.evc_en() == 0b1 {}
 
         // Prepare transmitter
         let mut len: usize = 0;

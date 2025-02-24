@@ -77,18 +77,19 @@ where
     ) -> Result<(), Error<SPI>> {
         if config.frame_filtering {
             self.ll
-                .sys_cfg()
-                .modify(
-                    |_, w| w.ffen(0b1), // enable frame filtering
-                )
-                .await?;
-            self.ll
                 .ff_cfg()
                 .modify(|_, w| {
                     w.ffab(0b1) // receive beacon frames
                         .ffad(0b1) // receive data frames
                         .ffaa(0b1) // receive acknowledgement frames
                         .ffam(0b1) // receive MAC command frames
+                })
+                .await?;
+            self.ll
+                .sys_cfg()
+                .modify(|_, w| {
+                    w.ffen(0b1). // enable frame filtering
+                    rxautr(0b1) // enable Receiver Auto-Re-enable for failed/filtered frames
                 })
                 .await?;
         } else {
