@@ -19,7 +19,6 @@ embedded-hal = "1.0"
 embedded-hal-async = "1.0"
 smoltcp = { version = ">=0.11", default-features = false, features = [
     "socket-raw",
-    "defmt",
     "medium-ieee802154",
 ] }
 nb = "1.0"
@@ -47,6 +46,6 @@ optional = true
 default = ["async", "rssi", "serde"]
 std = ["serde?/std"]
 async = []
-defmt = ["dep:defmt"]
+defmt = ["dep:defmt", "smoltcp/defmt"]
 rssi = ["dep:num-traits"]
 serde = ["dep:serde"]
