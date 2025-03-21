@@ -74,7 +74,7 @@ where
         let ldo_tune_h = self.read_otp(0x05).await?;
 
         // Read BIASTUNE_CAL value from OTP memory (bit 16 to 20)
-        let biastune_cal = self.read_otp(0x0A).await? >> 0x10 & 0x1F;
+        let biastune_cal = (self.read_otp(0x0A).await? >> 0x10) & 0x1F;
 
         #[cfg(feature = "defmt")]
         defmt::trace!(
