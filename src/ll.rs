@@ -1653,15 +1653,12 @@ impl_register! {
 }
 
 /// Transmit Data Buffer
-///
-/// Currently only the first 127 bytes of the buffer are supported, which is
-/// enough to support standard Standard IEEE 802.15.4 UWB frames.
 #[allow(non_camel_case_types)]
 pub struct TX_BUFFER;
 
 impl Register for TX_BUFFER {
     const ID: u8 = 0x14;
-    const LEN: usize = 127;
+    const LEN: usize = 1024;
     const SUB_ID: u8 = 0x00;
 }
 
@@ -1669,7 +1666,7 @@ impl Writable for TX_BUFFER {
     type Write = tx_buffer::W;
 
     fn write() -> Self::Write {
-        tx_buffer::W([0; 127 + 2])
+        tx_buffer::W([0; Self::LEN])
     }
 
     fn buffer(w: &mut Self::Write) -> &mut [u8] {
@@ -1686,12 +1683,11 @@ impl<SPI> DW3000<SPI> {
 
 /// Transmit Data Buffer
 pub mod tx_buffer {
-
     const HEADER_LEN: usize = 2;
-    const LEN: usize = 127;
+    const LEN: usize = 1024;
 
     /// Used to write to the register
-    pub struct W(pub(crate) [u8; LEN + HEADER_LEN]);
+    pub struct W(pub(crate) [u8; LEN]);
 
     impl W {
         /// Provides write access to the buffer contents
@@ -1702,15 +1698,12 @@ pub mod tx_buffer {
 }
 
 /// Receive Data Buffer 0
-///
-/// Currently only the first 127 bytes of the buffer are supported, which is
-/// enough to support standard Standard IEEE 802.15.4 UWB frames.
 #[allow(non_camel_case_types)]
 pub struct RX_BUFFER_0;
 
 impl Register for RX_BUFFER_0 {
     const ID: u8 = 0x12;
-    const LEN: usize = 127;
+    const LEN: usize = 1024;
     const SUB_ID: u8 = 0x00;
 }
 
@@ -1718,7 +1711,7 @@ impl Readable for RX_BUFFER_0 {
     type Read = rx_buffer_0::R;
 
     fn read() -> Self::Read {
-        rx_buffer_0::R([0; 127 + 2])
+        rx_buffer_0::R([0; Self::LEN])
     }
 
     fn buffer(w: &mut Self::Read) -> &mut [u8] {
@@ -1738,23 +1731,23 @@ pub mod rx_buffer_0 {
     use core::fmt;
 
     const HEADER_LEN: usize = 2;
-    const LEN: usize = 127;
+    const LEN: usize = 1024;
 
     /// Used to read from the register
-    pub struct R(pub(crate) [u8; HEADER_LEN + LEN]);
+    pub struct R(pub(crate) [u8; LEN]);
 
     impl R {
         /// Provides read access to the buffer contents
         pub fn data(&self) -> &[u8] {
-            &self.0[HEADER_LEN..HEADER_LEN + LEN]
+            &self.0[HEADER_LEN..]
         }
     }
 
     impl fmt::Debug for R {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "0x")?;
-            for i in (0..LEN).rev() {
-                write!(f, "{:02x}", self.0[HEADER_LEN + i])?;
+            for byte in self.data().iter().rev() {
+                write!(f, "{byte:02x}")?;
             }
 
             Ok(())
@@ -1763,15 +1756,12 @@ pub mod rx_buffer_0 {
 }
 
 /// Receive Data Buffer 1
-///
-/// Currently only the first 127 bytes of the buffer are supported, which is
-/// enough to support Standard IEEE 802.15.4 UWB frames.
 #[allow(non_camel_case_types)]
 pub struct RX_BUFFER_1;
 
 impl Register for RX_BUFFER_1 {
     const ID: u8 = 0x13;
-    const LEN: usize = 127;
+    const LEN: usize = 1024;
     const SUB_ID: u8 = 0x00;
 }
 
@@ -1779,7 +1769,7 @@ impl Readable for RX_BUFFER_1 {
     type Read = rx_buffer_1::R;
 
     fn read() -> Self::Read {
-        rx_buffer_1::R([0; 127 + 2])
+        rx_buffer_1::R([0; Self::LEN])
     }
 
     fn buffer(w: &mut Self::Read) -> &mut [u8] {
@@ -1799,23 +1789,23 @@ pub mod rx_buffer_1 {
     use core::fmt;
 
     const HEADER_LEN: usize = 2;
-    const LEN: usize = 127;
+    const LEN: usize = 1024;
 
     /// Used to read from the register
-    pub struct R(pub(crate) [u8; HEADER_LEN + LEN]);
+    pub struct R(pub(crate) [u8; LEN]);
 
     impl R {
         /// Provides read access to the buffer contents
         pub fn data(&self) -> &[u8] {
-            &self.0[HEADER_LEN..HEADER_LEN + LEN]
+            &self.0[HEADER_LEN..]
         }
     }
 
     impl fmt::Debug for R {
         fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             write!(f, "0x")?;
-            for i in (0..LEN).rev() {
-                write!(f, "{:02x}", self.0[HEADER_LEN + i])?;
+            for byte in self.data().iter().rev() {
+                write!(f, "{byte:02x}")?;
             }
 
             Ok(())
