@@ -153,7 +153,7 @@ where
     SPI::Error: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -169,7 +169,7 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Transfer(error) => write!(f, "Transfer({:?})", error),
+            Error::Transfer(error) => write!(f, "Transfer({error:?})"),
         }
     }
 }
