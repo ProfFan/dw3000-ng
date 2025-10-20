@@ -108,7 +108,7 @@ where
     SPI: spi::ErrorType,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -124,11 +124,11 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Spi(error) => write!(f, "Spi({:?})", error),
+            Error::Spi(error) => write!(f, "Spi({error:?})"),
             Error::Fcs => write!(f, "Fcs"),
             Error::Phy => write!(f, "Phy"),
             Error::BufferTooSmall { required_len } => {
-                write!(f, "BufferTooSmall {{ required_len: {:?} }}", required_len,)
+                write!(f, "BufferTooSmall {{ required_len: {required_len:?} }}")
             }
             Error::ReedSolomon => write!(f, "ReedSolomon"),
             Error::FrameWaitTimeout => write!(f, "FrameWaitTimeout"),
@@ -136,7 +136,7 @@ where
             Error::PreambleDetectionTimeout => write!(f, "PreambleDetectionTimeout"),
             Error::SfdTimeout => write!(f, "SfdTimeout"),
             Error::FrameFilteringRejection => write!(f, "FrameFilteringRejection"),
-            Error::Frame(error) => write!(f, "Frame({:?})", error),
+            Error::Frame(error) => write!(f, "Frame({error:?})"),
             Error::DelayedSendTooLate => write!(f, "DelayedSendTooLate"),
             Error::DelayedSendPowerUpWarning => write!(f, "DelayedSendPowerUpWarning"),
             Error::InvalidConfiguration => write!(f, "InvalidConfiguration"),
@@ -153,7 +153,6 @@ where
 }
 
 #[cfg(feature = "defmt")]
-
 // We can't derive this implementation, as `Debug` is only implemented
 // conditionally for `ll::Debug`.
 impl<SPI> Format for Error<SPI>
@@ -167,7 +166,7 @@ where
             Error::Fcs => defmt::write!(f, "Fcs"),
             Error::Phy => defmt::write!(f, "Phy"),
             Error::BufferTooSmall { required_len } => {
-                defmt::write!(f, "BufferTooSmall {{ required_len: {:?} }}", required_len,)
+                defmt::write!(f, "BufferTooSmall {{ required_len: {:?} }}", required_len)
             }
             Error::ReedSolomon => defmt::write!(f, "ReedSolomon"),
             Error::FrameWaitTimeout => defmt::write!(f, "FrameWaitTimeout"),

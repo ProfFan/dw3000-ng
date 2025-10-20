@@ -386,7 +386,7 @@ impl StsLen {
 
         // Compute the square root of the squared value with Newton's method
         let sqrt = |x: u32| -> u32 {
-            let mut z = (x + 1) / 2;
+            let mut z = x.div_ceil(2);
             let mut y = x;
             while z < y {
                 y = z;

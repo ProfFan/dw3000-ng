@@ -153,7 +153,7 @@ where
     SPI::Error: core::fmt::Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -169,7 +169,7 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::Transfer(error) => write!(f, "Transfer({:?})", error),
+            Error::Transfer(error) => write!(f, "Transfer({error:?})"),
         }
     }
 }
@@ -567,7 +567,7 @@ macro_rules! impl_register {
         impl<SPI> DW3000<SPI> {
             $(
                 #[$doc]
-                pub fn $name_lower(&mut self) -> RegAccessor<$name, SPI> {
+                pub fn $name_lower(&mut self) -> RegAccessor<'_, $name, SPI> {
                     RegAccessor(self, PhantomData)
                 }
             )*
@@ -1679,7 +1679,7 @@ impl Writable for TX_BUFFER {
 
 impl<SPI> DW3000<SPI> {
     /// Transmit Data Buffer
-    pub fn tx_buffer(&mut self) -> RegAccessor<TX_BUFFER, SPI> {
+    pub fn tx_buffer(&mut self) -> RegAccessor<'_, TX_BUFFER, SPI> {
         RegAccessor(self, PhantomData)
     }
 }
@@ -1728,7 +1728,7 @@ impl Readable for RX_BUFFER_0 {
 
 impl<SPI> DW3000<SPI> {
     /// Receive Data Buffer
-    pub fn rx_buffer_0(&mut self) -> RegAccessor<RX_BUFFER_0, SPI> {
+    pub fn rx_buffer_0(&mut self) -> RegAccessor<'_, RX_BUFFER_0, SPI> {
         RegAccessor(self, PhantomData)
     }
 }
@@ -1789,7 +1789,7 @@ impl Readable for RX_BUFFER_1 {
 
 impl<SPI> DW3000<SPI> {
     /// Receive Data Buffer1
-    pub fn rx_buffer_1(&mut self) -> RegAccessor<RX_BUFFER_1, SPI> {
+    pub fn rx_buffer_1(&mut self) -> RegAccessor<'_, RX_BUFFER_1, SPI> {
         RegAccessor(self, PhantomData)
     }
 }
