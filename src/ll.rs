@@ -567,7 +567,7 @@ macro_rules! impl_register {
         impl<SPI> DW3000<SPI> {
             $(
                 #[$doc]
-                pub fn $name_lower(&mut self) -> RegAccessor<$name, SPI> {
+                pub fn $name_lower(&mut self) -> RegAccessor<'_, $name, SPI> {
                     RegAccessor(self, PhantomData)
                 }
             )*
@@ -652,7 +652,7 @@ impl_register! {
         dis_drxb,    3,  3, u8; /// Disable Double RX Buffer
         phr_mode,    4,  4, u8; /// PHR Mode
         phr_6m8,     5,  5, u8; /// Sets the PHR rate to match the data rate
-        spi_crcen,   6,  6, u8; /// Enable SPI CRC functionnality
+        spi_crcen,   6,  6, u8; /// Enable SPI CRC functionality
         cia_ipatov,  7,  7, u8; /// Select CIA processing preamble CIR
         cia_sts,     8,  8, u8; /// Select CIA processing STS CIR
         rxwtoe,      9,  9, u8; /// Receive Wait Timeout Enable
@@ -750,7 +750,7 @@ impl_register! {
     0x00, 0x44, 6, RW, SYS_STATUS(sys_status) { /// System Event Status Register
         irqs,       0,  0, u8; /// Interrupt Request Status
         cplock,     1,  1, u8; /// Clock PLL Lock
-        spicrce,    2,  2, u8; /// External Sync Clock Reset
+        spicrce,    2,  2, u8; /// SPI CRC Error event
         aat,        3,  3, u8; /// Automatic Acknowledge Trigger
         txfrb,      4,  4, u8; /// TX Frame Begins
         txprs,      5,  5, u8; /// TX Preamble Sent
@@ -1679,7 +1679,7 @@ impl Writable for TX_BUFFER {
 
 impl<SPI> DW3000<SPI> {
     /// Transmit Data Buffer
-    pub fn tx_buffer(&mut self) -> RegAccessor<TX_BUFFER, SPI> {
+    pub fn tx_buffer(&mut self) -> RegAccessor<'_, TX_BUFFER, SPI> {
         RegAccessor(self, PhantomData)
     }
 }
@@ -1728,7 +1728,7 @@ impl Readable for RX_BUFFER_0 {
 
 impl<SPI> DW3000<SPI> {
     /// Receive Data Buffer
-    pub fn rx_buffer_0(&mut self) -> RegAccessor<RX_BUFFER_0, SPI> {
+    pub fn rx_buffer_0(&mut self) -> RegAccessor<'_, RX_BUFFER_0, SPI> {
         RegAccessor(self, PhantomData)
     }
 }
@@ -1789,7 +1789,7 @@ impl Readable for RX_BUFFER_1 {
 
 impl<SPI> DW3000<SPI> {
     /// Receive Data Buffer1
-    pub fn rx_buffer_1(&mut self) -> RegAccessor<RX_BUFFER_1, SPI> {
+    pub fn rx_buffer_1(&mut self) -> RegAccessor<'_, RX_BUFFER_1, SPI> {
         RegAccessor(self, PhantomData)
     }
 }

@@ -38,8 +38,9 @@ pub struct Message<'l> {
 }
 
 /// A struct representing the quality of the received message.
+#[derive(Debug)]
 #[cfg_attr(feature = "defmt", derive(Format))]
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct RxQuality {
     /// The confidence that there was Line Of Sight between the sender and the
     /// receiver.

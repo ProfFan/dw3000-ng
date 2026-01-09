@@ -17,7 +17,7 @@ pub struct Config {
     pub preamble_length: PreambleLength,
     /// Sets the bitrate of the transmission.
     pub bitrate: BitRate,
-    /// Defaults to `true`.
+    /// Defaults to `false`.
     pub frame_filtering: bool,
     /// Sets the ranging bit in the transmitted frame.
     /// This has no effect on the capabilities of the DW3000.
@@ -419,7 +419,7 @@ impl StsLen {
 
         // Compute the square root of the squared value with Newton's method
         let sqrt = |x: u32| -> u32 {
-            let mut z = (x + 1) / 2;
+            let mut z = (x + 1).div_ceil(2);
             let mut y = x;
             while z < y {
                 y = z;

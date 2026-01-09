@@ -2,8 +2,6 @@
 
 use core::ops::{Add, Sub};
 
-use serde::{Deserialize, Serialize};
-
 #[cfg(feature = "defmt")]
 use defmt::Format;
 
@@ -17,8 +15,9 @@ pub const TIME_MAX: u64 = 0xffffffffff;
 /// Internally uses the same 40-bit timestamps that the DW3000 uses.
 ///
 /// [`DW3000::sys_time`]: ../hl/struct.DW3000.html#method.sys_time
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug)]
 #[cfg_attr(feature = "defmt", derive(Format))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
 pub struct Instant(pub(crate) u64);
 
@@ -154,7 +153,8 @@ impl Sub<Instant> for Instant {
 /// A duration between two instants in DW3000 system time
 ///
 /// Internally uses the same 40-bit timestamps that the DW3000 uses.
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(C)]
 pub struct Duration(u64);
 
