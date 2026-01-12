@@ -1,5 +1,9 @@
 use super::Awake;
-use crate::{fast_command, ll, time::Duration, Error, DW3000};
+use crate::{
+    fast_command, ll,
+    time::{Duration, Instant},
+    Error, DW3000,
+};
 
 use smoltcp::wire::{Ieee802154Address, Ieee802154Pan};
 
@@ -43,12 +47,13 @@ where
         ))
     }
 
-    /// Returns the current system time (32-bit)
+    /// Returns the current system time (accurate to the upper 32-bit)
     #[maybe_async_attr]
-    pub async fn sys_time(&mut self) -> Result<u32, Error<SPI>> {
+    pub async fn sys_time(&mut self) -> Result<Instant, Error<SPI>> {
         let sys_time = self.ll.sys_time().read().await?.value();
 
-        Ok(sys_time)
+        // The systime read the upper 32-bits from the 40-bit timer
+        Ok(Instant((sys_time as u64) << 8))
     }
 
     /// Returns the state of the DW3000
@@ -98,7 +103,7 @@ where
     pub async fn force_idle(&mut self) -> Result<(), Error<SPI>> {
         // our probleme on this function is that we never come back to IDLE_PLL with a locked PLL after usng fast command 0
 
-        self.ll.fast_command(0).await?;
+        self.fast_cmd(crate::FastCommand::CMD_TXRXOFF).await?;
 
         Ok(())
     }

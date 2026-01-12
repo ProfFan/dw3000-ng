@@ -6,7 +6,7 @@ use byte::BytesExt as _;
 
 use super::AutoDoubleBufferReceiving;
 use crate::{
-    configs::{PdoaMode, SfdSequence},
+    configs::{PdoaMode, SfdSequence, TxContinuation},
     maybe_async_attr, spi_type,
     time::Instant,
     Config, Error, FastCommand, Ready, Sending, SingleBufferReceiving, Sleeping, DW3000,
@@ -233,6 +233,7 @@ where
         mut self,
         data: &[u8],
         send_time: SendTime,
+        continuation: TxContinuation,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         self.clear_event_counter().await?;
@@ -291,19 +292,33 @@ where
                     .modify(|_, w| // 32-bits value of the most significant bits
                     w.value( (time.value() >> 8) as u32 ))
                     .await?;
-                self.fast_cmd(FastCommand::CMD_DTX).await?;
+                if matches!(continuation, TxContinuation::Ready) {
+                    self.fast_cmd(FastCommand::CMD_DTX).await?;
+                } else {
+                    self.fast_cmd(FastCommand::CMD_DTX_W4R).await?;
+                }
             }
             SendTime::OnSync => {
                 self.ll.ec_ctrl().modify(|_, w| w.ostr_mode(1)).await?;
                 self.ll.ec_ctrl().modify(|_, w| w.osts_wait(33)).await?;
             }
-            SendTime::Now => self.fast_cmd(FastCommand::CMD_TX).await?,
+            SendTime::Now => {
+                if matches!(continuation, TxContinuation::Ready) {
+                    self.fast_cmd(FastCommand::CMD_TX).await?
+                } else {
+                    self.fast_cmd(FastCommand::CMD_TX_W4R).await?
+                }
+            }
         }
 
         Ok(DW3000 {
             ll: self.ll,
             seq: self.seq,
-            state: Sending { finished: false },
+            state: Sending {
+                finished: false,
+                continuation,
+                config,
+            },
         })
     }
 
@@ -330,12 +345,13 @@ where
         self,
         frame: Ieee802154Frame<T>,
         send_time: SendTime,
+        continuation: TxContinuation,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>>
     where
         T: AsRef<[u8]>,
     {
-        self.send_raw(frame.into_inner().as_ref(), send_time, config)
+        self.send_raw(frame.into_inner().as_ref(), send_time, continuation, config)
             .await
     }
 
@@ -363,6 +379,7 @@ where
         self,
         data: &[u8],
         send_time: SendTime,
+        continuation: TxContinuation,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         return self
@@ -371,6 +388,7 @@ where
                 send_time,
                 Ieee802154Pan::BROADCAST,
                 Ieee802154Address::BROADCAST,
+                continuation,
                 config,
             )
             .await;
@@ -402,6 +420,7 @@ where
         send_time: SendTime,
         pan_id: Ieee802154Pan,
         address: Ieee802154Address,
+        continuation: TxContinuation,
         config: Config,
     ) -> Result<DW3000<SPI, Sending>, Error<SPI>> {
         let mut buffer = [0_u8; 127];
@@ -409,7 +428,9 @@ where
             .build_frame(&mut buffer, data, Some(address), Some(pan_id))
             .await?;
 
-        return self.send_raw(&buffer[0..len + 2], send_time, config).await;
+        return self
+            .send_raw(&buffer[0..len + 2], send_time, continuation, config)
+            .await;
     }
 
     /// Attempt to receive a single IEEE 802.15.4 MAC frame
@@ -490,20 +511,14 @@ where
         self.ll()
             .sys_enable()
             .modify(|_, w| {
-                w
-                    // .rxprd_en(0b1)
-                    //     .rxsfdd_en(0b1)
-                    //     .rxphd_en(0b1)
-                    .rxphe_en(0b1)
+                w.rxphe_en(0b1)
                     .rxfr_en(0b1)
-                    // .rxfcg_en(0b1)
                     .rxfce_en(0b1)
                     .rxrfsl_en(0b1)
                     .rxfto_en(0b1)
                     .rxovrr_en(0b1)
                     .rxpto_en(0b1)
                     .rxsto_en(0b1)
-                // .rxprej_en(0b1)
             })
             .await?;
         Ok(())

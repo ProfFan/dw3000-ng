@@ -12,7 +12,7 @@ use defmt::Format;
 
 use super::{AutoDoubleBufferReceiving, ReceiveTime, Receiving};
 use crate::{
-    configs::{BitRate, PulseRepetitionFrequency, SfdSequence},
+    configs::{AutoAck, BitRate, PulseRepetitionFrequency, SfdSequence},
     maybe_async_attr, spi_type,
     time::Instant,
     Config, Error, FastCommand, Ready, DW3000,
@@ -78,24 +78,31 @@ where
     ) -> Result<(), Error<SPI>> {
         if config.frame_filtering {
             self.ll
-                .sys_cfg()
-                .modify(
-                    |_, w| w.ffen(0b1), // enable frame filtering
-                )
+                .ff_cfg()
+                .modify(|_, w| {
+                    w.ffab(0b1) // receive beacon frames
+                        .ffad(0b1) // receive data frames
+                        .ffaa(0b1) // receive acknowledgement frames
+                        .ffam(0b1) // receive MAC command frames
+                })
                 .await?;
             self.ll
-                .ff_cfg()
-                .modify(
-                    |_, w| {
-                        w.ffab(0b1) // receive beacon frames
-                            .ffad(0b1) // receive data frames
-                            .ffaa(0b1) // receive acknowledgement frames
-                            .ffam(0b1)
-                    }, // receive MAC command frames
-                )
+                .sys_cfg()
+                .modify(|_, w| {
+                    w.ffen(0b1). // enable frame filtering
+                    rxautr(0b1) // enable Receiver Auto-Re-enable for failed/filtered frames
+                })
                 .await?;
         } else {
             self.ll.sys_cfg().modify(|_, w| w.ffen(0b0)).await?; // disable frame filtering
+        }
+
+        if let AutoAck::Enabled { turnaround_time } = config.auto_ack {
+            self.ll.sys_cfg().modify(|_, w| w.auto_ack(0b1)).await?;
+            self.ll
+                .ack_resp()
+                .modify(|_, w| w.ack_tim(turnaround_time))
+                .await?;
         }
 
         match recv_time {
@@ -211,30 +218,7 @@ where
             rssi,
         };
 
-        // Reset status bits. This is not strictly necessary, but it helps, if
-        // you have to inspect SYS_STATUS manually during debugging.
-        // NOTE: The `SYS_STATUS` register is write-to-clear
-        self.ll()
-            .sys_status()
-            .write(|w| {
-                w.rxprd(0b1) // Receiver Preamble Detected
-                    .rxsfdd(0b1) // Receiver SFD Detected
-                    .ciadone(0b1) // LDE Processing Done
-                    .rxphd(0b1) // Receiver PHY Header Detected
-                    .rxphe(0b1) // Receiver PHY Header Error
-                    .rxfr(0b1) // Receiver Data Frame Ready
-                    .rxfcg(0b1) // Receiver FCS Good
-                    .rxfce(0b1) // Receiver FCS Error
-                    .rxfsl(0b1) // Receiver Reed Solomon Frame Sync Loss
-                    .rxfto(0b1) // Receiver Frame Wait Timeout
-                    .ciaerr(0b1) // Leading Edge Detection Processing Error
-                    .rxovrr(0b1) // Receiver Overrun
-                    .rxpto(0b1) // Preamble Detection Timeout
-                    .rxsto(0b1) // Receiver SFD Timeout
-                    .rxprej(0b1) // Receiver Preamble Rejection
-            })
-            .await
-            .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
+        self.clear_status().await?;
 
         // Read received frame
         let rx_finfo = self
@@ -365,29 +349,7 @@ where
         // are buggy, the following should never panic.
         let rx_time = Instant::new(rx_time).unwrap();
 
-        //  Reset status bits. This is not strictly necessary, but it helps, if
-        // you have to inspect SYS_STATUS manually during debugging.
-        self.ll()
-            .sys_status()
-            .write(|w| {
-                w.rxprd(0b1) // Receiver Preamble Detected
-                    .rxsfdd(0b1) // Receiver SFD Detected
-                    .ciadone(0b1) // LDE Processing Done
-                    .rxphd(0b1) // Receiver PHY Header Detected
-                    .rxphe(0b1) // Receiver PHY Header Error
-                    .rxfr(0b1) // Receiver Data Frame Ready
-                    .rxfcg(0b1) // Receiver FCS Good
-                    .rxfce(0b1) // Receiver FCS Error
-                    .rxfsl(0b1) // Receiver Reed Solomon Frame Sync Loss
-                    .rxfto(0b1) // Receiver Frame Wait Timeout
-                    .ciaerr(0b1) // Leading Edge Detection Processing Error
-                    .rxovrr(0b1) // Receiver Overrun
-                    .rxpto(0b1) // Preamble Detection Timeout
-                    .rxsto(0b1) // Receiver SFD Timeout
-                    .rxprej(0b1) // Receiver Preamble Rejection
-            })
-            .await
-            .map_err(|error| nb::Error::Other(Error::Spi(error)))?;
+        self.clear_status().await?;
 
         // Read received frame
         let rx_finfo = self
@@ -447,22 +409,22 @@ where
             (PulseRepetitionFrequency::Mhz64, Method::Sts) => 120.7,
         };
 
-        let f1;
-        let f2;
-        let f3;
+        let f1: u64;
+        let f2: u64;
+        let f3: u64;
         let n;
 
         match method {
             Method::Ipatov => {
-                f1 = ll.ip_diag_2().read().await?.ip_fp1m();
-                f2 = ll.ip_diag_3().read().await?.ip_fp2m();
-                f3 = ll.ip_diag_4().read().await?.ip_fp3m();
+                f1 = ll.ip_diag_2().read().await?.ip_fp1m() as u64;
+                f2 = ll.ip_diag_3().read().await?.ip_fp2m() as u64;
+                f3 = ll.ip_diag_4().read().await?.ip_fp3m() as u64;
                 n = ll.ip_diag_12().read().await?.ip_nacc();
             }
             Method::Sts => {
-                f1 = ll.sts_diag_2().read().await?.cp0_fp1m();
-                f2 = ll.sts_diag_3().read().await?.cp0_fp2m();
-                f3 = ll.sts_diag_4().read().await?.cp0_fp3m();
+                f1 = ll.sts_diag_2().read().await?.cp0_fp1m() as u64;
+                f2 = ll.sts_diag_3().read().await?.cp0_fp2m() as u64;
+                f3 = ll.sts_diag_4().read().await?.cp0_fp3m() as u64;
                 n = ll.sts_diag_12().read().await?.cp0_nacc();
             }
         }
@@ -487,6 +449,35 @@ where
         Ok(0.0)
     }
 
+    #[maybe_async_attr]
+    async fn clear_status(&mut self) -> Result<(), Error<SPI>> {
+        // Reset status bits. This is not strictly necessary, but it helps, if
+        // you have to inspect SYS_STATUS manually during debugging.
+        // NOTE: The `SYS_STATUS` register is write-to-clear
+        self.ll()
+            .sys_status()
+            .write(|w| {
+                w.rxprd(0b1) // Receiver Preamble Detected
+                    .rxsfdd(0b1) // Receiver SFD Detected
+                    .ciadone(0b1) // LDE Processing Done
+                    .rxphd(0b1) // Receiver PHY Header Detected
+                    .rxphe(0b1) // Receiver PHY Header Error
+                    .rxfr(0b1) // Receiver Data Frame Ready
+                    .rxfcg(0b1) // Receiver FCS Good
+                    .rxfce(0b1) // Receiver FCS Error
+                    .rxfsl(0b1) // Receiver Reed Solomon Frame Sync Loss
+                    .rxfto(0b1) // Receiver Frame Wait Timeout
+                    .ciaerr(0b1) // Leading Edge Detection Processing Error
+                    .rxovrr(0b1) // Receiver Overrun
+                    .rxpto(0b1) // Preamble Detection Timeout
+                    .rxsto(0b1) // Receiver SFD Timeout
+                    .rxprej(0b1) // Receiver Preamble Rejection
+            })
+            .await?;
+
+        Ok(())
+    }
+
     #[allow(clippy::type_complexity)]
     /// Finishes receiving and returns to the `Ready` state
     ///
@@ -498,6 +489,11 @@ where
         // BECAUSE : using force_idle (fast command 0) is not puting the pll back to stable !!!
 
         if !self.state.is_finished() {
+            match self.clear_status().await {
+                Ok(()) => (),
+                Err(error) => return Err((self, error)),
+            }
+
             match self.force_idle().await {
                 Ok(()) => (),
                 Err(error) => return Err((self, error)),
